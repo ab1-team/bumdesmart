@@ -58,6 +58,7 @@
                             <optgroup label="📊 Laporan Keuangan">
                                 <option value="neraca">Laporan Neraca</option>
                                 <option value="labaRugi">Laporan Laba Rugi</option>
+                                <option value="bukuBesar">Laporan Buku Besar</option>
                                 <option value="pembelian">Laporan Pembelian</option>
                                 <option value="piutang">Laporan Piutang (Customer)</option>
                                 <option value="hutang">Laporan Hutang (Supplier)</option>
@@ -79,8 +80,7 @@
                 <div class="col-md-6 mb-3">
                     <div class="form-group">
                         <label class="form-label">Nama Sub Laporan</label>
-                        <select x-model="jenis_sub_laporan" class="form-select tom-select" id="jenis_sub_laporan"
-                            disabled>
+                        <select x-model="jenis_sub_laporan" class="form-select tom-select" id="jenis_sub_laporan">
                             <option value="">-</option>
                         </select>
                     </div>
@@ -104,7 +104,23 @@
             periode: @entangle('periode'),
             jenis_laporan: @entangle('jenis_laporan'),
             jenis_sub_laporan: @entangle('jenis_sub_laporan'),
+            daftarAkun: @entangle('daftarAkun'),
+            init() {
+                this.$watch('jenis_laporan', (value) => this.jenisLaporan(value));
+            },
+            jenisLaporan(value) {
+                Select['jenis_sub_laporan'].clearOptions();
 
+                if (value === 'bukuBesar') {
+                    this.daftarAkun.forEach(account => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: account.kode,
+                            text: `${account.kode}. ${account.nama}`
+                        });
+                    });
+
+                }
+            },
             openReport() {
                 if (!this.jenis_laporan) {
                     Toast.fire({

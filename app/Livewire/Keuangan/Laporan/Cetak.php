@@ -3,8 +3,10 @@
 namespace App\Livewire\Keuangan\Laporan;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\AkunLevel1;
 use App\Models\Business;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchasesReturn;
@@ -140,6 +142,41 @@ class Cetak extends Controller
         $html = view('livewire.keuangan.pelaporan.neraca', compact('title', 'subtitle', 'akunLevel1s', 'tahun', 'bulan'))->render();
 
         return $this->streamPdf($html, 'laporan-neraca.pdf');
+    }
+
+    public function bukuBesar(array $data)
+    {
+        $kodeAkun = $data['sub_laporan'];
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? date('m');
+
+        $akun = Account::where('kode', $kodeAkun)->with([
+            'balance' => function ($query) use ($tahun) {
+                $query->where('business_id', auth()->user()->business_id)->where('tahun', $tahun);
+            },
+        ])->first();
+
+        $payments = Payment::where([
+            ['business_id', auth()->user()->business_id],
+            ['tanggal_pembayaran', 'LIKE', $tahun.'-'.$bulan.'-%'],
+        ])->where(function ($query) use ($kodeAkun) {
+            $query->where('rekening_debit', $kodeAkun)
+                ->orWhere('rekening_kredit', $kodeAkun);
+        })->get();
+
+        $title = 'Laporan Buku Besar';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+
+        $periodeParts[] = $tahun;
+        $namaBulan = implode(' ', $periodeParts);
+        $subtitle = 'Periode: '.$namaBulan;
+
+        $html = view('livewire.keuangan.pelaporan.buku-besar', compact('title', 'subtitle', 'akun', 'payments', 'tahun', 'bulan', 'namaBulan'))->render();
+
+        return $this->streamPdf($html, 'laporan-buku-besar.pdf');
     }
 
     public function produkTerlaris(array $data)
