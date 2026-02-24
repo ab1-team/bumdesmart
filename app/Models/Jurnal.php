@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Jurnal_umum extends Model
+class Jurnal extends Model
 {
     use HasFactory;
-    protected $table = 'jurnal_umums';
+
     protected $fillable = [
+        'business_id',
         'tanggal',
         'keterangan',
         'relasi',
@@ -20,7 +21,7 @@ class Jurnal_umum extends Model
 
     public function getPayment()
     {
-        return $this->hasOne(Payment::class, 'transaction_id', 'id');
+        return $this->hasOne(Payment::class, 'transaction_id', 'id')->where('jenis_transaksi', 'jurnal');
     }
 
     public function user()

@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jurnal_umums', function (Blueprint $table) {
-            $table->id();
+        Schema::create('jurnals', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->foreignId('business_id')->constrained('businesses')->cascadeOnDelete();
             $table->string('tanggal');
             $table->string('keterangan');
             $table->string('relasi');
             $table->string('jumlah');
             $table->string('urutan');
-            $table->string('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jurnal_umums');
+        Schema::dropIfExists('jurnals');
     }
 };

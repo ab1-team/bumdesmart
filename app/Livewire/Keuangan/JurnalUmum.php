@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Keuangan;
 
-use App\Models\Transaction_type;
-use App\Models\Jurnal_umum;
-use App\Models\Inventory;
 use App\Models\Account;
-use Livewire\Component;
-use Illuminate\Support\Facades\DB;
+use App\Models\Inventory;
+use App\Models\Jurnal;
 use App\Models\Payment;
+use App\Models\Transaction_type;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class JurnalUmum extends Component
 {
@@ -55,7 +55,7 @@ class JurnalUmum extends Component
 
     protected $listeners = [
         'setHargaPerolehan' => 'setHargaPerolehan',
-        'setInventaris' => 'setInventaris'
+        'setInventaris' => 'setInventaris',
     ];
 
     public function setInventaris($payload)
@@ -83,8 +83,9 @@ class JurnalUmum extends Component
 
     public function saveJurnalUmum($data)
     {
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             $this->dispatch('alert', type: 'error', message: 'Data tidak valid');
+
             return;
         }
         // dd($data);
@@ -99,110 +100,111 @@ class JurnalUmum extends Component
             $sumber = $data['sumber_dana'] ?? '';
             $simpan = $data['disimpan_ke'] ?? '';
 
-            $noPembayaran = 'PAY-' . date('Ymd') . '-' .
+            $noPembayaran = 'PAY-'.date('Ymd').'-'.
                 str_pad(Payment::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
 
-            $urutan = Jurnal_umum::whereYear('tanggal', $this->tahun)
+            $urutan = Jurnal::whereYear('tanggal', $this->tahun)
                 ->whereMonth('tanggal', $this->bulan)
                 ->whereDay('tanggal', $this->tanggal)
                 ->count() + 1;
-            $noJurnal = 'JU-' . date('Ymd') . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
+            $noJurnal = 'JU-'.date('Ymd').'-'.str_pad($urutan, 4, '0', STR_PAD_LEFT);
 
-            //PENGHAPUSAN / PENJUALAN ASET
+            // PENGHAPUSAN / PENJUALAN ASET
             if (
                 str_starts_with($sumber, '1.2.01.01') ||
                 str_starts_with($sumber, '1.2.02')
             ) {
                 if (str_starts_with($simpan, '5.3.02.01') && $data['jenis_transaksi'] == 2) {
                     $inventaris = Inventory::where('id', $data['id_barang'])->update([
-                        'business_id'       => auth()->user()->business_id,
-                        'payment_id'        => null,
-                        'nama_barang'       => $data['nama_barang'] ?? null,
-                        'tanggal_beli'      => $data['tanggal_pembelian'] ?? null,
-                        'tanggal_validasi'  => $data['tanggal_validasi'] ?? null,
-                        'jumlah'            => $data['jumlah'] ?? 0,
-                        'harga_satuan'      => $data['harga_satuan'] ?? 0,
-                        'umur_ekonomis'     => $data['umur_ekonomis'] ?? 0,
-                        'jenis'             => $data['jenis'] ?? null,
-                        'kategori'          => $data['kategori'] ?? null,
-                        'status'            => $data['status'] ?? null
+                        'business_id' => auth()->user()->business_id,
+                        'payment_id' => null,
+                        'nama_barang' => $data['nama_barang'] ?? null,
+                        'tanggal_beli' => $data['tanggal_pembelian'] ?? null,
+                        'tanggal_validasi' => $data['tanggal_validasi'] ?? null,
+                        'jumlah' => $data['jumlah'] ?? 0,
+                        'harga_satuan' => $data['harga_satuan'] ?? 0,
+                        'umur_ekonomis' => $data['umur_ekonomis'] ?? 0,
+                        'jenis' => $data['jenis'] ?? null,
+                        'kategori' => $data['kategori'] ?? null,
+                        'status' => $data['status'] ?? null,
                     ]);
 
                     Payment::create(
                         [
-                            'business_id'           => auth()->user()->business_id,
-                            'user_id'               => auth()->id(),
-                            'no_pembayaran'         => $noPembayaran,
-                            'tanggal_pembayaran'    => $data['tanggal_pembayaran'],
-                            'jenis_transaksi'       => 'jurnal_umum',
-                            'transaksi_id'          => $inventaris->id,
-                            'total_harga'           => $data['nominal'] ?? 0,
-                            'metode_pembayaran'     => 'tunai',
-                            'no_referensi'          => null,
-                            'catatan'               => 'transaksi Jurnal Umum',
-                            'rekening_debit'        => $sumber,
-                            'rekening_kredit'       => $simpan,
+                            'business_id' => auth()->user()->business_id,
+                            'user_id' => auth()->id(),
+                            'no_pembayaran' => $noPembayaran,
+                            'tanggal_pembayaran' => $data['tanggal_pembayaran'],
+                            'jenis_transaksi' => 'jurnal',
+                            'transaksi_id' => $data['id_barang'],
+                            'total_harga' => $data['nominal'] ?? 0,
+                            'metode_pembayaran' => 'tunai',
+                            'no_referensi' => null,
+                            'catatan' => 'transaksi Jurnal Umum',
+                            'rekening_debit' => $sumber,
+                            'rekening_kredit' => $simpan,
                         ]
                     );
                 }
-                //PEMBELIAN INVENTARIS
+                // PEMBELIAN INVENTARIS
             } elseif (
                 str_starts_with($simpan, '1.2.01') ||
                 str_starts_with($simpan, '1.2.03')
             ) {
                 $payment = Payment::create([
-                    'business_id'        => auth()->user()->business_id,
-                    'user_id'            => auth()->id(),
-                    'no_pembayaran'      => $noPembayaran,
+                    'business_id' => auth()->user()->business_id,
+                    'user_id' => auth()->id(),
+                    'no_pembayaran' => $noPembayaran,
                     'tanggal_pembayaran' => $data['tanggal_pembayaran'],
-                    'jenis_transaksi'    => 'jurnal_Inventaris',
-                    'transaksi_id'       => null,
-                    'total_harga'        => $data['nominal'] ?? 0,
-                    'metode_pembayaran'  => 'tunai',
-                    'no_referensi'       => null,
-                    'catatan'            => 'transaksi Jurnal Inventaris',
-                    'rekening_debit'     => $sumber,
-                    'rekening_kredit'    => $simpan,
+                    'jenis_transaksi' => 'jurnal_inventaris',
+                    'transaksi_id' => null,
+                    'total_harga' => $data['nominal'] ?? 0,
+                    'metode_pembayaran' => 'tunai',
+                    'no_referensi' => null,
+                    'catatan' => 'transaksi Jurnal Inventaris',
+                    'rekening_debit' => $sumber,
+                    'rekening_kredit' => $simpan,
                 ]);
-                if (!empty($data['inventaris'])) {
+                if (! empty($data['inventaris'])) {
                     $inv = $data['inventaris'];
                     $inventaris = Inventory::create([
-                        'business_id'       => auth()->user()->business_id,
-                        'payment_id'        => $payment->id,
-                        'nama_barang'       => $inv['nama_barang'] ?? null,
-                        'tanggal_beli'      => $data['tanggal_pembayaran'] ?? null,
-                        'tanggal_validasi'  => now(),
-                        'jumlah'            => $inv['jumlah'] ?? 0,
-                        'harga_satuan'      => $inv['harga_satuan'] ?? 0,
-                        'umur_ekonomis'     => $inv['umur_ekonomis'] ?? 0,
-                        'jenis'             => 0,
-                        'kategori'          => 0,
-                        'status'            => 'baik',
+                        'business_id' => auth()->user()->business_id,
+                        'payment_id' => $payment->id,
+                        'nama_barang' => $inv['nama_barang'] ?? null,
+                        'tanggal_beli' => $data['tanggal_pembayaran'] ?? null,
+                        'tanggal_validasi' => now(),
+                        'jumlah' => $inv['jumlah'] ?? 0,
+                        'harga_satuan' => $inv['harga_satuan'] ?? 0,
+                        'umur_ekonomis' => $inv['umur_ekonomis'] ?? 0,
+                        'jenis' => 0,
+                        'kategori' => 0,
+                        'status' => 'baik',
                     ]);
                 }
             } else {
-                $jurnal = Jurnal_umum::create([
-                    'tanggal'    => $data['tanggal_pembayaran'],
+                $jurnal = Jurnal::create([
+                    'business_id' => auth()->user()->business_id,
+                    'tanggal' => $data['tanggal_pembayaran'],
                     'keterangan' => $data['keterangan'] ?? null,
-                    'relasi'     => $data['relasi'] ?? null,
-                    'jumlah'     => $data['nominal'] ?? 0,
-                    'urutan'     => $noJurnal ?? 0,
-                    'user_id'    => auth()->id(),
+                    'relasi' => $data['relasi'] ?? null,
+                    'jumlah' => $data['nominal'] ?? 0,
+                    'urutan' => $noJurnal ?? 0,
+                    'user_id' => auth()->id(),
                 ]);
 
                 Payment::create([
-                    'business_id'           => auth()->user()->business_id,
-                    'user_id'               => auth()->id(),
-                    'no_pembayaran'         => $noPembayaran,
-                    'tanggal_pembayaran'    => $data['tanggal_pembayaran'],
-                    'jenis_transaksi'       => 'jurnal_umum',
-                    'transaction_id'        => $jurnal->id,
-                    'total_harga'           => $data['nominal'] ?? 0,
-                    'metode_pembayaran'     => 'tunai',
-                    'no_referensi'          => null,
-                    'catatan'               => 'transaksi Jurnal Umum',
-                    'rekening_debit'        => $sumber,
-                    'rekening_kredit'       => $simpan,
+                    'business_id' => auth()->user()->business_id,
+                    'user_id' => auth()->id(),
+                    'no_pembayaran' => $noPembayaran,
+                    'tanggal_pembayaran' => $data['tanggal_pembayaran'],
+                    'jenis_transaksi' => 'jurnal',
+                    'transaction_id' => $jurnal->id,
+                    'total_harga' => $data['nominal'] ?? 0,
+                    'metode_pembayaran' => 'tunai',
+                    'no_referensi' => null,
+                    'catatan' => 'transaksi Jurnal Umum',
+                    'rekening_debit' => $sumber,
+                    'rekening_kredit' => $simpan,
                 ]);
             }
             DB::commit();
