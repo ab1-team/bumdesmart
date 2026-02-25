@@ -4,6 +4,8 @@ namespace App\Utils;
 
 use App\Models\Account;
 use App\Models\AkunLevel1;
+use App\Models\ArusKas;
+use App\Models\Payment;
 
 class KeuanganUtil
 {
@@ -23,6 +25,25 @@ class KeuanganUtil
 
                 $saldo += $saldoAkun;
             }
+        }
+
+        return $saldo;
+    }
+
+    public static function saldoKas($tahun, $bulan): string
+    {
+        $accounts = Account::where([
+            ['business_id', auth()->user()->business_id],
+            ['kode', 'LIKE', '1.1.01.%'],
+        ])->with([
+            'balance' => function ($query) use ($tahun) {
+                $query->where('tahun', $tahun);
+            },
+        ])->get();
+
+        $saldo = 0;
+        foreach ($accounts as $account) {
+            $saldo += self::sumSaldo($account, $bulan);
         }
 
         return $saldo;
@@ -294,5 +315,109 @@ class KeuanganUtil
         }
 
         return $labaRugi;
+    }
+
+    public static function arusKas(string $tanggalMulai, string $tanggalAkhir)
+    {
+        $semuaArusKas = ArusKas::with('rekenings')->orderBy('id')->get()->keyBy('id');
+
+        $leafNodes = $semuaArusKas->filter(fn ($a) => $a->rekenings->isNotEmpty());
+        $semuaArusKas->each(fn ($a) => $a->total = 0);
+
+        if ($leafNodes->isNotEmpty()) {
+            $cases = 'CASE ';
+            $bindings = [];
+
+            foreach ($leafNodes as $arusKas) {
+                $whens = $arusKas->rekenings->map(function ($r) use (&$bindings) {
+                    $bindings[] = $r->rekening_debit;
+                    $bindings[] = $r->rekening_kredit;
+
+                    return '(rekening_debit LIKE ? AND rekening_kredit LIKE ?)';
+                })->implode(' OR ');
+
+                $cases .= "WHEN {$whens} THEN {$arusKas->id} ";
+            }
+
+            $cases .= 'END';
+
+            $innerQuery = Payment::selectRaw("{$cases} as arus_kas_id, total_harga", $bindings)
+                ->whereRaw("{$cases} IS NOT NULL", $bindings)
+                ->whereBetween('tanggal_pembayaran', [$tanggalMulai, $tanggalAkhir]);
+
+            $totals = Payment::selectRaw('arus_kas_id, SUM(total_harga) as total')
+                ->fromSub($innerQuery, 'grouped')
+                ->groupBy('arus_kas_id')
+                ->pluck('total', 'arus_kas_id');
+
+            foreach ($leafNodes as $id => $arusKas) {
+                $arusKas->total = (float) ($totals->get($id) ?? 0);
+            }
+        }
+
+        $visited = [];
+
+        $aggregate = function ($node) use (&$aggregate, $semuaArusKas, &$visited) {
+            if (isset($visited[$node->id])) {
+                return;
+            }
+            $visited[$node->id] = true;
+
+            $children = $semuaArusKas->filter(
+                fn ($n) => $n->sub == $node->id || $n->super_sub == $node->id
+            );
+
+            foreach ($children as $child) {
+                $aggregate($child);
+                $node->total += $child->total;
+            }
+        };
+
+        $semuaArusKas->each(fn ($node) => $aggregate($node));
+
+        $result = collect();
+        $curSection = null;
+        $curGroup = null;
+
+        foreach ($semuaArusKas->sortBy('id') as $node) {
+            $isHeader = $node->sub == 0 && $node->super_sub != 0;
+            $isSubHeader = $node->sub == 0 && $node->rekenings->isEmpty() && ! $isHeader;
+            $isLeaf = ! $isHeader && ! $isSubHeader;
+
+            if ($isHeader) {
+                if ($curGroup !== null) {
+                    $curSection['groups']->push($curGroup);
+                    $curGroup = null;
+                }
+                if ($curSection !== null) {
+                    $result->push($curSection);
+                }
+                $curSection = ['header' => $node, 'groups' => collect()];
+
+            } elseif ($isSubHeader) {
+                if ($curGroup !== null && $curSection !== null) {
+                    $curSection['groups']->push($curGroup);
+                }
+                if ($curSection === null) {
+                    $curSection = ['header' => null, 'groups' => collect()];
+                }
+                $curGroup = ['subheader' => $node, 'items' => collect()];
+
+            } elseif ($isLeaf) {
+                if ($curGroup === null) {
+                    $curGroup = ['subheader' => null, 'items' => collect()];
+                }
+                $curGroup['items']->push($node);
+            }
+        }
+
+        if ($curGroup !== null && $curSection !== null) {
+            $curSection['groups']->push($curGroup);
+        }
+        if ($curSection !== null) {
+            $result->push($curSection);
+        }
+
+        return $result;
     }
 }

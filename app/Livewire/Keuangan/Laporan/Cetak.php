@@ -205,6 +205,31 @@ class Cetak extends Controller
         return $this->streamPdf($html, 'laporan-laba-rugi.pdf');
     }
 
+    public function arusKas(array $data)
+    {
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? date('m');
+        $bulanLalu = $bulan - 1;
+
+        $tanggalMulai = $tahun.'-'.$bulan.'-01';
+        $tanggalAkhir = date('Y-m-t', strtotime($tanggalMulai));
+
+        $arusKas = KeuanganUtil::arusKas($tanggalMulai, $tanggalAkhir);
+        $saldoKas = KeuanganUtil::saldoKas($tahun, $bulanLalu);
+
+        $title = 'Laporan Arus Kas';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+        $periodeParts[] = $tahun;
+        $subtitle = 'Periode: '.implode(' ', $periodeParts);
+
+        $html = view('livewire.keuangan.pelaporan.arus-kas', compact('title', 'subtitle', 'arusKas', 'saldoKas'))->render();
+
+        return $this->streamPdf($html, 'laporan-arus-kas.pdf');
+    }
+
     public function asetTetapInventaris(array $data)
     {
         $tahun = $data['tahun'] ?? date('Y');
