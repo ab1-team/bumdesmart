@@ -13,6 +13,16 @@
                     <div class="display-5 fw-bold text-primary" x-text="formatRupiah(subtotal)"></div>
                 </div>
 
+                <!-- Customer Selection -->
+                <div class="mb-4" wire:ignore>
+                    <label class="form-label">Customer</label>
+                    <div class="w-100 position-relative">
+                        <select class="form-select" id="customerSearch" x-model="customerSearch" wire:ignore>
+                            <option value=""></option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Payment Input -->
                 <div class="mb-3">
                     <label class="form-label">Jumlah Bayar</label>

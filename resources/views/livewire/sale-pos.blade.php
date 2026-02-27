@@ -73,14 +73,6 @@
 
     <div class="col-6 col-md-5 col-lg-4 overflow-hidden" wire:ignore>
         <div class="card h-100">
-            <div class="card-header">
-                <div class="w-100 position-relative">
-                    <label class="form-label">Customer</label>
-                    <select class="form-select" id="customerSearch" x-model="customerSearch" wire:ignore>
-                        <option value=""></option>
-                    </select>
-                </div>
-            </div>
 
             <div class="card-body p-0 px-3 overflow-x-hidden overflow-y-auto">
                 <div class="list-group list-group-flush">

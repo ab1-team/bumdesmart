@@ -45,7 +45,7 @@
                     </span>
                     <div class="d-none d-xl-block ps-2">
                         <div>{{ auth()->user()->nama_lengkap }}</div>
-                        <div class="mt-1 small text-secondary">{{ auth()->user()->no_hp }}</div>
+                        <div class="mt-1 small text-secondary">{{ auth()->user()->role->nama_role }}</div>
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
