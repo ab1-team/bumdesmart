@@ -334,7 +334,13 @@ class TambahPenjualan extends Component
             DB::commit();
             $this->dispatch('alert', type: 'success', message: $message);
 
-            $this->dispatch('redirect', url: '/penjualan/daftar', timeout: 1000);
+            // Jika transaksi baru, buka cetak struk sebelum redirect
+            if (! $this->saleId) {
+                // Gunakan objek sale dari createLogic
+                $this->dispatch('open-receipt', url: '/penjualan/cetak-struk/'.$sale->id);
+            }
+
+            $this->dispatch('redirect', url: '/penjualan/cetak-struk', timeout: 1500);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('alert', type: 'error', message: 'Error: '.$e->getMessage());

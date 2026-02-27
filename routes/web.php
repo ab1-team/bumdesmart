@@ -7,14 +7,16 @@ use App\Livewire\DaftarReturPembelian;
 use App\Livewire\DaftarReturPenjualan;
 use App\Livewire\Dashboard;
 use App\Livewire\Kategori;
+use App\Livewire\Keuangan\JurnalUmum;
 use App\Livewire\Keuangan\Laporan\Cetak;
 use App\Livewire\Keuangan\Pelaporan;
 use App\Livewire\Member;
-use App\Livewire\Keuangan\JurnalUmum;
 use App\Livewire\Merek;
 use App\Livewire\Pelanggan;
 use App\Livewire\Pengaturan;
+use App\Livewire\Penjualan\CetakStruk;
 use App\Livewire\Produk;
+use App\Livewire\Profile;
 use App\Livewire\Rak;
 use App\Livewire\Role;
 use App\Livewire\SalePos;
@@ -49,6 +51,7 @@ Route::group([
     'middleware' => 'auth',
 ], function () {
     Route::get('/dashboard', Dashboard::class);
+    Route::get('/profile', Profile::class);
 
     Route::get('/master-data/role', Role::class);
     Route::get('/master-data/user', User::class);
@@ -81,10 +84,13 @@ Route::group([
     Route::get('/penjualan/retur/{id}', TambahReturPenjualan::class);
     Route::get('/penjualan/daftar-retur', DaftarReturPenjualan::class);
     Route::get('/penjualan/pos', SalePos::class);
+    Route::get('/penjualan/cetak-struk/{id}', CetakStruk::class);
 
     Route::get('/keuangan/pelaporan', Pelaporan::class);
     Route::get('/keuangan/pelaporan/cetak', Cetak::class);
 
     Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
     Route::get('/master-pengaturan', Pengaturan::class);
+
+    Route::post('/logout', [AuthController::class, 'logout']);
 });

@@ -202,6 +202,10 @@
             initTomSelect();
         });
 
+        window.addEventListener('open-receipt', (event) => {
+            window.open(event.detail.url, '_blank');
+        });
+
         document.addEventListener('DOMContentLoaded', function(e) {
             $('input').on('focus', function() {
                 $(this).select();

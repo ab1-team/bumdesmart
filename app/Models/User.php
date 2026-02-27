@@ -18,6 +18,7 @@ class User extends Authenticatable
         'no_hp',
         'username',
         'password',
+        'foto',
     ];
 
     public function role()

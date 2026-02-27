@@ -47,6 +47,10 @@
                                         wire:click="detailPenjualan({{ $sale->id }})">
                                         Detail Penjualan
                                     </a>
+                                    <a class="dropdown-item" href="/penjualan/cetak-struk/{{ $sale->id }}"
+                                        target="_blank">
+                                        Cetak Struk
+                                    </a>
                                     <a class="dropdown-item" href="/penjualan/edit/{{ $sale->id }}">
                                         Edit
                                     </a>

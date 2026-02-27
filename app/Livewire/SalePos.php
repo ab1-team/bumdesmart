@@ -98,6 +98,7 @@ class SalePos extends Component
 
             $this->dispatch('sale-stored');
             $this->dispatch('alert', type: 'success', message: 'Transaksi berhasil disimpan!');
+            $this->dispatch('open-receipt', url: '/penjualan/cetak-struk/'.$sale->id);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -148,7 +149,10 @@ class SalePos extends Component
         $type = $setting['jenis'] ?? 'nominal';
 
         if ($type == 'persen') {
-            if ($amt >= 100) return 0;
+            if ($amt >= 100) {
+                return 0;
+            }
+
             return $baseTotal * ($amt / (100 - $amt));
         }
 
@@ -390,7 +394,10 @@ class SalePos extends Component
         }
 
         // For percentage, calculate derived amount from baseInfo (Net)
-        if ($amt >= 100) return 0;
+        if ($amt >= 100) {
+            return 0;
+        }
+
         return $baseInfo * ($amt / (100 - $amt));
     }
 

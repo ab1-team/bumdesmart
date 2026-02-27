@@ -963,6 +963,10 @@
             }));
         });
 
+        window.addEventListener('open-receipt', (event) => {
+            window.open(event.detail.url, '_blank');
+        });
+
         document.addEventListener('livewire:initialized', () => {
             Livewire.on('sale-stored', () => {
                 window.dispatchEvent(new CustomEvent('sale-stored'));
