@@ -33,10 +33,11 @@ class UserSeeder extends Seeder
             [
                 'business_id' => 1,
                 'role_id' => 1,
-                'nama_lengkap' => 'Owner',
-                'initial' => 'Owner',
+                'is_master' => true,
+                'nama_lengkap' => 'Master Admin',
+                'initial' => 'Mas',
                 'no_hp' => '08123456789',
-                'username' => 'owner',
+                'username' => 'master',
                 'password' => Hash::make('password'),
             ],
             [

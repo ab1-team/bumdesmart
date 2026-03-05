@@ -47,8 +47,19 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [AuthController::class, 'login']);
 Route::post('/auth', [AuthController::class, 'auth']);
 
+// === MASTER ROUTES ===
 Route::group([
-    'middleware' => 'auth',
+    'middleware' => ['auth', 'is_master'],
+    'prefix'     => 'master',
+], function () {
+    Route::get('/dashboard', \App\Livewire\Master\Dashboard::class);
+    Route::get('/owner',     \App\Livewire\Master\MasterOwner::class);
+    Route::get('/business',  \App\Livewire\MasterData\MasterBusiness::class);
+});
+
+// === BUSINESS OPERATIONAL ROUTES ===
+Route::group([
+    'middleware' => ['auth', 'is_not_master'],
 ], function () {
     Route::get('/dashboard', Dashboard::class);
     Route::get('/profile', Profile::class);
@@ -91,6 +102,9 @@ Route::group([
 
     Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
     Route::get('/master-pengaturan', Pengaturan::class);
+});
 
+Route::group(['middleware' => 'auth'], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+

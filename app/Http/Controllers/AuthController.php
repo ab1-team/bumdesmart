@@ -45,6 +45,11 @@ class AuthController extends Controller
         if (Auth::attempt($data)) {
             $user = Auth::user();
 
+            // Master bisa login dari domain manapun, langsung ke master dashboard
+            if ($user->is_master) {
+                return redirect('/master/dashboard')->with('success', 'Login berhasil!');
+            }
+
             foreach ($owner->businesses as $business) {
                 if ($business->id == $user->business_id) {
                     return redirect('/dashboard')->with('success', 'Login berhasil!');

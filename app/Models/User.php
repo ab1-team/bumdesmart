@@ -11,6 +11,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory;
 
     protected $fillable = [
+        'is_master',
         'business_id',
         'role_id',
         'nama_lengkap',
