@@ -118,8 +118,9 @@ class SalePos extends Component
             'status' => 'CLOSED',
         ]);
 
-        $this->cashDrawer = null;
         $this->dispatch('alert', type: 'success', message: 'Kasir berhasil ditutup!');
+        $this->dispatch('open-receipt', url: '/penjualan/cetak-struk-kasir/'.$this->cashDrawer->id);
+        $this->cashDrawer = null;
         $this->dispatch('close-modal', id: 'closeCashierModal');
     }
 

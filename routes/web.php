@@ -96,6 +96,7 @@ Route::group([
     Route::get('/penjualan/daftar-retur', DaftarReturPenjualan::class);
     Route::get('/penjualan/pos', SalePos::class);
     Route::get('/penjualan/cetak-struk/{id}', CetakStruk::class);
+    Route::get('/penjualan/cetak-struk-kasir/{id}', \App\Livewire\Penjualan\CetakStrukKasir::class);
 
     Route::get('/keuangan/pelaporan', Pelaporan::class);
     Route::get('/keuangan/pelaporan/cetak', Cetak::class);

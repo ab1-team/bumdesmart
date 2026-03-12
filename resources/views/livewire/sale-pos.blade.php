@@ -1096,6 +1096,11 @@
 
             Livewire.on('close-modal', (event) => {
                 $(`#${event.id}`).modal('hide');
+                
+                // Refresh if it's cashier related to ensure full state sync
+                if (event.id === 'openCashierModal' || event.id === 'closeCashierModal') {
+                    window.location.reload();
+                }
             });
 
             Livewire.on('add-to-cart', (event) => {
