@@ -24,6 +24,8 @@ class Role extends Component
 
     public $deskripsi;
 
+    public $selectedMenus = [];
+
     protected function rules()
     {
         return [
@@ -32,12 +34,13 @@ class Role extends Component
                 Rule::unique('roles', 'nama_role')->ignore($this->id),
             ],
             'deskripsi' => 'nullable',
+            'selectedMenus' => 'nullable|array',
         ];
     }
 
     public function resetForm()
     {
-        $this->reset('id', 'namaRole', 'deskripsi');
+        $this->reset('id', 'namaRole', 'deskripsi', 'selectedMenus');
     }
 
     public function create()
@@ -53,11 +56,12 @@ class Role extends Component
         $this->resetForm();
         $this->titleModal = 'Ubah Role';
 
-        $role = \App\Models\Role::find($id);
+        $role = \App\Models\Role::with('menus')->find($id);
 
         $this->namaRole = $role->nama_role;
         $this->deskripsi = $role->deskripsi;
         $this->id = $role->id;
+        $this->selectedMenus = $role->menus->pluck('id')->map(fn ($id) => (string) $id)->toArray();
 
         $this->dispatch('show-modal', modalId: 'roleModal');
     }
@@ -73,10 +77,13 @@ class Role extends Component
         ];
 
         if ($this->id) {
-            \App\Models\Role::find($this->id)->update($data);
+            $role = \App\Models\Role::find($this->id);
+            $role->update($data);
+            $role->menus()->sync($this->selectedMenus);
             $message = 'Role berhasil diubah';
         } else {
-            \App\Models\Role::create($data);
+            $role = \App\Models\Role::create($data);
+            $role->menus()->sync($this->selectedMenus);
             $message = 'Role berhasil ditambahkan';
         }
 
@@ -113,10 +120,12 @@ class Role extends Component
         ];
 
         $roles = TableUtil::paginate($this, $query, $headers, 10);
+        $availableMenus = \App\Models\Menu::with('children')->whereNull('parent_id')->orderBy('order')->get();
 
         return view('livewire.role', [
             'roles' => $roles,
             'headers' => $headers,
+            'availableMenus' => $availableMenus,
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 }

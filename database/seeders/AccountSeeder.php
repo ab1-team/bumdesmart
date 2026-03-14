@@ -15,6 +15,13 @@ class AccountSeeder extends Seeder
      */
     public function run(): void
     {
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        AkunLevel1::truncate();
+        AkunLevel2::truncate();
+        AkunLevel3::truncate();
+        Account::truncate();
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $akunLevel1 = [];
         $akunLevel2 = [];
         $akunLevel3 = [];

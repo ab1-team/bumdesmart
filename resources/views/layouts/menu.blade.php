@@ -20,164 +20,31 @@
             ],
         ];
     } else {
-        $listMenu = [
-            [
-                'title' => 'Dashboard',
-                'url' => '/dashboard',
-                'icon' => 'home',
-            ],
-            [
-                'title' => 'Master Data',
-                'url' => '/master-data',
-                'icon' => 'database',
-                'child' => [
-                    [
-                        'title' => 'Role',
-                        'url' => '/master-data/role',
-                    ],
-                    [
-                        'title' => 'User',
-                        'url' => '/master-data/user',
-                    ],
-                    [
-                        'title' => 'Member',
-                        'url' => '/master-data/member',
-                    ],
-                    [
-                        'title' => 'Pelanggan',
-                        'url' => '/master-data/pelanggan',
-                    ],
-                    [
-                        'title' => 'Supplier',
-                        'url' => '/master-data/supplier',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Master Produk',
-                'url' => '/master-produk',
-                'icon' => 'box',
-                'child' => [
-                    [
-                        'title' => 'Satuan',
-                        'url' => '/master-produk/satuan',
-                    ],
-                    [
-                        'title' => 'Kategori',
-                        'url' => '/master-produk/kategori',
-                    ],
-                    [
-                        'title' => 'Merek',
-                        'url' => '/master-produk/merek',
-                    ],
-                    [
-                        'title' => 'Rak',
-                        'url' => '/master-produk/rak',
-                    ],
-                    [
-                        'title' => 'Produk',
-                        'url' => '/master-produk/produk',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Pembelian',
-                'url' => '/pembelian',
-                'icon' => 'add_shopping_cart',
-                'child' => [
-                    [
-                        'title' => 'Tambah Pembelian',
-                        'url' => '/pembelian/tambah',
-                    ],
-                    [
-                        'title' => 'Daftar Pembelian',
-                        'url' => '/pembelian/daftar',
-                    ],
-                    [
-                        'title' => 'Daftar Retur',
-                        'url' => '/pembelian/daftar-retur',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Penjualan',
-                'url' => '/penjualan',
-                'icon' => 'point_of_sale',
-                'child' => [
-                    [
-                        'title' => 'Tambah Penjualan',
-                        'url' => '/penjualan/tambah',
-                    ],
-                    [
-                        'title' => 'Daftar Penjualan',
-                        'url' => '/penjualan/daftar',
-                    ],
-                    [
-                        'title' => 'Daftar Return',
-                        'url' => '/penjualan/daftar-retur',
-                    ],
-                    [
-                        'title' => 'POS',
-                        'url' => '/penjualan/pos',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Inventory',
-                'url' => '/stock',
-                'icon' => 'inventory',
-                'child' => [
-                    [
-                        'title' => 'Stok Opname',
-                        'url' => '/stock/opname',
-                        'child' => [
-                            [
-                                'title' => 'Tambah Opname',
-                                'url' => '/stock/opname/tambah',
-                            ],
-                            [
-                                'title' => 'Daftar Opname',
-                                'url' => '/stock/opname/daftar',
-                            ],
-                        ],
-                    ],
-                    [
-                        'title' => 'Stok Adjustment',
-                        'url' => '/stock/adjustment',
-                        'child' => [
-                            [
-                                'title' => 'Tambah Adjustment',
-                                'url' => '/stock/adjustment/tambah',
-                            ],
-                            [
-                                'title' => 'Daftar Adjustment',
-                                'url' => '/stock/adjustment/daftar',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Keuangan',
-                'url' => '/keuangan',
-                'icon' => 'analytics',
-                'child' => [
-                    [
-                        'title' => 'Jurnal Umum',
-                        'url' => '/keuangan/jurnal-umum',
-                    ],
-                    [
-                        'title' => 'Pelaporan',
-                        'url' => '/keuangan/pelaporan',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Pengaturan',
-                'url' => '/master-pengaturan',
-                'icon' => 'settings',
-            ],
-        ];
+        $userRole = auth()->user()->role;
+        if ($userRole) {
+            $menus = $userRole->menus()->with('children')->whereNull('parent_id')->orderBy('order')->get();
+
+            $listMenu = $menus->map(function ($menu) {
+                $item = [
+                    'title' => $menu->title,
+                    'url' => $menu->url,
+                    'icon' => $menu->icon,
+                ];
+
+                if ($menu->children->count() > 0) {
+                    $item['child'] = $menu->children->map(function ($child) {
+                        return [
+                            'title' => $child->title,
+                            'url' => $child->url,
+                        ];
+                    })->toArray();
+                }
+
+                return $item;
+            })->toArray();
+        } else {
+            $listMenu = [];
+        }
     } // end else (business user menu)
 
     $path = '/' . request()->path();

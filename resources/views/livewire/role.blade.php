@@ -44,7 +44,7 @@
     </div>
 
     <div class="modal fade" id="roleModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-3 modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">{{ $titleModal }}</h4>
@@ -65,6 +65,46 @@
                             @error('deskripsi')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
+                        </div>
+
+                        <hr>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Akses Menu</label>
+                            <div class="row">
+                                @forelse ($availableMenus as $menu)
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="p-3 border rounded bg-light h-100">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    value="{{ $menu->id }}" wire:model="selectedMenus"
+                                                    id="menu-{{ $menu->id }}">
+                                                <label class="form-check-label fw-bold" for="menu-{{ $menu->id }}">
+                                                    {{ $menu->title }}
+                                                </label>
+                                            </div>
+                                            @if ($menu->children->count() > 0)
+                                                <div class="ms-4 mt-2">
+                                                    @foreach ($menu->children as $child)
+                                                        <div class="form-check mb-1">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                value="{{ $child->id }}" wire:model="selectedMenus"
+                                                                id="menu-{{ $child->id }}">
+                                                            <label class="form-check-label"
+                                                                for="menu-{{ $child->id }}">
+                                                                {{ $child->title }}
+                                                            </label>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-12 text-center text-muted py-3">
+                                        <small>Data menu belum tersedia di database.</small>
+                                    </div>
+                                @endforelse
+                            </div>
                         </div>
                     </form>
                 </div>

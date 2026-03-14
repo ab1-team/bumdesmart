@@ -14,4 +14,9 @@ class Role extends Model
         'deskripsi',
         'business_id',
     ];
+
+    public function menus()
+    {
+        return $this->belongsToMany(Menu::class, 'role_menu');
+    }
 }

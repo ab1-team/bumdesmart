@@ -14,6 +14,11 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Role::truncate();
+        User::truncate();
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $roles = [
             [
                 'business_id' => 1,
@@ -27,7 +32,9 @@ class UserSeeder extends Seeder
             ],
         ];
 
-        Role::insert($roles);
+        foreach ($roles as $role) {
+            Role::create($role);
+        }
 
         $users = [
             [
@@ -45,12 +52,14 @@ class UserSeeder extends Seeder
                 'role_id' => 2,
                 'nama_lengkap' => 'Admin',
                 'initial' => 'Admin',
-                'no_hp' => '08123456789',
+                'no_hp' => '08123456780',
                 'username' => 'admin',
                 'password' => Hash::make('password'),
             ],
         ];
 
-        User::insert($users);
+        foreach ($users as $user) {
+            User::create($user);
+        }
     }
 }
