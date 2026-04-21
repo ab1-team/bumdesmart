@@ -39,6 +39,7 @@ class TambahPenjualan extends Component
             $this->loadSaleData($id);
         } else {
             $this->tanggalPenjualan = date('Y-m-d');
+            $this->nomorPenjualan = $this->generateInvoiceNumber();
 
             // Find default customer "umum"
             $defaultCustomer = Customer::where('business_id', $this->businessId)
@@ -47,6 +48,7 @@ class TambahPenjualan extends Component
 
             if ($defaultCustomer) {
                 $this->existingData = [
+                    'nomorPenjualan' => $this->nomorPenjualan,
                     'customer' => $defaultCustomer->id,
                     'customer_name' => $defaultCustomer->nama_pelanggan,
                     'tanggalPenjualan' => $this->tanggalPenjualan,
@@ -227,7 +229,7 @@ class TambahPenjualan extends Component
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            $nomorPenjualan = ($data['nomorPenjualan'] != '') ? $data['nomorPenjualan'] : 'INV-'.time();
+            $nomorPenjualan = ($data['nomorPenjualan'] != '') ? $data['nomorPenjualan'] : $this->generateInvoiceNumber();
             $tgl = $data['tanggalPenjualan'] ?? date('Y-m-d');
 
             if ($this->saleId) {
@@ -735,6 +737,17 @@ class TambahPenjualan extends Component
     }
 
 
+
+    private function generateInvoiceNumber()
+    {
+        $date = date('Y/m');
+        $today = date('Y-m-d');
+        $count = Sale::where('business_id', $this->businessId)
+            ->whereDate('tanggal_transaksi', $today)
+            ->count() + 1;
+
+        return 'INV/'.$date.'/'.str_pad($count, 4, '0', STR_PAD_LEFT);
+    }
 
     public function render()
     {

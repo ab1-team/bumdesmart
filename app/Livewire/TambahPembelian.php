@@ -53,6 +53,13 @@ class TambahPembelian extends Component
             $this->loadPurchaseData($id);
         } else {
             $this->tanggalPembelian = date('Y-m-d');
+            $this->nomorPembelian = $this->generatePurchaseNumber();
+            
+            $this->existingData = [
+                'nomorPembelian' => $this->nomorPembelian,
+                'tanggalPembelian' => $this->tanggalPembelian,
+                'jenisPembayaran' => 'cash',
+            ];
         }
     }
 
@@ -252,7 +259,7 @@ class TambahPembelian extends Component
                 $keterangan .= ' [Transfer: '.$data['noRekening'].']';
             }
 
-            $no_pembelian = ($data['nomorPembelian'] != '') ? $data['nomorPembelian'] : 'PO-'.time();
+            $no_pembelian = ($data['nomorPembelian'] != '') ? $data['nomorPembelian'] : $this->generatePurchaseNumber();
 
             // Handle Update vs Create
             if ($this->purchaseId) {
@@ -647,6 +654,17 @@ class TambahPembelian extends Component
         }
 
         return (float) $str;
+    }
+
+    private function generatePurchaseNumber()
+    {
+        $date = date('Y/m');
+        $today = date('Y-m-d');
+        $count = Purchase::where('business_id', $this->businessId)
+            ->whereDate('tanggal_pembelian', $today)
+            ->count() + 1;
+
+        return 'PO/'.$date.'/'.str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 
     public function render()
