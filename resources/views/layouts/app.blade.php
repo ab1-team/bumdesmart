@@ -158,21 +158,23 @@
             <!-- END PAGE BODY -->
             <!-- BEGIN FOOTER -->
             <!--  BEGIN FOOTER  -->
-            <footer class="footer footer-transparent d-print-none me-0">
-                <div class="container-xl">
-                    <div class="row text-center align-items-center flex-row-reverse">
-                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
-                            <ul class="list-inline list-inline-dots mb-0">
-                                <li class="list-inline-item">
-                                    Copyright &copy; {{ date('Y') }}
-                                    <a href="." class="link-secondary">{{ env('APP_NAME') }}</a>.
-                                    All rights reserved.
-                                </li>
-                            </ul>
+            @if (!str_contains($url, 'pos'))
+                <footer class="footer footer-transparent d-print-none me-0">
+                    <div class="container-xl">
+                        <div class="row text-center align-items-center flex-row-reverse">
+                            <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                                <ul class="list-inline list-inline-dots mb-0">
+                                    <li class="list-inline-item">
+                                        Copyright &copy; {{ date('Y') }}
+                                        <a href="." class="link-secondary">{{ env('APP_NAME') }}</a>.
+                                        All rights reserved.
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </footer>
+                </footer>
+            @endif
             <!--  END FOOTER  -->
             <!-- END FOOTER -->
         </div>
