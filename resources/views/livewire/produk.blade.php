@@ -184,7 +184,7 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Stok Minimal</label>
-                                            <input type="number" class="form-control" wire:model="stokMinimal"
+                                            <input type="number" step="any" class="form-control" wire:model="stokMinimal"
                                                 name="stokMinimal" placeholder="Stok Minimal" />
                                             @error('stokMinimal')
                                                 <small class="text-danger">{{ $message }}</small>

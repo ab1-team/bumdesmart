@@ -61,7 +61,7 @@
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control" x-model="product.jumlah_beli"
+                                    <input type="number" step="any" class="form-control" x-model="product.jumlah_beli"
                                         x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -544,7 +544,7 @@
 
                     let p = this.products[id];
                     let harga = this.parseFormatted(p.harga_beli);
-                    let qty = parseInt(p.jumlah_beli) || 0;
+                    let qty = parseFloat(p.jumlah_beli) || 0;
                     let diskon = this.parseFormatted(p.diskon.nominal);
 
                     let sub = (harga * qty) - diskon;
@@ -562,7 +562,7 @@
                     // Loop through cart
                     Object.values(this.products).forEach(p => {
                         let sub = this.parseFormatted(p.subtotal);
-                        let qty = parseInt(p.jumlah_beli) || 0;
+                        let qty = parseFloat(p.jumlah_beli) || 0;
                         let d = this.parseFormatted(p.diskon.nominal);
                         let c = this.parseFormatted(p.cashback.nominal);
 
@@ -691,7 +691,7 @@
                     let m = this.modalProduct;
 
                     let harga = this.parseFormatted(p.harga_beli);
-                    let qty = parseInt(p.jumlah_beli) || 0;
+                    let qty = parseFloat(p.jumlah_beli) || 0;
 
 
                     // FIX: Use parseFormatted
@@ -723,7 +723,7 @@
                     let m = this.modalProduct;
 
                     let harga = this.parseFormatted(p.harga_beli);
-                    let qty = parseInt(p.jumlah_beli) || 0;
+                    let qty = parseFloat(p.jumlah_beli) || 0;
 
                     // FIX: Use parseFormatted
                     let val = this.parseFormatted(m.cashback.jumlah);

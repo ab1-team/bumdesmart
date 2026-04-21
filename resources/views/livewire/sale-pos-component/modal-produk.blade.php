@@ -27,6 +27,12 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label">Jumlah (Qty)</label>
+                            <input type="number" step="any" class="form-control" x-model="selectedItem.qty"
+                                placeholder="Masukkan Jumlah">
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label">Diskon</label>
                             <div class="row g-2 align-items-center mb-2">
                                 <div class="col-auto">

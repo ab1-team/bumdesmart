@@ -307,9 +307,9 @@ class Produk extends Component
             TableUtil::setTableHeader('gambar', 'Gambar', false, false),
             TableUtil::setTableHeader('sku', 'SKU', true, true),
             TableUtil::setTableHeader('nama_produk', 'Nama Produk', true, true),
-            TableUtil::setTableHeader('product.category.nama_kategori', 'Kategori', true, true),
-            TableUtil::setTableHeader('product.brand.nama_brand', 'Merek', true, true),
-            TableUtil::setTableHeader('product.shelf.nama_rak', 'Rak', true, true),
+            TableUtil::setTableHeader('category.nama_kategori', 'Kategori', true, true),
+            TableUtil::setTableHeader('brand.nama_brand', 'Merek', true, true),
+            TableUtil::setTableHeader('shelf.nama_rak', 'Rak', true, true),
             TableUtil::setTableHeader('stok_aktual', 'Stok', true, true),
             TableUtil::setTableHeader('aksi', 'Aksi', false, false),
         ];

@@ -85,8 +85,8 @@
                                     <input type="number" class="form-control" :value="item.stok_sistem" readonly>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control" min="0"
-                                        x-model.number="item.stok_fisik" @input="hitung(item)">
+                                    <input type="number" step="any" class="form-control" min="0"
+                                        x-model="item.stok_fisik" @input="hitung(item)">
                                 </td>
                                 <td>
                                     <span :class="{ 'text-success': item.selisih > 0, 'text-danger': item.selisih < 0 }"

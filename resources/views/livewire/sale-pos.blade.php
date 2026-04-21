@@ -703,7 +703,7 @@
                     const item = this.cart.find(i => i.id === id);
                     if (!item) return;
 
-                    const newQty = item.qty + delta;
+                    const newQty = parseFloat(item.qty) + delta;
                     if (newQty <= 0) {
                         this.removeFromCart(id);
                     } else if (newQty <= item.stock) {
@@ -931,7 +931,7 @@
                 calculateItemDiscount(item) {
                     if (!item || !item.diskon) return 0;
                     let price = parseFloat(item.price);
-                    let qty = parseInt(item.qty);
+                    let qty = parseFloat(item.qty);
                     let discountVal = parseFloat(item.diskon.jumlah) || 0;
 
                     if (item.diskon.jenis === 'nominal') {
@@ -944,7 +944,7 @@
                 calculateItemCashback(item) {
                     if (!item || !item.cashback) return 0;
                     let price = parseFloat(item.price);
-                    let qty = parseInt(item.qty);
+                    let qty = parseFloat(item.qty);
                     let cashbackVal = parseFloat(item.cashback.jumlah) || 0;
 
                     if (item.cashback.jenis === 'nominal') {

@@ -59,7 +59,7 @@
                                         x-mask:dynamic="$money($input)">
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control" x-model="product.jumlah_jual"
+                                    <input type="number" step="any" class="form-control" x-model="product.jumlah_jual"
                                         x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -499,7 +499,7 @@
 
                     let p = this.products[id];
                     let harga = this.parseFormatted(p.harga_jual);
-                    let qty = parseInt(p.jumlah_jual) || 0;
+                    let qty = parseFloat(p.jumlah_jual) || 0;
 
                     // Validate qty against stock
                     if (qty > p.stok_tersedia) {
@@ -530,7 +530,7 @@
 
                     Object.values(this.products).forEach(p => {
                         let sub = this.parseFormatted(p.subtotal);
-                        let qty = parseInt(p.jumlah_jual) || 0;
+                        let qty = parseFloat(p.jumlah_jual) || 0;
                         let d = this.parseFormatted(p.diskon.nominal);
                         let c = this.parseFormatted(p.cashback ? p.cashback.nominal : 0);
 

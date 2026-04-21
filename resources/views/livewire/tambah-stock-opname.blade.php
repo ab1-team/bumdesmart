@@ -123,7 +123,7 @@
                                     </td>
                                     <td class="text-center" x-text="item.sistem"></td>
                                     <td>
-                                        <input type="number" class="form-control text-center"
+                                        <input type="number" step="any" class="form-control text-center"
                                             x-model.number="item.fisik"
                                             @input="calculateDiff(index); item.counted = true"
                                             @focus="$event.target.select()">
@@ -222,8 +222,8 @@
                         calculateDiff(index) {
                             const item = this.items[index];
                             // Safety check
-                            const fisik = item.fisik === '' ? 0 : parseInt(item.fisik);
-                            const sistem = parseInt(item.sistem);
+                            const fisik = item.fisik === '' ? 0 : parseFloat(item.fisik);
+                            const sistem = parseFloat(item.sistem);
 
                             item.selisih = fisik - sistem;
 
