@@ -37,7 +37,8 @@
 
                     <!-- Product Search -->
                     <div class="mb-3" wire:ignore>
-                        <select id="productSearchSelect" class="form-select" placeholder="Cari Produk atau Scan Barcode...">
+                        <select id="productSearchSelect" class="form-select"
+                            placeholder="Cari Produk atau Scan Barcode...">
                             <option value=""></option>
                         </select>
                     </div>
@@ -76,41 +77,34 @@
             <div class="row g-2">
                 @foreach ($products as $product)
                     <div class="col-6 mb-2">
-                        <div class="card text-bg-dark border-0 shadow-sm product-card"
-                            style="height: 100px;"
+                        <div class="card text-bg-dark border-0 shadow-sm product-card" style="height: 100px;"
                             @click="addToCart({
                                 id: {{ $product->id }},
                                 name: '{{ addslashes($product->nama_produk) }}',
                                 price: {{ $product->harga_jual }},
                                 stock: {{ $product->stok_aktual }},
-                                image: '{{ $product->gambar && $product->gambar !== "products/no-image.png" ? asset('storage/' . $product->gambar) : "https://placehold.co/400x400?text=No+Image" }}'
+                                image: '{{ $product->gambar && $product->gambar !== 'products/no-image.png' ? asset('storage/' . $product->gambar) : 'https://placehold.co/400x400?text=No+Image' }}'
                             })">
-<<<<<<< HEAD
-                            <img src="{{ asset('storage/' . $product->gambar) }}" class="card-img"
-                                alt="{{ $product->nama_produk }}">
-                            <div class="card-img-overlay d-flex flex-column justify-content-end">
-                                <h5 class="card-title mb-1">{{ $product->nama_produk }}</h5>
-                                <div class="card-text">Rp {{ \App\Utils\NumberUtil::format($product->harga_jual) }}</div>
-                                <span class="badge">{{ \App\Utils\NumberUtil::format($product->stok_aktual) }}</span>
-=======
-                            <div class="h-100 bg-muted-lt d-flex align-items-center justify-content-center overflow-hidden position-relative">
-                                @if($product->gambar && $product->gambar !== "products/no-image.png" && file_exists(public_path('storage/' . $product->gambar)))
-                                    <img src="{{ asset('storage/' . $product->gambar) }}" 
-                                        class="card-img h-100"
-                                        style="object-fit: cover; opacity: 0.6;"
-                                        alt="{{ $product->nama_produk }}">
+                            <div
+                                class="h-100 bg-muted-lt d-flex align-items-center justify-content-center overflow-hidden position-relative">
+                                @if (
+                                    $product->gambar &&
+                                        $product->gambar !== 'products/no-image.png' &&
+                                        file_exists(public_path('storage/' . $product->gambar)))
+                                    <img src="{{ asset('storage/' . $product->gambar) }}" class="card-img h-100"
+                                        style="object-fit: cover; opacity: 0.6;" alt="{{ $product->nama_produk }}">
                                 @else
-                                    <img src="https://placehold.co/400x400?text=No+Image" 
-                                        class="card-img h-100"
-                                        style="object-fit: cover; opacity: 0.3;"
-                                        alt="{{ $product->nama_produk }}">
+                                    <img src="https://placehold.co/400x400?text=No+Image" class="card-img h-100"
+                                        style="object-fit: cover; opacity: 0.3;" alt="{{ $product->nama_produk }}">
                                 @endif
                             </div>
                             <div class="card-img-overlay d-flex flex-column justify-content-end p-2">
-                                <h5 class="card-title mb-0 text-truncate" style="font-size: 0.7rem;">{{ $product->nama_produk }}</h5>
-                                <div class="card-text fw-bold text-primary" style="font-size: 0.75rem;">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
-                                <span class="badge bg-dark-lt position-absolute top-0 end-0 m-1" style="font-size: 0.6rem;">{{ $product->stok_aktual }}</span>
->>>>>>> 780a0106141b4bba2d4616ed6f4d166f7e90c4e3
+                                <h5 class="card-title mb-0 text-truncate" style="font-size: 0.7rem;">
+                                    {{ $product->nama_produk }}</h5>
+                                <div class="card-text fw-bold text-primary" style="font-size: 0.75rem;">Rp
+                                    {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
+                                <span class="badge bg-dark-lt position-absolute top-0 end-0 m-1"
+                                    style="font-size: 0.6rem;">{{ $product->stok_aktual }}</span>
                             </div>
                         </div>
                     </div>
@@ -142,16 +136,19 @@
                                     <span class="avatar avatar-sm rounded shadow-sm"
                                         :style="`background-image: url(${item.image})`"></span>
                                 </div>
-                                
+
                                 <!-- Name & Unit Price -->
                                 <div class="col min-w-0">
                                     <div role="button" @click="openModal(item)"
-                                        class="fw-bold text-dark d-block text-truncate fs-5 lh-1 mb-1" x-text="item.name"></div>
+                                        class="fw-bold text-dark d-block text-truncate fs-5 lh-1 mb-1"
+                                        x-text="item.name"></div>
                                     <div class="text-secondary small">
                                         <template x-if="calculateItemDiscount(item) > 0">
                                             <span>
-                                                <span class="text-decoration-line-through opacity-50 me-1" x-text="formatRupiah(item.price)"></span>
-                                                <span class="text-primary" x-text="formatRupiah(item.price - (calculateItemDiscount(item) / item.qty))"></span>
+                                                <span class="text-decoration-line-through opacity-50 me-1"
+                                                    x-text="formatRupiah(item.price)"></span>
+                                                <span class="text-primary"
+                                                    x-text="formatRupiah(item.price - (calculateItemDiscount(item) / item.qty))"></span>
                                             </span>
                                         </template>
                                         <template x-if="calculateItemDiscount(item) <= 0">
@@ -163,30 +160,38 @@
                                 <!-- Quantity Controls -->
                                 <div class="col-auto">
                                     <div class="d-flex align-items-center bg-light rounded-pill p-1 border shadow-sm">
-                                        <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle" style="width: 24px; height: 24px;" @click="updateQty(item.id, -1)">
-                                            <span class="material-symbols-outlined" style="font-size: 14px;">remove</span>
+                                        <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle"
+                                            style="width: 24px; height: 24px;" @click="updateQty(item.id, -1)">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 14px;">remove</span>
                                         </button>
-<<<<<<< HEAD
-                                        <span class="qty-display" x-text="formatDecimal(item.qty)"></span>
-                                        <button class="qty-btn" @click="updateQty(item.id, 1)">
-                                            <span class="material-symbols-outlined">add</span>
-=======
-                                        <span class="fw-bold px-2" style="min-width: 25px; text-align: center; font-size: 0.8rem;" x-text="item.qty"></span>
-                                        <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle" style="width: 24px; height: 24px;" @click="updateQty(item.id, 1)">
-                                            <span class="material-symbols-outlined" style="font-size: 14px;">add</span>
->>>>>>> 780a0106141b4bba2d4616ed6f4d166f7e90c4e3
-                                        </button>
+                                        <<<<<<< HEAD <span class="qty-display" x-text="formatDecimal(item.qty)">
+                                            </span>
+                                            <button class="qty-btn" @click="updateQty(item.id, 1)">
+                                                <span class="material-symbols-outlined">add</span>
+                                                =======
+                                                <span class="fw-bold px-2"
+                                                    style="min-width: 25px; text-align: center; font-size: 0.8rem;"
+                                                    x-text="item.qty"></span>
+                                                <button
+                                                    class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle"
+                                                    style="width: 24px; height: 24px;" @click="updateQty(item.id, 1)">
+                                                    <span class="material-symbols-outlined"
+                                                        style="font-size: 14px;">add</span>
+                                                    >>>>>>> 780a0106141b4bba2d4616ed6f4d166f7e90c4e3
+                                                </button>
                                     </div>
                                 </div>
 
                                 <!-- Total Nominal -->
-                                <div class="col-2 text-end fw-bold text-dark fs-4" 
+                                <div class="col-2 text-end fw-bold text-dark fs-4"
                                     x-text="formatRupiah((item.price * item.qty) - calculateItemDiscount(item))">
                                 </div>
 
                                 <!-- Delete Button -->
                                 <div class="col-auto">
-                                    <button class="btn btn-sm btn-icon btn-ghost-danger border-0" @click="removeFromCart(item.id)">
+                                    <button class="btn btn-sm btn-icon btn-ghost-danger border-0"
+                                        @click="removeFromCart(item.id)">
                                         <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
                                     </button>
                                 </div>
@@ -209,8 +214,8 @@
                         @click="pauseSale()">
                         <span class="material-symbols-outlined fs-3">inactive_order</span>
                     </button>
-                    <button class="btn btn-outline-secondary flex-fill p-1 position-relative" title="Transaksi Tertunda"
-                        x-show="heldSales.length > 0" @click="openHeldSalesModal()">
+                    <button class="btn btn-outline-secondary flex-fill p-1 position-relative"
+                        title="Transaksi Tertunda" x-show="heldSales.length > 0" @click="openHeldSalesModal()">
                         <span class="material-symbols-outlined fs-3">restore_page</span>
                         <span class="badge bg-info text-light badge-notification"
                             style="position: absolute; top: -5px; right: -5px; min-width: 1rem; height: 1rem; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;"
@@ -221,8 +226,8 @@
                         <span class="material-symbols-outlined fs-3">delete_sweep</span>
                     </button>
                     @if ($cashDrawer)
-                        <button class="btn btn-outline-dark flex-fill p-1" title="Tutup Kasir"
-                            data-bs-toggle="modal" data-bs-target="#closeCashierModal">
+                        <button class="btn btn-outline-dark flex-fill p-1" title="Tutup Kasir" data-bs-toggle="modal"
+                            data-bs-target="#closeCashierModal">
                             <span class="material-symbols-outlined fs-3">logout</span>
                         </button>
                     @endif
@@ -1111,7 +1116,8 @@
                         name: raw.nama_produk,
                         price: raw.harga_jual,
                         stock: raw.stok_aktual,
-                        image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? ('/storage/' + raw.gambar) : 'https://placehold.co/400x400?text=No+Image',
+                        image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? ('/storage/' +
+                            raw.gambar) : 'https://placehold.co/400x400?text=No+Image',
                     };
 
                     Alpine.$data(el).addToCart(productData);
@@ -1138,7 +1144,8 @@
                     searchField: 'nama_pelanggan',
                     load: function(query, callback) {
                         if (query.length < 2) return callback();
-                        @this.call('loadCustomers', query, 0).then(res => callback(res.data)).catch(() => callback());
+                        @this.call('loadCustomers', query, 0).then(res => callback(res.data)).catch(
+                        () => callback());
                     },
                     onChange: function(value) {
                         let el = document.querySelector('[x-data]');
@@ -1167,7 +1174,8 @@
                     closeAfterSelect: true,
                     load: function(query, callback) {
                         if (query.length < 2) return callback();
-                        @this.call('loadProducts', query, 0).then(res => callback(res.data)).catch(() => callback());
+                        @this.call('loadProducts', query, 0).then(res => callback(res.data)).catch(() =>
+                            callback());
                     },
                     render: {
                         option: function(data, escape) {
@@ -1194,7 +1202,9 @@
                                 name: raw.nama_produk,
                                 price: parseFloat(raw.harga_jual),
                                 stock: parseFloat(raw.stok_aktual),
-                                image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? ('/storage/' + raw.gambar) : 'https://placehold.co/400x400?text=No+Image',
+                                image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? (
+                                        '/storage/' + raw.gambar) :
+                                    'https://placehold.co/400x400?text=No+Image',
                             };
                             Alpine.$data(el).addToCart(productData);
                             setTimeout(() => {
