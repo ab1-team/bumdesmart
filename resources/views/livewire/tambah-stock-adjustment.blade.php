@@ -46,7 +46,7 @@
             <hr>
 
             <div class="row mb-3">
-                <div class="col-md-6" wire:ignore>
+                <div class="col-12" wire:ignore>
                     <label class="form-label">Cari & Tambah Produk</label>
                     <select id="cariProduk" class="form-select"
                         placeholder="Ketik nama produk atau scan barcode..."></select>
@@ -119,12 +119,14 @@
             <hr>
 
             <div class="row mt-3">
-                <div class="col-md-6">
+                <div class="col-12 mb-3">
                     <label class="form-label">Catatan</label>
                     <textarea class="form-control" rows="3" x-model="catatan"></textarea>
                 </div>
-                <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
-                    <button class="btn btn-primary" @click="simpan('draft')">Simpan Draft</button>
+                <div class="col-12 d-flex justify-content-end">
+                    <button class="btn btn-success" @click="simpan('draft')">
+                        <i class="fas fa-save me-1"></i> Simpan Draft
+                    </button>
                 </div>
             </div>
         </div>
