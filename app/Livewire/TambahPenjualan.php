@@ -39,6 +39,21 @@ class TambahPenjualan extends Component
             $this->loadSaleData($id);
         } else {
             $this->tanggalPenjualan = date('Y-m-d');
+
+            // Find default customer "umum"
+            $defaultCustomer = Customer::where('business_id', $this->businessId)
+                ->where('nama_pelanggan', 'LIKE', '%umum%')
+                ->first();
+
+            if ($defaultCustomer) {
+                $this->existingData = [
+                    'customer' => $defaultCustomer->id,
+                    'customer_name' => $defaultCustomer->nama_pelanggan,
+                    'tanggalPenjualan' => $this->tanggalPenjualan,
+                    'jenisPembayaran' => 'cash',
+                    'metodeBayar' => 'tunai',
+                ];
+            }
         }
     }
 

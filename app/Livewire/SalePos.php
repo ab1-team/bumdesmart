@@ -27,6 +27,8 @@ class SalePos extends Component
 
     public $cashDrawer = null;
 
+    public $defaultCustomer = null;
+
     public $openingBalance = 0;
 
     public $closingBalanceManual = 0;
@@ -68,6 +70,10 @@ class SalePos extends Component
     {
         $this->businessId = auth()->user()->business_id;
         $this->checkCashDrawer();
+
+        $this->defaultCustomer = Customer::where('business_id', $this->businessId)
+            ->where('nama_pelanggan', 'LIKE', '%umum%')
+            ->first();
     }
 
     public function checkCashDrawer()
