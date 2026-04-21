@@ -18,17 +18,17 @@
                 <!-- Payment Input -->
                 <div class="mb-3">
                     <label class="form-label">Jumlah Bayar</label>
-                    <input type="text" class="form-control" x-mask:dynamic="$money($input)"
+                    <input type="text" class="form-control" x-mask:dynamic="$money($input, ',', '.')"
                         x-model="checkOut.bayar" placeholder="0" id="paymentInput" />
                     <!-- Quick Amounts -->
                     <div class="mt-2 d-flex gap-2 flex-wrap justify-content-center">
                         <button type="button" class="btn btn-sm btn-outline-primary"
-                            @click="checkOut.bayar = subtotal">Uang Pas</button>
+                            @click="checkOut.bayar = formatRupiah(subtotal)">Uang Pas</button>
 
                         <!-- Dynamic Suggestions -->
                         <template x-for="amount in getSuggestedAmounts()" :key="amount">
                             <button type="button" class="btn btn-sm btn-outline-secondary"
-                                @click="checkOut.bayar = amount" x-show="amount > subtotal"
+                                @click="checkOut.bayar = formatRupiah(amount)" x-show="amount > subtotal"
                                 x-text="formatRupiah(amount)"></button>
                         </template>
                     </div>

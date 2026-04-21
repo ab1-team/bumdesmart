@@ -1016,7 +1016,7 @@
                     if (this.cart.length === 0) return;
 
                     if (!this.checkOut.bayar) {
-                        this.checkOut.bayar = this.subtotal;
+                        this.checkOut.bayar = this.formatRupiah(this.subtotal);
                     }
                     $('#checkoutModal').modal('show');
                     setTimeout(() => {
