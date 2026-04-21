@@ -113,6 +113,9 @@ class MasterBusiness extends Component
                 'email'      => $this->email,
             ]);
 
+            // Initialize accounting accounts (CoA Level 4)
+            \App\Utils\AccountUtil::initializeBusinessAccounts($business->id);
+
             // Create default roles for the new business
             $roles = [
                 [
