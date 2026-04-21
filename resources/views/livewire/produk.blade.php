@@ -113,53 +113,61 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Kategori</label>
-                                            <select wire:model="kategori" id="kategori" class="form-select tom-select">
-                                                <option value="">Pilih Kategori</option>
-                                                @foreach ($this->categories as $category)
-                                                    <option value="{{ $category->id }}">{{ $category->nama_kategori }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div wire:ignore>
+                                                <select wire:model="kategori" id="kategori" class="form-select tom-select">
+                                                    <option value="">Pilih Kategori</option>
+                                                    @foreach ($this->categories as $category)
+                                                        <option value="{{ $category->id }}">{{ $category->nama_kategori }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                             @error('kategori')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Merek</label>
-                                            <select wire:model="merek" id="merek" class="form-select tom-select">
-                                                <option value="">Pilih Merek</option>
-                                                @foreach ($this->brands as $brand)
-                                                    <option value="{{ $brand->id }}">{{ $brand->nama_brand }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div wire:ignore>
+                                                <select wire:model="merek" id="merek" class="form-select tom-select">
+                                                    <option value="">Pilih Merek</option>
+                                                    @foreach ($this->brands as $brand)
+                                                        <option value="{{ $brand->id }}">{{ $brand->nama_brand }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                             @error('merek')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Satuan</label>
-                                            <select wire:model="satuan" id="satuan" class="form-select tom-select">
-                                                <option value="">Pilih Satuan</option>
-                                                @foreach ($this->units as $unit)
-                                                    <option value="{{ $unit->id }}">{{ $unit->nama_satuan }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div wire:ignore>
+                                                <select wire:model="satuan" id="satuan" class="form-select tom-select">
+                                                    <option value="">Pilih Satuan</option>
+                                                    @foreach ($this->units as $unit)
+                                                        <option value="{{ $unit->id }}">{{ $unit->nama_satuan }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                             @error('satuan')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Rak Penyimpanan</label>
-                                            <select wire:model="rakPenyimpanan" id="rakPenyimpanan"
-                                                class="form-select tom-select">
-                                                <option value="">Pilih Rak Penyimpanan</option>
-                                                @foreach ($this->shelves as $shelf)
-                                                    <option value="{{ $shelf->id }}">{{ $shelf->nama_rak }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div wire:ignore>
+                                                <select wire:model="rakPenyimpanan" id="rakPenyimpanan"
+                                                    class="form-select tom-select">
+                                                    <option value="">Pilih Rak Penyimpanan</option>
+                                                    @foreach ($this->shelves as $shelf)
+                                                        <option value="{{ $shelf->id }}">{{ $shelf->nama_rak }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                             @error('rakPenyimpanan')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
