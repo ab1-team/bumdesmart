@@ -1074,8 +1074,6 @@
 
             Livewire.on('close-modal', (event) => {
                 $(`#${event.id}`).modal('hide');
-
-                // Refresh if it's cashier related to ensure full state sync
                 if (event.id === 'openCashierModal' || event.id === 'closeCashierModal') {
                     window.location.reload();
                 }
@@ -1085,14 +1083,12 @@
                 let el = document.querySelector('[x-data]');
                 if (el) {
                     let raw = event.product;
-
-                    console.log(raw);
                     let productData = {
                         id: raw.id,
                         name: raw.nama_produk,
                         price: raw.harga_jual,
                         stock: raw.stok_aktual,
-                        image: '/storage/' + raw.gambar,
+                        image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? ('/storage/' + raw.gambar) : 'https://placehold.co/400x400?text=No+Image',
                     };
 
                     Alpine.$data(el).addToCart(productData);
@@ -1110,9 +1106,8 @@
                     });
                 }
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize TomSelects after Livewire/Alpine are ready
             if (document.getElementById('customerSearch')) {
                 customerTomSelect = new TomSelect('#customerSearch', {
                     valueField: 'id',
@@ -1120,19 +1115,21 @@
                     searchField: 'nama_pelanggan',
                     load: function(query, callback) {
                         if (query.length < 2) return callback();
-                        @this.call('loadCustomers', query, 0).then(res => callback(res.data)).catch(
-                            () => callback());
+                        @this.call('loadCustomers', query, 0).then(res => callback(res.data)).catch(() => callback());
                     },
                     onChange: function(value) {
                         let el = document.querySelector('[x-data]');
-                        if (el) {
+                        if (el && value) {
                             let data = this.options[value];
-                            Alpine.$data(el).selectedCustomer = data || null;
+                            if (data) {
+                                Alpine.$data(el).selectedCustomer = JSON.parse(JSON.stringify(data));
+                            }
+                        } else if (el) {
+                            Alpine.$data(el).selectedCustomer = null;
                         }
                     }
                 });
 
-                // Pre-populate default customer
                 @if ($defaultCustomer)
                     customerTomSelect.addOption(@js($defaultCustomer));
                     customerTomSelect.setValue(@js($defaultCustomer->id));
@@ -1147,19 +1144,18 @@
                     closeAfterSelect: true,
                     load: function(query, callback) {
                         if (query.length < 2) return callback();
-                        @this.call('loadProducts', query, 0).then(res => callback(res.data)).catch(
-                            () => callback());
+                        @this.call('loadProducts', query, 0).then(res => callback(res.data)).catch(() => callback());
                     },
                     render: {
                         option: function(data, escape) {
                             return `<div class="d-flex flex-column py-1">
-                                            <div class="fw-bold text-dark">${escape(data.nama_produk)}</div>
-                                            <div class="d-flex justify-content-between align-items-center mt-1">
-                                                <small class="text-secondary">${escape(data.sku || '-')}</small>
-                                                <span class="badge bg-primary-lt">Rp ${parseFloat(data.harga_jual).toLocaleString('id-ID')}</span>
-                                            </div>
-                                            <small class="text-muted mt-1">Stok: ${Math.round(data.stok_aktual)} ${data.unit ? data.unit.nama_satuan : ''}</small>
-                                        </div>`;
+                                <div class="fw-bold text-dark">${escape(data.nama_produk)}</div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <small class="text-secondary">${escape(data.sku || '-')}</small>
+                                    <span class="badge bg-primary-lt">Rp ${parseFloat(data.harga_jual).toLocaleString('id-ID')}</span>
+                                </div>
+                                <small class="text-muted mt-1">Stok: ${Math.round(data.stok_aktual)} ${data.unit ? data.unit.nama_satuan : ''}</small>
+                            </div>`;
                         },
                         item: function(data, escape) {
                             return `<div>${escape(data.nama_produk)}</div>`;
@@ -1167,7 +1163,6 @@
                     },
                     onChange: function(value) {
                         if (!value) return;
-                        
                         let el = document.querySelector('[x-data]');
                         if (el) {
                             let raw = this.options[value];
@@ -1179,8 +1174,6 @@
                                 image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? ('/storage/' + raw.gambar) : 'https://placehold.co/400x400?text=No+Image',
                             };
                             Alpine.$data(el).addToCart(productData);
-                            
-                            // Full reset of TomSelect state to ensure previous results are gone
                             setTimeout(() => {
                                 this.clear(true);
                                 this.setTextboxValue('');
@@ -1191,33 +1184,27 @@
                     }
                 });
             }
+        });
 
+        document.addEventListener('DOMContentLoaded', function() {
             const scrollContainer = document.querySelector('.overflow-y-auto');
             if (scrollContainer) {
                 let isDown = false;
-                let startY;
-                let scrollTop;
-
+                let startY, scrollTop;
                 scrollContainer.addEventListener('mousedown', (e) => {
                     isDown = true;
                     scrollContainer.style.userSelect = 'none';
                     startY = e.pageY - scrollContainer.offsetTop;
                     scrollTop = scrollContainer.scrollTop;
                 });
-
-                scrollContainer.addEventListener('mouseleave', () => {
-                    isDown = false;
-                });
-
-                scrollContainer.addEventListener('mouseup', () => {
-                    isDown = false;
-                });
-
+                scrollContainer.addEventListener('mouseleave', () => isDown = false);
+                scrollContainer.addEventListener('mouseup', () => isDown = false);
                 scrollContainer.addEventListener('mousemove', (e) => {
                     if (!isDown) return;
                     e.preventDefault();
                     const y = e.pageY - scrollContainer.offsetTop;
                     const walk = (y - startY) * 2;
+                    scrollContainer.scrollTop = scrollTop - walk;
                 });
             }
 

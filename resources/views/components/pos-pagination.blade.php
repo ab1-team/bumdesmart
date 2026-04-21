@@ -1,51 +1,31 @@
-<div>
+<div class="p-2 border-top bg-light-lt">
     @if ($paginator->hasPages())
-        <ul class="pagination justify-content-center m-0">
-            {{-- Previous Page Link --}}
-            @if ($paginator->onFirstPage())
-                <li class="page-item disabled" aria-disabled="true">
-                    <span class="page-link" aria-hidden="true">&lsaquo;</span>
-                </li>
-            @else
-                <li class="page-item">
-                    <button type="button" class="page-link" wire:click="previousPage" rel="prev"
-                        aria-label="@lang('pagination.previous')">&lsaquo;</button>
-                </li>
-            @endif
-
-            {{-- Pagination Elements --}}
-            @foreach ($elements as $element)
-                {{-- "Three Dots" Separator --}}
-                @if (is_string($element))
-                    <li class="page-item disabled" aria-disabled="true"><span
-                            class="page-link">{{ $element }}</span></li>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-secondary small fw-medium">
+                Page {{ $paginator->currentPage() }} of {{ $paginator->lastPage() }}
+            </div>
+            
+            <div class="d-flex gap-1">
+                @if ($paginator->onFirstPage())
+                    <button class="btn btn-sm btn-icon btn-white disabled" disabled title="Previous">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+                    </button>
+                @else
+                    <button class="btn btn-sm btn-icon btn-white shadow-sm" wire:click="previousPage" title="Previous">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+                    </button>
                 @endif
 
-                {{-- Array Of Links --}}
-                @if (is_array($element))
-                    @foreach ($element as $page => $url)
-                        @if ($page == $paginator->currentPage())
-                            <li class="page-item active" aria-current="page"><span
-                                    class="page-link">{{ $page }}</span></li>
-                        @else
-                            <li class="page-item"><button type="button" class="page-link"
-                                    wire:click="gotoPage({{ $page }})">{{ $page }}</button></li>
-                        @endif
-                    @endforeach
+                @if ($paginator->hasMorePages())
+                    <button class="btn btn-sm btn-icon btn-white shadow-sm" wire:click="nextPage" title="Next">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+                    </button>
+                @else
+                    <button class="btn btn-sm btn-icon btn-white disabled" disabled title="Next">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+                    </button>
                 @endif
-            @endforeach
-
-            {{-- Next Page Link --}}
-            @if ($paginator->hasMorePages())
-                <li class="page-item">
-                    <button type="button" class="page-link" wire:click="nextPage" rel="next"
-                        aria-label="@lang('pagination.next')">&rsaquo;</button>
-                </li>
-            @else
-                <li class="page-item disabled" aria-disabled="true" aria-label="@lang('pagination.next')">
-                    <span class="page-link" aria-hidden="true">&rsaquo;</span>
-                </li>
-            @endif
-        </ul>
+            </div>
+        </div>
     @endif
 </div>
