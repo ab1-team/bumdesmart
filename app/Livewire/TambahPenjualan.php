@@ -357,7 +357,7 @@ class TambahPenjualan extends Component
                 $this->dispatch('open-receipt', url: '/penjualan/cetak-struk/'.$sale->id);
             }
 
-            $this->dispatch('redirect', url: '/penjualan/cetak-struk', timeout: 1500);
+            $this->dispatch('redirect', url: '/penjualan/daftar', timeout: 1500);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('alert', type: 'error', message: 'Error: '.$e->getMessage());
