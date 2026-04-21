@@ -165,21 +165,14 @@
                                             <span class="material-symbols-outlined"
                                                 style="font-size: 14px;">remove</span>
                                         </button>
-                                        <<<<<<< HEAD <span class="qty-display" x-text="formatDecimal(item.qty)">
-                                            </span>
-                                            <button class="qty-btn" @click="updateQty(item.id, 1)">
-                                                <span class="material-symbols-outlined">add</span>
-                                                =======
-                                                <span class="fw-bold px-2"
-                                                    style="min-width: 25px; text-align: center; font-size: 0.8rem;"
-                                                    x-text="item.qty"></span>
-                                                <button
-                                                    class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle"
-                                                    style="width: 24px; height: 24px;" @click="updateQty(item.id, 1)">
-                                                    <span class="material-symbols-outlined"
-                                                        style="font-size: 14px;">add</span>
-                                                    >>>>>>> 780a0106141b4bba2d4616ed6f4d166f7e90c4e3
-                                                </button>
+                                        <span class="fw-bold px-2"
+                                            style="min-width: 25px; text-align: center; font-size: 0.8rem;"
+                                            x-text="formatDecimal(item.qty)"></span>
+                                        <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle"
+                                            style="width: 24px; height: 24px;" @click="updateQty(item.id, 1)">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 14px;">add</span>
+                                        </button>
                                     </div>
                                 </div>
 
