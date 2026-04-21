@@ -85,6 +85,14 @@
                                 stock: {{ $product->stok_aktual }},
                                 image: '{{ $product->gambar && $product->gambar !== "products/no-image.png" ? asset('storage/' . $product->gambar) : "https://placehold.co/400x400?text=No+Image" }}'
                             })">
+<<<<<<< HEAD
+                            <img src="{{ asset('storage/' . $product->gambar) }}" class="card-img"
+                                alt="{{ $product->nama_produk }}">
+                            <div class="card-img-overlay d-flex flex-column justify-content-end">
+                                <h5 class="card-title mb-1">{{ $product->nama_produk }}</h5>
+                                <div class="card-text">Rp {{ \App\Utils\NumberUtil::format($product->harga_jual) }}</div>
+                                <span class="badge">{{ \App\Utils\NumberUtil::format($product->stok_aktual) }}</span>
+=======
                             <div class="h-100 bg-muted-lt d-flex align-items-center justify-content-center overflow-hidden position-relative">
                                 @if($product->gambar && $product->gambar !== "products/no-image.png" && file_exists(public_path('storage/' . $product->gambar)))
                                     <img src="{{ asset('storage/' . $product->gambar) }}" 
@@ -102,6 +110,7 @@
                                 <h5 class="card-title mb-0 text-truncate" style="font-size: 0.7rem;">{{ $product->nama_produk }}</h5>
                                 <div class="card-text fw-bold text-primary" style="font-size: 0.75rem;">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
                                 <span class="badge bg-dark-lt position-absolute top-0 end-0 m-1" style="font-size: 0.6rem;">{{ $product->stok_aktual }}</span>
+>>>>>>> 780a0106141b4bba2d4616ed6f4d166f7e90c4e3
                             </div>
                         </div>
                     </div>
@@ -157,9 +166,15 @@
                                         <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle" style="width: 24px; height: 24px;" @click="updateQty(item.id, -1)">
                                             <span class="material-symbols-outlined" style="font-size: 14px;">remove</span>
                                         </button>
+<<<<<<< HEAD
+                                        <span class="qty-display" x-text="formatDecimal(item.qty)"></span>
+                                        <button class="qty-btn" @click="updateQty(item.id, 1)">
+                                            <span class="material-symbols-outlined">add</span>
+=======
                                         <span class="fw-bold px-2" style="min-width: 25px; text-align: center; font-size: 0.8rem;" x-text="item.qty"></span>
                                         <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle" style="width: 24px; height: 24px;" @click="updateQty(item.id, 1)">
                                             <span class="material-symbols-outlined" style="font-size: 14px;">add</span>
+>>>>>>> 780a0106141b4bba2d4616ed6f4d166f7e90c4e3
                                         </button>
                                     </div>
                                 </div>
@@ -978,8 +993,16 @@
                     return val > 0 ? val : 0;
                 },
 
+                formatDecimal(num) {
+                    if (num === null || num === undefined) return '';
+                    return Number(num).toLocaleString('id-ID', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 0
+                    });
+                },
+
                 formatRupiah(num) {
-                    return new Intl.NumberFormat('en-US').format(num || 0);
+                    return this.formatDecimal(num);
                 },
 
                 parseFormatted(val) {

@@ -44,7 +44,7 @@
                                 <td>{{ $product->category->nama_kategori }}</td>
                                 <td>{{ $product->brand->nama_brand }}</td>
                                 <td>{{ $product->shelf->nama_rak ?? 'Tidak ada' }}</td>
-                                <td>{{ $product->stok_aktual }}</td>
+                                <td>{{ \App\Utils\NumberUtil::format($product->stok_aktual) }}</td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-info dropdown-toggle" type="button"

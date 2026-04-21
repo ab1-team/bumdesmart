@@ -435,8 +435,16 @@
                 },
 
                 // --- Helpers ---
+                formatDecimal(num) {
+                    if (num === null || num === undefined) return '';
+                    return Number(num).toLocaleString('id-ID', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 0
+                    });
+                },
+
                 formatRupiah(num) {
-                    return new Intl.NumberFormat('en-US').format(num || 0);
+                    return this.formatDecimal(num);
                 },
 
                 parseFormatted(val) {
@@ -797,7 +805,10 @@
                                     <div class="fw-bold">${escape(data.nama_produk)}</div>
                                     <div class="d-flex justify-content-between small text-muted">
                                         <span>${escape(data.sku)}</span>
-                                        <span class="text-success fw-bold">Rp ${new Intl.NumberFormat('en-US').format(data.harga_jual)}</span>
+                                        <div class="text-end">
+                                            <div class="text-success fw-bold">Rp ${Number(data.harga_jual).toLocaleString('id-ID', { maximumFractionDigits: 2, minimumFractionDigits: 0 })}</div>
+                                            <div class="text-info" style="font-size: 0.85em;">${escape(data.batch_info)}</div>
+                                        </div>
                                     </div>
                                     ${data.promo_label ? `<div class="badge bg-green-lt mt-1">${escape(data.promo_label)}</div>` : ''}
                                   </div>

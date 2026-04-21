@@ -82,7 +82,7 @@
                                         readonly>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control" :value="item.stok_sistem" readonly>
+                                    <input type="text" class="form-control" :value="formatDecimal(item.stok_sistem)" readonly>
                                 </td>
                                 <td>
                                     <input type="number" step="any" class="form-control" min="0"
@@ -90,7 +90,7 @@
                                 </td>
                                 <td>
                                     <span :class="{ 'text-success': item.selisih > 0, 'text-danger': item.selisih < 0 }"
-                                        class="fw-bold" x-text="item.selisih"></span>
+                                        class="fw-bold" x-text="formatDecimal(item.selisih)"></span>
                                     <small class="d-block text-muted" x-show="item.selisih > 0">(Surplus)</small>
                                     <small class="d-block text-muted" x-show="item.selisih < 0">(Minus)</small>
                                 </td>
@@ -206,7 +206,7 @@
                                     ${item.gambar ? `<span class="avatar me-2" style="background-image: url(${escape(item.gambar)})"></span>` : ''}
                                     <div class="flex-fill">
                                         <div class="fw-bold">${escape(item.nama_produk)}</div>
-                                        <div class="text-muted small">SKU: ${escape(item.sku)} | Stok: ${escape(item.stok_aktual)} ${escape(item.unit)}</div>
+                                        <div class="text-muted small">SKU: ${escape(item.sku)} | Stok: ${Number(item.stok_aktual).toLocaleString('id-ID', { maximumFractionDigits: 2, minimumFractionDigits: 0 })} ${escape(item.unit)}</div>
                                     </div>
                                 </div>`
                             },
@@ -259,12 +259,16 @@
                     item.selisih = item.stok_fisik - item.stok_sistem
                 },
 
-                formatRupiah(val) {
-                    return new Intl.NumberFormat('id-ID', {
-                        style: 'currency',
-                        currency: 'IDR',
+                formatDecimal(val) {
+                    if (val === null || val === undefined) return '';
+                    return Number(val).toLocaleString('id-ID', {
+                        maximumFractionDigits: 2,
                         minimumFractionDigits: 0
-                    }).format(val || 0)
+                    });
+                },
+
+                formatRupiah(val) {
+                    return this.formatDecimal(val);
                 },
 
                 simpan(status) {

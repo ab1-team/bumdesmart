@@ -121,7 +121,7 @@
                                         <div class="font-weight-medium" x-text="item.nama_produk"></div>
                                         <div class="text-muted text-xs" x-text="item.kode_produk"></div>
                                     </td>
-                                    <td class="text-center" x-text="item.sistem"></td>
+                                    <td class="text-center" x-text="formatDecimal(item.sistem)"></td>
                                     <td>
                                         <input type="number" step="any" class="form-control text-center"
                                             x-model.number="item.fisik"
@@ -129,7 +129,7 @@
                                             @focus="$event.target.select()">
                                     </td>
                                     <td class="text-center">
-                                        <span x-text="item.selisih > 0 ? '+' + item.selisih : item.selisih"
+                                        <span x-text="formatDecimal(item.selisih)"
                                             :class="item.selisih < 0 ? 'text-danger fw-bold' : (item.selisih > 0 ?
                                                 'text-success fw-bold' : 'text-muted')">
                                         </span>
@@ -186,6 +186,14 @@
                         search: '',
                         items: [],
                         isSaving: false,
+
+                        formatDecimal(val) {
+                            if (val === null || val === undefined) return '';
+                            return Number(val).toLocaleString('id-ID', {
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 0
+                            });
+                        },
 
                         init() {
                             if (!this.tanggalOpname) {
