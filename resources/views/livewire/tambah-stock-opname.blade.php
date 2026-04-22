@@ -187,6 +187,8 @@
                         tanggalOpname: @entangle('tanggalOpname'),
                         status: @entangle('status'),
                         catatan: @entangle('catatan'),
+                        categoryId: @entangle('categoryId'),
+                        shelfId: @entangle('shelfId'),
                         search: '',
                         items: [],
                         isSaving: false,
@@ -200,6 +202,12 @@
                         },
 
                         init() {
+                            // Force initial values from Livewire to prevent empty fields on Edit
+                            this.nomorOpname = this.$wire.get('nomorOpname');
+                            this.tanggalOpname = this.$wire.get('tanggalOpname');
+                            this.status = this.$wire.get('status');
+                            this.catatan = this.$wire.get('catatan');
+
                             if (!this.tanggalOpname) {
                                 this.tanggalOpname = new Date().toISOString().split('T')[0];
                             }
@@ -250,9 +258,10 @@
                         },
 
                         cetakForm() {
-                            const categoryId = this.$wire.get('categoryId') || '';
-                            const shelfId = this.$wire.get('shelfId') || '';
-                            const url = `/keuangan/pelaporan/cetak?laporan=formStockOpname&categoryId=${categoryId}&shelfId=${shelfId}`;
+                            const opnameId = this.$wire.get('opnameId') || '';
+                            const categoryId = this.categoryId || '';
+                            const shelfId = this.shelfId || '';
+                            const url = `/keuangan/pelaporan/cetak?laporan=formStockOpname&categoryId=${categoryId}&shelfId=${shelfId}&opnameId=${opnameId}`;
                             window.open(url, '_blank');
                         },
 

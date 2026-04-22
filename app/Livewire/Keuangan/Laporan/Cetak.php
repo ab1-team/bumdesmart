@@ -416,16 +416,33 @@ class Cetak extends Controller
         $business = Business::first();
         $categoryId = $data['categoryId'] ?? null;
         $shelfId = $data['shelfId'] ?? null;
+        $opnameId = $data['opnameId'] ?? null;
+
+        $categoryName = '-';
+        $shelfName = '-';
+        $catatan = '-';
 
         $query = Product::where('business_id', auth()->user()->business_id)
             ->where('is_active', true);
 
-        if ($categoryId) {
-            $query->where('category_id', $categoryId);
-        }
+        if ($opnameId) {
+            $opname = StockOpname::find($opnameId);
+            if ($opname) {
+                $catatan = $opname->catatan ?: '-';
+            }
+            $query->whereIn('id', function($q) use ($opnameId) {
+                $q->select('product_id')->from('stock_opname_details')->where('stock_opname_id', $opnameId);
+            });
+        } else {
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+                $categoryName = \App\Models\Category::find($categoryId)?->nama_kategori ?: '-';
+            }
 
-        if ($shelfId) {
-            $query->where('shelf_id', $shelfId);
+            if ($shelfId) {
+                $query->where('shelf_id', $shelfId);
+                $shelfName = \App\Models\Shelves::find($shelfId)?->nama_rak ?: '-';
+            }
         }
 
         $products = $query->orderBy('nama_produk')->get();
@@ -433,7 +450,7 @@ class Cetak extends Controller
         $title = 'Form Stock Opname (Lembar Kerja)';
         $subtitle = 'Per Tanggal: '.Carbon::now()->isoFormat('D MMMM Y');
 
-        $html = view('livewire.keuangan.pelaporan.form-stock-opname', compact('title', 'subtitle', 'products', 'business'))->render();
+        $html = view('livewire.keuangan.pelaporan.form-stock-opname', compact('title', 'subtitle', 'products', 'business', 'categoryName', 'shelfName', 'catatan'))->render();
 
         return $this->streamPdf($html, 'form-stock-opname.pdf');
     }

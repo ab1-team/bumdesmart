@@ -20,13 +20,13 @@
         <table style="border: none; width: 100%; font-size: 10pt;">
             <tr>
                 <td style="border: none; width: 15%;">Lokasi/Rak</td>
-                <td style="border: none; width: 35%;">: ____________________</td>
+                <td style="border: none; width: 35%;">: {{ $shelfName }}</td>
                 <td style="border: none; width: 15%;">Kategori</td>
-                <td style="border: none; width: 35%;">: ____________________</td>
+                <td style="border: none; width: 35%;">: {{ $categoryName }}</td>
             </tr>
             <tr>
                 <td style="border: none;">Catatan</td>
-                <td style="border: none;" colspan="3">: __________________________________________________</td>
+                <td style="border: none;" colspan="3">: {{ $catatan }}</td>
             </tr>
         </table>
     </div>

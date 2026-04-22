@@ -66,7 +66,7 @@ class TambahStockOpname extends Component
         }
 
         $this->nomorOpname = $opname->no_opname;
-        $this->tanggalOpname = $opname->tanggal_opname;
+        $this->tanggalOpname = \Carbon\Carbon::parse($opname->tanggal_opname)->format('Y-m-d');
         $this->catatan = $opname->catatan;
         $this->status = $opname->status;
 
@@ -89,7 +89,7 @@ class TambahStockOpname extends Component
         $this->existingData = [
             'opnameId' => $id,
             'nomorOpname' => $opname->no_opname,
-            'tanggalOpname' => $opname->tanggal_opname,
+            'tanggalOpname' => \Carbon\Carbon::parse($opname->tanggal_opname)->format('Y-m-d'),
             'status' => $opname->status,
             'catatan' => $opname->catatan,
             'items' => $items
@@ -325,7 +325,6 @@ class TambahStockOpname extends Component
 
     public function render()
     {
-        $this->tanggalOpname = date('Y-m-d');
 
         return view('livewire.tambah-stock-opname')
             ->layout('layouts.app', ['title' => $this->title]);
