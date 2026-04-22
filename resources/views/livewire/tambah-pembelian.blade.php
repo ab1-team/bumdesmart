@@ -756,6 +756,8 @@
                     });
 
                     let payload = {
+                        nomorPembelian: this.nomorPembelian,
+                        tanggalPembelian: this.tanggalPembelian,
                         supplier: this.supplier,
                         catatan: this.catatan,
                         products: cleanProducts,
