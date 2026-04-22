@@ -34,7 +34,7 @@ class Cetak extends Controller
             abort(404, 'Laporan tidak ditemukan');
         }
 
-        $business = Business::first();
+        $business = Business::find(auth()->user()->business_id);
         view()->share('business', $business);
 
         return $this->{$data['laporan']}($data);

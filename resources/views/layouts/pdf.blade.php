@@ -169,7 +169,10 @@
             <tr>
                 @php
                     // Pastikan ambil data dari database secara aman
-                    $business = $business ?? \App\Models\Business::with('owner')->first();
+                    $business = $business ?? \App\Models\Business::with('owner')->find(auth()->user()?->business_id);
+                    if (!$business) {
+                        $business = \App\Models\Business::with('owner')->first();
+                    }
                     $owner = $business?->owner ?? \App\Models\Owner::first();
                     
                     $namaUsaha = $business?->nama_usaha ?? ($owner?->nama_usaha ?? env('APP_NAME', 'BUMDes Smart'));
