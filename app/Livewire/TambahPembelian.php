@@ -95,6 +95,8 @@ class TambahPembelian extends Component
                 'sku' => $detail->product->sku,
                 'harga_beli' => (string) $detail->harga_satuan, // Pass as string for formatting
                 'jumlah_beli' => $detail->jumlah,
+                'unit' => $detail->product->unit ? $detail->product->unit->nama_satuan : '-',
+                'allow_decimal' => $detail->product->unit ? (bool)$detail->product->unit->desimal : false,
                 'tanggal_kadaluarsa' => $batch ? ($batch->tanggal_kadaluarsa ? $batch->tanggal_kadaluarsa->format('Y-m-d') : '') : '',
                 'diskon' => [
                     'jenis' => $detail->jenis_diskon,
@@ -171,7 +173,8 @@ class TambahPembelian extends Component
     {
         $perPage = 20;
 
-        $productsQuery = Product::where('business_id', $this->businessId)
+        $productsQuery = Product::with('unit')
+            ->where('business_id', $this->businessId)
             ->where(function ($q) use ($query) {
                 $q->where('nama_produk', 'LIKE', "%{$query}%")
                     ->orWhere('sku', 'LIKE', "%{$query}%");
@@ -197,7 +200,8 @@ class TambahPembelian extends Component
                 'sku' => $product->sku,
                 'harga_beli' => $product->harga_beli,
                 'gambar' => $product->gambar,
-                // Pass full object if needed, but array is usually enough
+                'unit' => $product->unit ? $product->unit->nama_satuan : '-',
+                'allow_decimal' => $product->unit ? (bool)$product->unit->desimal : false,
             ];
         }
 

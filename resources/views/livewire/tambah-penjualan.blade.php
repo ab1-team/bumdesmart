@@ -59,8 +59,11 @@
                                         x-mask:dynamic="$money($input, ',', '.', 0)">
                                 </td>
                                 <td>
-                                    <input type="number" step="any" class="form-control" x-model="product.jumlah_jual"
-                                        x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
+                                    <div class="input-group">
+                                        <input type="number" :step="product.allow_decimal ? 'any' : '1'" class="form-control" x-model="product.jumlah_jual"
+                                            x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
+                                        <span class="input-group-text small" x-text="product.unit"></span>
+                                    </div>
                                 </td>
                                 <td>
                                     <!-- Trigger Modal Diskon -->
@@ -529,6 +532,8 @@
                             sku: product.sku,
                             harga_jual: this.formatRupiah(product.harga_jual),
                             jumlah_jual: 1,
+                            unit: product.unit,
+                            allow_decimal: product.allow_decimal,
                             stok_tersedia: product.stok_tersedia || 999999, 
                             diskon: {
                                 jenis: 'nominal',
@@ -558,6 +563,12 @@
                     let p = this.products[id];
                     let harga = this.parseFormatted(p.harga_jual);
                     let qty = parseFloat(p.jumlah_jual) || 0;
+
+                    // Cek jika produk tidak boleh desimal tapi diinput desimal
+                    if (!p.allow_decimal && qty % 1 !== 0) {
+                        qty = Math.floor(qty);
+                        p.jumlah_jual = qty;
+                    }
 
                     if (qty > p.stok_tersedia) {
                         alert(`Stok tidak mencukupi! Maksimal ${p.stok_tersedia} unit`);
@@ -812,7 +823,7 @@
                                     <div class="d-flex justify-content-between small text-muted">
                                         <span>${escape(data.sku)}</span>
                                         <div class="text-end">
-                                            <div class="text-success fw-bold">Rp ${Number(data.harga_jual).toLocaleString('id-ID', { maximumFractionDigits: 2, minimumFractionDigits: 0 })}</div>
+                                            <div class="text-success fw-bold">Rp ${Number(data.harga_jual).toLocaleString('id-ID')} / ${escape(data.unit)}</div>
                                             <div class="text-info" style="font-size: 0.85em;">${escape(data.batch_info)}</div>
                                         </div>
                                     </div>

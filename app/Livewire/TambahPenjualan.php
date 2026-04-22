@@ -90,6 +90,8 @@ class TambahPenjualan extends Component
                 'gambar' => $detail->product->gambar,
                 'harga_jual' => (string) $detail->harga_satuan,
                 'jumlah_jual' => $detail->jumlah,
+                'unit' => $detail->product->unit ? $detail->product->unit->nama_satuan : '-',
+                'allow_decimal' => $detail->product->unit ? (bool)$detail->product->unit->desimal : false,
                 'stok_tersedia' => $availableForThisEdit, // Helper for frontend validation
                 'diskon' => [
                     'jenis' => $detail->jenis_diskon,
@@ -163,7 +165,7 @@ class TambahPenjualan extends Component
         }
 
         // 2. Search Products (Only with stock > 0)
-        $products = Product::where('business_id', $this->businessId)
+        $products = Product::with('unit')->where('business_id', $this->businessId)
             ->where('is_active', true)
             ->where('stok_aktual', '>', 0) // Only products with stock
             ->where(function ($q) use ($query) {
@@ -212,6 +214,8 @@ class TambahPenjualan extends Component
                 'batch_info' => $stockInfo,
                 'original_price' => $p->harga_jual,
                 'stok_tersedia' => $p->stok_aktual, // For validation
+                'unit' => $p->unit ? $p->unit->nama_satuan : '-',
+                'allow_decimal' => $p->unit ? (bool)$p->unit->desimal : false,
             ];
         }
 

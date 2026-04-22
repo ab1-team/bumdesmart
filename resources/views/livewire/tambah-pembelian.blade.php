@@ -61,8 +61,11 @@
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
-                                    <input type="number" step="any" class="form-control" x-model="product.jumlah_beli"
-                                        x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
+                                    <div class="input-group">
+                                        <input type="number" :step="product.allow_decimal ? 'any' : '1'" class="form-control" x-model="product.jumlah_beli"
+                                            x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
+                                        <span class="input-group-text small" x-text="product.unit"></span>
+                                    </div>
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.tanggal_kadaluarsa"
@@ -533,6 +536,8 @@
                             sku: product.sku,
                             harga_beli: this.formatRupiah(parseInt(product.harga_beli)),
                             jumlah_beli: 1,
+                            unit: product.unit,
+                            allow_decimal: product.allow_decimal,
                             tanggal_kadaluarsa: '',
                             diskon: {
                                 jenis: 'nominal',
@@ -571,6 +576,13 @@
                     let p = this.products[id];
                     let harga = this.parseFormatted(p.harga_beli);
                     let qty = parseFloat(p.jumlah_beli) || 0;
+                    
+                    // Cek jika produk tidak boleh desimal tapi diinput desimal
+                    if (!p.allow_decimal && qty % 1 !== 0) {
+                        qty = Math.floor(qty);
+                        p.jumlah_beli = qty;
+                    }
+
                     let diskon = this.parseFormatted(p.diskon.nominal);
 
                     let sub = (harga * qty) - diskon;
@@ -804,7 +816,7 @@
                                     <div class="fw-bold">${escape(data.nama_produk)}</div>
                                     <div class="d-flex justify-content-between small text-muted">
                                         <span>${escape(data.sku)}</span>
-                                        <span class="text-success">Rp ${new Intl.NumberFormat('en-US').format(data.harga_beli)}</span>
+                                        <span class="text-success fw-bold">Rp ${Number(data.harga_beli).toLocaleString('id-ID')} / ${escape(data.unit)}</span>
                                     </div>
                                   </div>
                                 </div>`;
