@@ -250,8 +250,8 @@
                         },
 
                         cetakForm() {
-                            const categoryId = @js($this->categoryId);
-                            const shelfId = @js($this->shelfId);
+                            const categoryId = this.$wire.get('categoryId') || '';
+                            const shelfId = this.$wire.get('shelfId') || '';
                             const url = `/keuangan/pelaporan/cetak?laporan=formStockOpname&categoryId=${categoryId}&shelfId=${shelfId}`;
                             window.open(url, '_blank');
                         },
