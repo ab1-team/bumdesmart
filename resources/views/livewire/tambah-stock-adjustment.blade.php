@@ -26,7 +26,7 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Tanggal Penyesuaian</label>
-                    <input type="text" id="tanggalAdjustment" class="form-control litepicker">
+                    <input type="text" id="tanggalAdjustment" class="form-control litepicker" readonly>
                 </div>
 
                 <div class="col-md-3" wire:ignore>
@@ -166,11 +166,14 @@
                         format: 'YYYY-MM-DD',
                         autoApply: true,
                         singleMode: true,
-                        setup: p => p.on('selected', d => {
-                            this.tanggalAdjustment = d.format('YYYY-MM-DD')
-                        })
+                        setup: (picker) => {
+                            picker.on('selected', (date) => {
+                                this.tanggalAdjustment = date.format('YYYY-MM-DD');
+                            });
+                        }
                     })
                 },
+
 
                 initJenis() {
                     const el = document.getElementById('jenisAdjustment')

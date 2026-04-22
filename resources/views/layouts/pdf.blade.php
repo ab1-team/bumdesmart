@@ -189,7 +189,7 @@
                 @endif
                 <td class="kop-text">
                     <p class="kop-nama">
-                        {{ $owner->nama_usaha ?? ($business->nama_usaha ?? env('APP_NAME', 'BUMDes Smart')) }}</p>
+                        {{ ($owner->nama_usaha ?? null) ?? ($business->nama_usaha ?? env('APP_NAME', 'BUMDes Smart')) }}</p>
                     <p class="kop-alamat">
                         {{ $business->alamat ?? '' }}
                         @if (isset($business->no_telp) && $business->no_telp)
