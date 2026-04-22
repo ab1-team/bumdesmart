@@ -80,6 +80,18 @@ class PaymentUtil
             ];
         }
 
+        if ($jenisTransaksi == 'stock_opname' || $jenisTransaksi == 'stock_adjustment') {
+            // Rekening Persediaan
+            $rekeningPersediaan = '1.1.03.01';
+            // Laba/Rugi Penyesuaian Stok
+            $rekeningVarians = '6.1.09.01';
+
+            $return['variance'] = [
+                'rekening_debit' => $rekeningVarians,
+                'rekening_kredit' => $rekeningPersediaan,
+            ];
+        }
+
         return $return;
     }
 }

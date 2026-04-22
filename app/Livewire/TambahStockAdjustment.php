@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockMovement;
+use App\Models\Payment;
+use App\Utils\PaymentUtil;
 
 class TambahStockAdjustment extends Component
 {
@@ -120,6 +122,55 @@ class TambahStockAdjustment extends Component
                         'reference_type'         => 'stock_adjustment',
                         'catatan'                => $item['alasan'] ?? $data['catatan'] ?? null,
                     ]);
+                }
+            }
+
+            // Generate Accounting Journal (Payments) IF APPROVED
+            if ($status === 'approved') {
+                $kodeRekening = PaymentUtil::ambilRekening('stock_adjustment');
+                $timestamp = now();
+                $payments = [];
+
+                foreach ($data['items'] as $item) {
+                    $selisih = (float)($item['selisih'] ?? 0);
+                    if ($selisih == 0) continue;
+
+                    $totalValue = abs($selisih) * ($item['harga_satuan'] ?? 0);
+                    if ($totalValue <= 0) continue;
+
+                    $rekDebit = $kodeRekening['variance']['rekening_debit'];
+                    $rekKredit = $kodeRekening['variance']['rekening_kredit'];
+
+                    if ($selisih > 0) {
+                        // Profit/Gain
+                        $rekDebit = $kodeRekening['variance']['rekening_kredit'];
+                        $rekKredit = $kodeRekening['variance']['rekening_debit'];
+                        $memo = "Adjustment In: " . ($item['nama_produk'] ?? $item['product_id']);
+                    } else {
+                        // Loss
+                        $memo = "Adjustment Out: " . ($item['nama_produk'] ?? $item['product_id']);
+                    }
+
+                    $payments[] = [
+                        'business_id' => $this->businessId,
+                        'user_id' => auth()->id(),
+                        'no_pembayaran' => $adjustment->no_penyesuaian . '-' . $item['product_id'],
+                        'tanggal_pembayaran' => $data['tanggal_penyesuaian'],
+                        'jenis_transaksi' => 'stock_adjustment',
+                        'transaction_id' => $adjustment->id,
+                        'total_harga' => $totalValue,
+                        'metode_pembayaran' => 'system',
+                        'no_referensi' => null,
+                        'catatan' => $memo,
+                        'rekening_debit' => $rekDebit,
+                        'rekening_kredit' => $rekKredit,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
+                }
+
+                if (!empty($payments)) {
+                    Payment::insert($payments);
                 }
             }
 

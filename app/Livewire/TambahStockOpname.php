@@ -8,6 +8,8 @@ use App\Models\Shelves;
 use App\Models\StockMovement;
 use App\Models\StockOpname;
 use App\Models\StockOpnameDetail;
+use App\Models\Payment;
+use App\Utils\PaymentUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -255,6 +257,59 @@ class TambahStockOpname extends Component
                             'catatan' => $item['alasan'] ?? $data['catatan'] ?? 'Stock Opname Adjustment',
                         ]);
                     }
+                }
+            }
+
+            // 6. Generate Accounting Journal (Payments) IF APPROVED
+            if ($status === 'approved') {
+                $kodeRekening = PaymentUtil::ambilRekening('stock_opname');
+                $timestamp = now();
+                $payments = [];
+
+                foreach ($data['items'] as $item) {
+                    $selisih = $item['selisih'];
+                    if ($selisih == 0) continue;
+
+                    $totalValue = abs($selisih) * ($item['harga_satuan'] ?? 0);
+                    if ($totalValue <= 0) continue;
+
+                    $rekDebit = $kodeRekening['variance']['rekening_debit'];
+                    $rekKredit = $kodeRekening['variance']['rekening_kredit'];
+
+                    if ($selisih > 0) {
+                        // Fisik > Sistem (Gain/Surplus)
+                        // Debit: Persediaan (Asset increase)
+                        // Kredit: Laba/Rugi Penyesuaian (Income-like)
+                        $rekDebit = $kodeRekening['variance']['rekening_kredit'];
+                        $rekKredit = $kodeRekening['variance']['rekening_debit'];
+                        $memo = "Surplus Stok: " . ($item['nama_produk'] ?? $item['id']);
+                    } else {
+                        // Fisik < Sistem (Loss/Shrinkage)
+                        // Debit: Laba/Rugi Penyesuaian (Expense increase)
+                        // Kredit: Persediaan (Asset decrease)
+                        $memo = "Penyusutan Stok: " . ($item['nama_produk'] ?? $item['id']);
+                    }
+
+                    $payments[] = [
+                        'business_id' => $this->businessId,
+                        'user_id' => auth()->id(),
+                        'no_pembayaran' => $opname->no_opname . '-' . $item['product_id'],
+                        'tanggal_pembayaran' => $tanggalOpname,
+                        'jenis_transaksi' => 'stock_opname',
+                        'transaction_id' => $opname->id,
+                        'total_harga' => $totalValue,
+                        'metode_pembayaran' => 'system',
+                        'no_referensi' => null,
+                        'catatan' => $memo,
+                        'rekening_debit' => $rekDebit,
+                        'rekening_kredit' => $rekKredit,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
+                }
+
+                if (!empty($payments)) {
+                    Payment::insert($payments);
                 }
             }
 
