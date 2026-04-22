@@ -105,6 +105,40 @@ class Role extends Component
         $this->dispatch('alert', type: 'success', message: 'Role berhasil dihapus');
     }
 
+    public function toggleParent($parentId)
+    {
+        $menu = \App\Models\Menu::with('children')->find($parentId);
+        $childrenIds = $menu->children->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+
+        // Di Laravel Livewire, saat wire:click dijalankan bersamaan dengan wire:model,
+        // model biasanya sudah terupdate. Jadi kita cek apakah parent ada di selectedMenus.
+        if (in_array((string) $parentId, $this->selectedMenus)) {
+            // Jika parent dicentang, centang semua anak
+            $this->selectedMenus = array_unique(array_merge($this->selectedMenus, $childrenIds));
+        } else {
+            // Jika parent tidak dicentang, hapus centang semua anak
+            $this->selectedMenus = array_values(array_diff($this->selectedMenus, $childrenIds));
+        }
+    }
+
+    public function toggleChild($parentId)
+    {
+        $parent = \App\Models\Menu::with('children')->find($parentId);
+        $childrenIds = $parent->children->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+
+        $selectedChildren = array_intersect($this->selectedMenus, $childrenIds);
+
+        if (count($selectedChildren) > 0) {
+            // Jika ada minimal satu anak dicentang, maka parent otomatis ikut tercentang
+            if (!in_array((string) $parentId, $this->selectedMenus)) {
+                $this->selectedMenus[] = (string) $parentId;
+            }
+        } else {
+            // Jika semua anak tidak dicentang, maka parent ikut tidak tercentang
+            $this->selectedMenus = array_values(array_diff($this->selectedMenus, [(string) $parentId]));
+        }
+    }
+
     public function render()
     {
         $this->title = 'Role';

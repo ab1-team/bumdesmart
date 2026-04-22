@@ -77,6 +77,7 @@
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     value="{{ $menu->id }}" wire:model="selectedMenus"
+                                                    wire:click="toggleParent({{ $menu->id }})"
                                                     id="menu-{{ $menu->id }}">
                                                 <label class="form-check-label fw-bold" for="menu-{{ $menu->id }}">
                                                     {{ $menu->title }}
@@ -88,6 +89,7 @@
                                                         <div class="form-check mb-1">
                                                             <input class="form-check-input" type="checkbox"
                                                                 value="{{ $child->id }}" wire:model="selectedMenus"
+                                                                wire:click="toggleChild({{ $menu->id }})"
                                                                 id="menu-{{ $child->id }}">
                                                             <label class="form-check-label"
                                                                 for="menu-{{ $child->id }}">
