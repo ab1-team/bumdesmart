@@ -25,11 +25,7 @@ class PaymentUtil
         $return = [];
         if ($jenisTransaksi == 'purchase') {
             $rekeningKredit = $rekeningKas;
-            $rekeningDebit = '1.1.03.01';
-
-            if ($jenisPembayaran == 'credit') {
-                $rekeningKredit = $rekeningKas;
-            }
+            $rekeningDebit = ($jenisPembayaran == 'credit' || $jenisPembayaran == 'preorder') ? '1.1.04.01' : '1.1.03.01';
 
             $return['purchase'] = [
                 'rekening_kredit' => $rekeningKredit,
