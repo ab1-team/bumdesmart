@@ -113,6 +113,7 @@ class Cetak extends Controller
 
     public function jurnalTransaksi(array $data)
     {
+        $business = view()->shared('business');
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
@@ -139,13 +140,14 @@ class Cetak extends Controller
 
     public function bukuBesar(array $data)
     {
+        $business = view()->shared('business');
         $kodeAkun = $data['sub_laporan'];
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
         $akun = Account::where('kode', $kodeAkun)->with([
             'balance' => function ($query) use ($tahun) {
-                $query->where('business_id', auth()->user()->business_id)->where('tahun', $tahun);
+                $query->where('business_id', $business->id)->where('tahun', $tahun);
             },
         ])->first();
 
@@ -174,15 +176,16 @@ class Cetak extends Controller
 
     public function neraca(array $data)
     {
+        $business = view()->shared('business');
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
         $akunLevel1s = AkunLevel1::with([
             'akunLevel2.akunLevel3.accounts' => function ($query) {
-                $query->where('business_id', auth()->user()->business_id);
+                $query->where('business_id', $business->id);
             },
             'akunLevel2.akunLevel3.accounts.balance' => function ($query) use ($tahun) {
-                $query->where('business_id', auth()->user()->business_id)->where('tahun', $tahun);
+                $query->where('business_id', $business->id)->where('tahun', $tahun);
             },
         ])->where('id', '<=', '3')->get();
 
@@ -201,6 +204,7 @@ class Cetak extends Controller
 
     public function labaRugi(array $data)
     {
+        $business = view()->shared('business');
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
@@ -319,6 +323,7 @@ class Cetak extends Controller
 
     public function piutang(array $data)
     {
+        $business = view()->shared('business');
         $sales = Sale::with('customer')
             ->where('jumlah_utang', '>', 0)
             ->orderBy('tanggal_transaksi', 'asc')
@@ -345,6 +350,7 @@ class Cetak extends Controller
 
     public function hutang(array $data)
     {
+        $business = view()->shared('business');
         $purchases = Purchase::with('supplier')
             ->where('jumlah_utang', '>', 0)
             ->orderBy('tanggal_pembelian', 'asc')
@@ -403,6 +409,7 @@ class Cetak extends Controller
 
     public function buktiStokOpname(array $data)
     {
+        $business = view()->shared('business');
         $id = $data['id'] ?? null;
         if (! $id) {
             abort(404, 'ID Stock Opname tidak ditemukan');
@@ -411,7 +418,7 @@ class Cetak extends Controller
         $opname = StockOpname::with(['details' => function($q) {
                 $q->where('selisih', '!=', 0)->with('product');
             }, 'user', 'approvedBy'])
-            ->where('business_id', auth()->user()->business_id)
+            ->where('business_id', $business->id)
             ->findOrFail($id);
 
         $title = 'Bukti Stock Opname';
@@ -424,7 +431,7 @@ class Cetak extends Controller
 
     public function formStockOpname(array $data)
     {
-        $business = Business::first();
+        $business = view()->shared('business');
         $categoryId = $data['categoryId'] ?? null;
         $shelfId = $data['shelfId'] ?? null;
         $opnameId = $data['opnameId'] ?? null;
@@ -474,6 +481,7 @@ class Cetak extends Controller
 
     public function pembelian(array $data)
     {
+        $business = view()->shared('business');
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
@@ -508,7 +516,8 @@ class Cetak extends Controller
 
     public function marginProduk(array $data)
     {
-        $products = Product::with('category')
+        $business = view()->shared('business');
+        $products = Product::where('business_id', $business->id)
             ->where('is_active', true)
             ->where('harga_jual', '>', 0)
             ->get()
@@ -530,6 +539,7 @@ class Cetak extends Controller
 
     public function customerTerbaik(array $data)
     {
+        $business = view()->shared('business');
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
@@ -539,6 +549,7 @@ class Cetak extends Controller
             DB::raw('SUM(total) as total_belanja'),
             DB::raw('AVG(total) as rata_rata')
         )
+            ->where('business_id', $business->id)
             ->whereYear('tanggal_transaksi', $tahun);
 
         if ($bulan != '-') {
@@ -567,7 +578,9 @@ class Cetak extends Controller
 
     public function inventoryTurnover(array $data)
     {
-        $products = Product::with('category')
+        $business = view()->shared('business');
+        $products = Product::where('business_id', $business->id)
+            ->with('category')
             ->where('is_active', true)
             ->where('stok_aktual', '>', 0)
             ->get()
