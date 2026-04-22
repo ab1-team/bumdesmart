@@ -429,6 +429,12 @@ class Cetak extends Controller
             $opname = StockOpname::find($opnameId);
             if ($opname) {
                 $catatan = $opname->catatan ?: '-';
+                
+                // Prioritaskan bisnis milik data opname ini untuk KOP
+                $business = Business::find($opname->business_id);
+                if ($business) {
+                    view()->share('business', $business);
+                }
             }
             $query->whereIn('id', function($q) use ($opnameId) {
                 $q->select('product_id')->from('stock_opname_details')->where('stock_opname_id', $opnameId);
