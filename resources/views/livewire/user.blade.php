@@ -117,3 +117,41 @@
         </div>
     </div>
 </div>
+
+@section('script')
+    <script>
+        document.addEventListener('livewire:navigated', () => {
+            initTomSelect();
+        });
+
+        window.addEventListener('show-modal', event => {
+            if (event.detail.modalId === 'userModal') {
+                setTimeout(() => {
+                    initTomSelect();
+                }, 100);
+            }
+        });
+
+        function initTomSelect() {
+            document.querySelectorAll('.tom-select').forEach(el => {
+                if (el.tomselect) return;
+
+                new TomSelect(el, {
+                    plugins: ['dropdown_input'],
+                    onChange: function(value) {
+                        @this.set(el.getAttribute('wire:model'), value);
+                    }
+                });
+            });
+        }
+
+        // Handle Livewire updates
+        document.addEventListener('livewire:load', () => {
+            initTomSelect();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTomSelect();
+        });
+    </script>
+@endsection
