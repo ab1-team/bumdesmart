@@ -261,7 +261,7 @@ class SalePos extends Component
         $timestamp = now();
 
         foreach ($products as $item) {
-            $qty = $item['qty'];
+            $qty = (float)$item['qty'];
             $productId = $item['id'];
 
             $needed = $qty;

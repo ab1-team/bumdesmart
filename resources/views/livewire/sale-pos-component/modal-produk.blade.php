@@ -28,7 +28,9 @@
 
                         <div class="mb-3">
                             <label class="form-label">Jumlah (Qty)</label>
-                            <input type="number" step="any" class="form-control" x-model="selectedItem.qty"
+                            <input type="text" class="form-control" 
+                                x-model="selectedItem.qty"
+                                @blur="selectedItem.qty = parseNumber(selectedItem.qty)"
                                 placeholder="Masukkan Jumlah">
                         </div>
 

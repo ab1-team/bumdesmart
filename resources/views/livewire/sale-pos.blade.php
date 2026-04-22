@@ -83,6 +83,7 @@
                                 name: '{{ addslashes($product->nama_produk) }}',
                                 price: {{ $product->harga_jual }},
                                 stock: {{ $product->stok_aktual }},
+                                allow_decimal: {{ $product->allow_decimal ? 'true' : 'false' }},
                                 image: '{{ $product->gambar && $product->gambar !== 'products/no-image.png' ? asset('storage/' . $product->gambar) : 'https://placehold.co/400x400?text=No+Image' }}'
                             })">
                             <div
@@ -159,15 +160,17 @@
 
                                 <!-- Quantity Controls -->
                                 <div class="col-auto">
-                                    <div class="d-flex align-items-center bg-light rounded-pill p-1 border shadow-sm">
+                                    <div class="d-flex align-items-center bg-light rounded-pill p-1 border shadow-sm" style="width: 120px;">
                                         <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle"
                                             style="width: 24px; height: 24px;" @click="updateQty(item.id, -1)">
                                             <span class="material-symbols-outlined"
                                                 style="font-size: 14px;">remove</span>
                                         </button>
-                                        <span class="fw-bold px-2"
-                                            style="min-width: 25px; text-align: center; font-size: 0.8rem;"
-                                            x-text="formatDecimal(item.qty)"></span>
+                                        <input type="text" class="form-control form-control-sm border-0 bg-transparent text-center fw-bold p-0"
+                                            style="box-shadow: none; font-size: 0.8rem;"
+                                            :value="formatDecimal(item.qty)"
+                                            @blur="updateQtyFromInput(item.id, $event.target.value)"
+                                            @keydown.enter="$event.target.blur()">
                                         <button class="btn btn-sm btn-icon btn-ghost-secondary border-0 rounded-circle"
                                             style="width: 24px; height: 24px;" @click="updateQty(item.id, 1)">
                                             <span class="material-symbols-outlined"
@@ -700,7 +703,31 @@
                     const item = this.cart.find(i => i.id === id);
                     if (!item) return;
 
-                    const newQty = parseFloat(item.qty) + delta;
+                    let newQty = parseFloat(item.qty) + delta;
+
+                    // Samakan dengan Tambah Pembelian
+                    if (!item.allow_decimal && newQty % 1 !== 0) {
+                        newQty = Math.floor(newQty);
+                    }
+
+                    if (newQty <= 0) {
+                        this.removeFromCart(id);
+                    } else {
+                        item.qty = newQty;
+                    }
+                },
+
+                updateQtyFromInput(id, value) {
+                    const item = this.cart.find(i => i.id === id);
+                    if (!item) return;
+
+                    let newQty = this.parseNumber(value);
+
+                    // Samakan dengan Tambah Pembelian
+                    if (!item.allow_decimal && newQty % 1 !== 0) {
+                        newQty = Math.floor(newQty);
+                    }
+
                     if (newQty <= 0) {
                         this.removeFromCart(id);
                     } else {
@@ -993,23 +1020,36 @@
                 },
 
                 formatDecimal(num) {
-                    if (num === null || num === undefined) return '';
-                    return Number(num).toLocaleString('id-ID', {
-                        maximumFractionDigits: 2,
+                    if (num === null || num === undefined || num === '') return '';
+                    let val = this.parseNumber(num);
+                    return new Intl.NumberFormat('id-ID', {
+                        maximumFractionDigits: 3,
                         minimumFractionDigits: 0
-                    });
+                    }).format(val);
                 },
 
                 formatRupiah(num) {
-                    return this.formatDecimal(num);
+                    if (num === null || num === undefined || num === '') return '';
+                    let val = this.parseNumber(num);
+                    return new Intl.NumberFormat('id-ID', {
+                        maximumFractionDigits: 0,
+                        minimumFractionDigits: 0
+                    }).format(val);
                 },
 
                 parseNumber(val) {
                     if (typeof val === 'number') return val;
                     if (!val) return 0;
-                    // Standard Indonesian: 1.234,56
-                    let clean = String(val).replace(/\./g, '').replace(/,/g, '.');
-                    return parseFloat(clean) || 0;
+                    
+                    let str = String(val).trim();
+                    // If it contains a comma and a dot, replace dot then comma
+                    if (str.includes(',') && str.includes('.')) {
+                        str = str.replace(/\./g, '').replace(/,/g, '.');
+                    } else if (str.includes(',')) {
+                        // If only comma, it's the decimal separator
+                        str = str.replace(/,/g, '.');
+                    }
+                    return parseFloat(str) || 0;
                 },
 
                 processPayment() {
@@ -1115,6 +1155,7 @@
                         name: raw.nama_produk,
                         price: raw.harga_jual,
                         stock: raw.stok_aktual,
+                        allow_decimal: raw.allow_decimal,
                         image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? ('/storage/' +
                             raw.gambar) : 'https://placehold.co/400x400?text=No+Image',
                     };
@@ -1205,6 +1246,7 @@
                                 name: raw.nama_produk,
                                 price: parseFloat(raw.harga_jual),
                                 stock: parseFloat(raw.stok_aktual),
+                                allow_decimal: raw.allow_decimal,
                                 image: (raw.gambar && raw.gambar !== 'products/no-image.png') ? (
                                         '/storage/' + raw.gambar) :
                                     'https://placehold.co/400x400?text=No+Image',
