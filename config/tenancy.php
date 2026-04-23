@@ -20,6 +20,7 @@ return [
         '127.0.0.1',
         'localhost',
         'bumdesmart.test',
+        'astamart.net',
     ],
 
     /**
