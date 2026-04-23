@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->string('barcode')->nullable()->after('sku');
-        });
+        if (!Schema::hasColumn('products', 'barcode')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->string('barcode')->nullable()->after('sku');
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('barcode');
-        });
+        if (Schema::hasColumn('products', 'barcode')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->dropColumn('barcode');
+            });
+        }
     }
 };
