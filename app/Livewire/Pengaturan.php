@@ -25,10 +25,6 @@ class Pengaturan extends Component
 
     public $nama_perusahaan;
 
-    public $domain;
-
-    public $domain_alternatif;
-
     public $logo;
 
     public $new_logo;
@@ -49,8 +45,6 @@ class Pengaturan extends Component
             if ($owner) {
                 $this->owner_id = $owner->id;
                 $this->nama_perusahaan = $owner->nama_usaha;
-                $this->domain = $owner->domain;
-                $this->domain_alternatif = $owner->domain_alternatif;
                 $this->logo = $owner->logo;
             }
         }

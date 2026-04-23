@@ -1,112 +1,106 @@
 <div>
+
     <form wire:submit="updateSettings">
         <div class="row row-cards">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Data Bisnis / Toko</h3>
+            <!-- Data Bisnis / Toko -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h3 class="card-title text-primary">
+                            <span class="material-symbols-outlined me-2" style="vertical-align: middle;">store</span>
+                            Informasi Bisnis & Toko
+                        </h3>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label required">Nama Toko</label>
-                            <input type="text" class="form-control @error('nama_toko') is-invalid @enderror"
-                                wire:model="nama_toko">
-                            @error('nama_toko')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label required">Alamat Toko</label>
-                            <textarea class="form-control @error('alamat_toko') is-invalid @enderror" wire:model="alamat_toko" rows="3"></textarea>
-                            @error('alamat_toko')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">No. Telepon</label>
-                            <input type="text" class="form-control @error('no_telp_toko') is-invalid @enderror"
-                                wire:model="no_telp_toko">
-                            @error('no_telp_toko')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control @error('email_toko') is-invalid @enderror"
-                                wire:model="email_toko">
-                            @error('email_toko')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label required font-weight-bold">Nama Toko / Unit Usaha</label>
+                                <input type="text" class="form-control @error('nama_toko') is-invalid @enderror"
+                                    wire:model="nama_toko" placeholder="Masukkan nama toko">
+                                @error('nama_toko')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label required font-weight-bold">Alamat Lengkap</label>
+                                <textarea class="form-control @error('alamat_toko') is-invalid @enderror" 
+                                    wire:model="alamat_toko" rows="4" placeholder="Alamat lengkap operasional toko"></textarea>
+                                @error('alamat_toko')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label font-weight-bold">No. Telepon / WhatsApp</label>
+                                <input type="text" class="form-control @error('no_telp_toko') is-invalid @enderror"
+                                    wire:model="no_telp_toko" placeholder="08xxxx">
+                                @error('no_telp_toko')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label font-weight-bold">Email Bisnis</label>
+                                <input type="email" class="form-control @error('email_toko') is-invalid @enderror"
+                                    wire:model="email_toko" placeholder="email@toko.com">
+                                @error('email_toko')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <!-- Data Owner (Pusat) -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Data Pengelola Pusat (Owner)</h3>
+            <!-- Data Owner (Pusat) -->
+            <div class="col-md-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light">
+                        <h3 class="card-title text-primary">
+                            <span class="material-symbols-outlined me-2" style="vertical-align: middle;">corporate_fare</span>
+                            Identitas Pengelola (Owner)
+                        </h3>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label required">Nama Perusahaan Pengelola</label>
+                        <div class="mb-4">
+                            <label class="form-label required font-weight-bold">Nama Perusahaan Pengelola</label>
                             <input type="text" class="form-control @error('nama_perusahaan') is-invalid @enderror"
-                                wire:model="nama_perusahaan">
+                                wire:model="nama_perusahaan" placeholder="Nama BUMDES / PT Pengelola">
                             @error('nama_perusahaan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Logo</label>
-                            <div class="d-flex align-items-center mb-2">
-                                @if ($new_logo)
-                                    <span class="avatar avatar-xl me-3"
-                                        style="background-image: url({{ $new_logo->temporaryUrl() }})"></span>
-                                @elseif ($logo)
-                                    <span class="avatar avatar-xl me-3"
-                                        style="background-image: url({{ asset('storage/' . $logo) }})"></span>
-                                @else
-                                    <span class="avatar avatar-xl me-3">No Logo</span>
-                                @endif
-                                <div>
+                            <label class="form-label font-weight-bold">Logo Perusahaan</label>
+                            <div class="p-3 border rounded-3 bg-light text-center">
+                                <div class="mb-3 d-flex justify-content-center">
+                                    @if ($new_logo)
+                                        <span class="avatar avatar-xl shadow-sm border border-primary"
+                                            style="background-image: url({{ $new_logo->temporaryUrl() }}); width: 120px; height: 120px; background-size: contain;"></span>
+                                    @elseif ($logo)
+                                        <span class="avatar avatar-xl shadow-sm"
+                                            style="background-image: url({{ asset('storage/' . $logo) }}); width: 120px; height: 120px; background-size: contain;"></span>
+                                    @else
+                                        <div class="avatar avatar-xl shadow-sm bg-white text-muted" style="width: 120px; height: 120px;">
+                                            <span class="material-symbols-outlined" style="font-size: 48px;">image_not_supported</span>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="mt-3">
                                     <input type="file" class="form-control @error('new_logo') is-invalid @enderror"
                                         wire:model="new_logo" accept="image/*">
-                                    <small class="form-hint mt-1">Format: JPG, PNG. Maksimal 2MB.</small>
+                                    <div class="form-hint text-muted mt-2 small">Format: JPG, PNG. Maksimal 2MB.</div>
                                     @error('new_logo')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Domain Utama</label>
-                            <!-- Note: User requested domain to be readonly -->
-                            <input type="text" class="form-control disabled bg-light" wire:model="domain" readonly
-                                disabled>
-                            <small class="form-hint text-danger mt-1">
-                                <span class="material-symbols-outlined"
-                                    style="font-size: 14px; vertical-align: bottom;">info</span>
-                                Domain utama tidak dapat diubah secara manual.
-                            </small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Domain Alternatif</label>
-                            <!-- Note: User requested domain alternatif to be readonly -->
-                            <input type="text" class="form-control disabled bg-light" wire:model="domain_alternatif"
-                                readonly disabled>
-                            <small class="form-hint text-danger mt-1">
-                                <span class="material-symbols-outlined"
-                                    style="font-size: 14px; vertical-align: bottom;">info</span>
-                                Domain alternatif tidak dapat diubah secara manual.
-                            </small>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary mt-2">
+            <div class="col-12 text-end mt-3">
+                <button type="submit" class="btn btn-primary px-4">
                     <span class="material-symbols-outlined me-2">save</span>
                     Simpan Pengaturan
                 </button>
