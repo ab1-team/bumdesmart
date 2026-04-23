@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Owner;
 use Auth;
 use Illuminate\Http\Request;
 
@@ -16,6 +15,7 @@ class AuthController extends Controller
 
         if (tenant()) {
             $owner = tenant();
+
             return view('auth.login', compact('owner'));
         }
 
@@ -51,7 +51,7 @@ class AuthController extends Controller
             // Central Login (using a different guard if needed, or manual check)
             // For simplicity, let's assume central users are in 'central_users' table
             // and we use a 'central' guard or just check the model.
-            
+
             // Note: You should configure 'central' guard in config/auth.php
             if (Auth::guard('central')->attempt($data)) {
                 return redirect('/master/dashboard')->with('success', 'Login berhasil!');

@@ -47,8 +47,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [AuthController::class, 'login']);
-Route::post('/auth', [AuthController::class, 'auth']);
+foreach (config('tenancy.central_domains') as $domain) {
+    Route::domain($domain)->group(function () {
+        Route::get('/', [AuthController::class, 'login']);
+        Route::post('/auth', [AuthController::class, 'auth']);
+    });
+}
 
 use App\Livewire\Master\MasterDashboard;
 
@@ -61,6 +65,11 @@ Route::group([
     Route::get('/owner', MasterOwner::class);
     Route::get('/business', MasterBusiness::class);
 });
+
+// Fix 404: Redirect central /dashboard to /master/dashboard
+Route::get('/dashboard', function() {
+    return redirect('/master/dashboard');
+})->middleware(['auth:central', 'is_master']);
 
 Route::group(['middleware' => 'auth'], function () {
     Route::post('/logout', [AuthController::class, 'logout']);

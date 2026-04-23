@@ -50,76 +50,70 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 |
 */
 
-$centralDomains = config('tenancy.central_domains');
-$currentDomain = $_SERVER['HTTP_HOST'] ?? '';
-$currentDomain = explode(':', $currentDomain)[0];
+Route::middleware([
+    InitializeTenancyByDomain::class,
+    PreventAccessFromCentralDomains::class,
+    'web',
+])->group(function () {
+    Route::get('/', [AuthController::class, 'login']);
+    Route::post('/auth', [AuthController::class, 'auth']);
 
-if (!in_array($currentDomain, $centralDomains)) {
-    Route::middleware([
-        InitializeTenancyByDomain::class,
-        PreventAccessFromCentralDomains::class,
-        'web',
-    ])->group(function () {
-        Route::get('/', [AuthController::class, 'login']);
-        Route::post('/auth', [AuthController::class, 'auth']);
+    Route::group([
+        'middleware' => ['auth', 'is_not_master'],
+    ], function () {
+            Route::get('/dashboard', Dashboard::class);
+            Route::get('/profile', Profile::class);
 
-        Route::group([
-            'middleware' => ['auth', 'is_not_master'],
-        ], function () {
-        Route::get('/dashboard', Dashboard::class);
-        Route::get('/profile', Profile::class);
+            Route::get('/master-data/role', Role::class);
+            Route::get('/master-data/user', User::class);
+            Route::get('/master-data/member', Member::class);
+            Route::get('/master-data/pelanggan', Pelanggan::class);
+            Route::get('/master-data/supplier', Supplier::class);
 
-        Route::get('/master-data/role', Role::class);
-        Route::get('/master-data/user', User::class);
-        Route::get('/master-data/member', Member::class);
-        Route::get('/master-data/pelanggan', Pelanggan::class);
-        Route::get('/master-data/supplier', Supplier::class);
+            Route::get('/master-produk/satuan', Satuan::class);
+            Route::get('/master-produk/kategori', Kategori::class);
+            Route::get('/master-produk/merek', Merek::class);
+            Route::get('/master-produk/rak', Rak::class);
+            Route::get('/master-produk/produk', Produk::class);
 
-        Route::get('/master-produk/satuan', Satuan::class);
-        Route::get('/master-produk/kategori', Kategori::class);
-        Route::get('/master-produk/merek', Merek::class);
-        Route::get('/master-produk/rak', Rak::class);
-        Route::get('/master-produk/produk', Produk::class);
+            Route::get('/pembelian/tambah', TambahPembelian::class);
+            Route::get('/pembelian/daftar', DaftarPembelian::class);
+            Route::get('/pembelian/edit/{id}', TambahPembelian::class);
 
-        Route::get('/pembelian/tambah', TambahPembelian::class);
-        Route::get('/pembelian/daftar', DaftarPembelian::class);
-        Route::get('/pembelian/edit/{id}', TambahPembelian::class);
+            Route::get('/pembelian/daftar-retur', DaftarReturPembelian::class);
+            Route::get('/pembelian/retur/{id}', TambahReturPembelian::class);
 
-        Route::get('/pembelian/daftar-retur', DaftarReturPembelian::class);
-        Route::get('/pembelian/retur/{id}', TambahReturPembelian::class);
+            Route::get('/stock', function () {
+                return redirect('/stock/opname');
+            });
 
-        Route::get('/stock', function () {
-            return redirect('/stock/opname');
+            Route::get('/stock/opname', StockOpname::class);
+            Route::get('/stock/opname/tambah', TambahStockOpname::class);
+            Route::get('/stock/opname/daftar', StockOpname::class);
+            Route::get('/stock/opname/edit/{id}', TambahStockOpname::class);
+
+            Route::get('/stock/adjustment', StockAdjustment::class);
+            Route::get('/stock/adjustment/tambah', TambahStockAdjustment::class);
+            Route::get('/stock/adjustment/daftar', StockAdjustment::class);
+
+            Route::get('/penjualan/tambah', TambahPenjualan::class);
+            Route::get('/penjualan/daftar', DaftarPenjualan::class);
+            Route::get('/penjualan/edit/{id}', TambahPenjualan::class);
+
+            Route::get('/penjualan/retur/{id}', TambahReturPenjualan::class);
+            Route::get('/penjualan/daftar-retur', DaftarReturPenjualan::class);
+            Route::get('/penjualan/pos', SalePos::class);
+            Route::get('/penjualan/cetak-struk/{id}', CetakStruk::class);
+            Route::get('/penjualan/cetak-struk-kasir/{id}', CetakStrukKasir::class);
+
+            Route::get('/keuangan/pelaporan', Pelaporan::class);
+            Route::get('/keuangan/pelaporan/cetak', Cetak::class);
+
+            Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
+            Route::get('/master-pengaturan', Pengaturan::class);
         });
 
-        Route::get('/stock/opname', StockOpname::class);
-        Route::get('/stock/opname/tambah', TambahStockOpname::class);
-        Route::get('/stock/opname/daftar', StockOpname::class);
-        Route::get('/stock/opname/edit/{id}', TambahStockOpname::class);
-
-        Route::get('/stock/adjustment', StockAdjustment::class);
-        Route::get('/stock/adjustment/tambah', TambahStockAdjustment::class);
-        Route::get('/stock/adjustment/daftar', StockAdjustment::class);
-
-        Route::get('/penjualan/tambah', TambahPenjualan::class);
-        Route::get('/penjualan/daftar', DaftarPenjualan::class);
-        Route::get('/penjualan/edit/{id}', TambahPenjualan::class);
-
-        Route::get('/penjualan/retur/{id}', TambahReturPenjualan::class);
-        Route::get('/penjualan/daftar-retur', DaftarReturPenjualan::class);
-        Route::get('/penjualan/pos', SalePos::class);
-        Route::get('/penjualan/cetak-struk/{id}', CetakStruk::class);
-        Route::get('/penjualan/cetak-struk-kasir/{id}', CetakStrukKasir::class);
-
-        Route::get('/keuangan/pelaporan', Pelaporan::class);
-        Route::get('/keuangan/pelaporan/cetak', Cetak::class);
-
-        Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
-        Route::get('/master-pengaturan', Pengaturan::class);
-    });
-
-    Route::group(['middleware' => 'auth'], function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::group(['middleware' => 'auth'], function () {
+            Route::post('/logout', [AuthController::class, 'logout']);
     });
 });
-}
