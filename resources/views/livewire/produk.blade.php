@@ -408,6 +408,7 @@
             targetField = field;
             $('#scannerModal').modal('show');
             
+            // Wait for modal animation to finish before starting camera
             setTimeout(() => {
                 Html5Qrcode.getCameras().then(devices => {
                     if (devices && devices.length) {
@@ -415,25 +416,37 @@
                         currentCameraId = devices[devices.length - 1].id;
                         startScanner(currentCameraId);
                     }
-                }).catch(err => console.error(err));
+                }).catch(err => {
+                    console.error("Gagal mendapatkan kamera:", err);
+                    alert("Kamera tidak ditemukan atau izin ditolak.");
+                });
             }, 500);
         }
 
-        function startScanner(cameraId) {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    initScanner(cameraId);
-                });
-            } else {
+        async function startScanner(cameraId) {
+            try {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    await html5QrCode.stop();
+                }
+                initScanner(cameraId);
+            } catch (err) {
+                console.error("Gagal stop/start scanner:", err);
                 initScanner(cameraId);
             }
         }
 
         function initScanner(cameraId) {
-            html5QrCode = new Html5Qrcode("reader");
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
             html5QrCode.start(
                 cameraId, 
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { 
+                    fps: 10, 
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
                 (decodedText) => {
                     // Success!
                     if (targetField === 'barcode') {
@@ -445,17 +458,23 @@
                     // Visual feedback
                     const reader = document.getElementById('reader');
                     reader.style.border = '5px solid #2fb344';
-                    setTimeout(() => reader.style.border = 'none', 500);
+                    setTimeout(() => {
+                        if(reader) reader.style.border = 'none';
+                    }, 500);
                     
-                    // Beep sound (optional)
-                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2216/2216-preview.mp3');
-                    audio.play();
+                    // Beep sound
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2216/2216-preview.mp3');
+                        audio.play();
+                    } catch(e) {}
 
-                    // Close scanner after successful scan for single input
+                    // Close scanner
                     closeScanner();
                 },
                 (errorMessage) => { /* scanning... */ }
-            ).catch(err => console.error(err));
+            ).catch(err => {
+                console.error("Gagal inisialisasi scanner:", err);
+            });
         }
 
         function toggleCamera() {
@@ -466,15 +485,22 @@
             startScanner(currentCameraId);
         }
 
-        function closeScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    $('#scannerModal').modal('hide');
-                }).catch(() => {
-                    $('#scannerModal').modal('hide');
-                });
-            } else {
+        async function closeScanner() {
+            try {
+                if (html5QrCode) {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    await html5QrCode.clear();
+                }
+            } catch (err) {
+                console.error("Gagal menutup kamera:", err);
+            } finally {
                 $('#scannerModal').modal('hide');
+                // Force clear element just in case
+                const reader = document.getElementById('reader');
+                if (reader) reader.innerHTML = '';
+                html5QrCode = null;
             }
         }
 
