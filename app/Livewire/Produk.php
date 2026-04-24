@@ -160,6 +160,19 @@ class Produk extends Component
 
     public function store()
     {
+        // Generate SKU if empty
+        if (empty($this->sku)) {
+            $prefix = 'BM';
+            $uniqueId = substr(time(), -6) . mt_rand(10, 99);
+            $this->sku = $prefix . $uniqueId;
+            
+            // Ensure uniqueness (just in case)
+            while (\App\Models\Product::where('sku', $this->sku)->exists()) {
+                $uniqueId = substr(time(), -6) . mt_rand(10, 99);
+                $this->sku = $prefix . $uniqueId;
+            }
+        }
+
         $this->validate();
 
         $data = [
