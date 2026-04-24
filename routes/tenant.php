@@ -75,6 +75,7 @@ Route::middleware([
             Route::get('/master-produk/merek', Merek::class);
             Route::get('/master-produk/rak', Rak::class);
             Route::get('/master-produk/produk', Produk::class);
+            Route::get('/master-produk/produk/cetak-label', \App\Livewire\Produk\CetakLabel::class)->name('produk.cetak-label');
 
             Route::get('/pembelian/tambah', TambahPembelian::class);
             Route::get('/pembelian/daftar', DaftarPembelian::class);

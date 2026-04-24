@@ -9,7 +9,7 @@
                         @if ($header['sortable'] ?? true)
                             <div class="d-flex align-items-center">
                                 <span>
-                                    {{ $header['label'] }}
+                                    {!! $header['label'] !!}
                                 </span>
                                 @if ($sortColumn === $header['key'])
                                     <span class="material-symbols-outlined">
@@ -18,7 +18,7 @@
                                 @endif
                             </div>
                         @else
-                            {{ $header['label'] }}
+                            {!! $header['label'] !!}
                         @endif
                     </th>
                 @endforeach

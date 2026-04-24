@@ -57,6 +57,30 @@ class Produk extends Component
     public $tanggalMulai = [];
 
     public $tanggalAkhir = [];
+    
+    // Label Printing
+    public $selectedForLabels = []; // Array of Product IDs
+    public $selectedProducts = []; // Checkbox selection
+    public $selectAll = false;
+    public $labelOptions = [
+        'type' => 'barcode', // barcode or qrcode
+        'size' => '107',    // 107, 103, 121
+        'qty' => 1,
+        'show_price' => true,
+        'show_name' => true
+    ];
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedProducts = \App\Models\Product::where('business_id', $this->businessId)
+                ->pluck('id')
+                ->map(fn($id) => (string) $id)
+                ->toArray();
+        } else {
+            $this->selectedProducts = [];
+        }
+    }
 
     public function mount()
     {
@@ -269,6 +293,55 @@ class Produk extends Component
         $this->reset('hargaJualMember', 'tanggalMulai', 'tanggalAkhir');
     }
 
+    public function modalCetakLabel($id = null)
+    {
+        if ($id) {
+            $this->selectedForLabels = [$id];
+        }
+        
+        $this->labelOptions['qty'] = 1;
+        $this->dispatch('show-modal', modalId: 'cetakLabelModal');
+    }
+
+    public function modalCetakMassal()
+    {
+        if (empty($this->selectedProducts)) {
+            $this->dispatch('alert', type: 'error', message: 'Pilih produk terlebih dahulu');
+            return;
+        }
+
+        $this->selectedForLabels = $this->selectedProducts;
+        $this->labelOptions['qty'] = 1;
+        $this->dispatch('show-modal', modalId: 'cetakLabelModal');
+    }
+
+    public function openPrintLabels()
+    {
+        if (empty($this->selectedForLabels)) {
+            $this->dispatch('alert', type: 'error', message: 'Pilih produk terlebih dahulu');
+            return;
+        }
+
+        $ids = implode(',', $this->selectedForLabels);
+        $type = $this->labelOptions['type'];
+        $size = $this->labelOptions['size'];
+        $qty = $this->labelOptions['qty'];
+        $price = $this->labelOptions['show_price'] ? 1 : 0;
+        $name = $this->labelOptions['show_name'] ? 1 : 0;
+
+        $url = route('produk.cetak-label', [
+            'ids' => $ids,
+            'type' => $type,
+            'size' => $size,
+            'qty' => $qty,
+            'price' => $price,
+            'name' => $name
+        ]);
+
+        $this->dispatch('open-new-tab', url: $url);
+        $this->dispatch('hide-modal', modalId: 'cetakLabelModal');
+    }
+
     #[\Livewire\Attributes\Computed]
     public function categories()
     {
@@ -312,6 +385,7 @@ class Produk extends Component
         ]);
 
         $headers = [
+            TableUtil::setTableHeader('selection', '<input type="checkbox" wire:model.live="selectAll" class="form-check-input">', false, false),
             TableUtil::setTableHeader('id', '#', false, false),
             TableUtil::setTableHeader('gambar', 'Gambar', false, false),
             TableUtil::setTableHeader('sku', 'SKU', true, true),
