@@ -45,7 +45,7 @@
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-info dropdown-toggle" type="button"
-                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport" data-bs-popper-config='{"strategy":"fixed"}'>
                                             <span class="material-symbols-outlined">
                                                 more_vert
                                             </span>

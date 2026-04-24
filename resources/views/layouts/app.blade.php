@@ -106,6 +106,17 @@
         .table tr td {
             vertical-align: middle;
         }
+
+        /* Fix for dropdown menus to flow freely */
+        .dropdown-menu {
+            z-index: 1060; /* Ensure it's above other elements */
+        }
+
+        /* Prevent table-responsive from clipping dropdowns and hide vertical scroll */
+        .table-responsive {
+            overflow-x: auto;
+            overflow-y: hidden; /* Prevent vertical scrollbar from dropdowns */
+        }
     </style>
     <!-- END CUSTOM FONT -->
 
@@ -298,6 +309,7 @@
                 setTimeout(() => {
                     initTomSelect();
                     initLitepicker();
+                    initDropdownViewport();
                 }, 100);
             });
 
@@ -423,7 +435,17 @@
             document.querySelectorAll('.tom-select').forEach(initSingleTomSelect);
         }
 
+        function initDropdownViewport() {
+            // Use 'fixed' strategy to completely bypass table overflow clipping
+            document.querySelectorAll('.table-responsive .dropdown-toggle').forEach(el => {
+                el.setAttribute('data-bs-boundary', 'viewport');
+                el.setAttribute('data-bs-popper-config', '{"strategy":"fixed"}');
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            initDropdownViewport();
+            
             const dropdownSubmenus = document.querySelectorAll('.dropdown-submenu');
 
             dropdownSubmenus.forEach(function(submenu) {
