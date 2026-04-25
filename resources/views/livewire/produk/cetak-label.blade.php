@@ -97,7 +97,8 @@
         /* No. 107 (18x50mm) - 3 Columns */
         .size-107 { 
             grid-template-columns: repeat(3, 50mm); 
-            gap: 2.5mm;
+            column-gap: 2.5mm;
+            row-gap: 3mm;
             padding: 5mm 3mm;
             width: 165mm; 
         }
@@ -108,7 +109,7 @@
         .size-108 { 
             grid-template-columns: repeat(4, 38mm); 
             column-gap: 2.5mm;
-            row-gap: 2mm;
+            row-gap: 3mm;
             padding: 5mm 3mm;
             width: 165mm; 
         }
@@ -120,7 +121,7 @@
         .size-103 { 
             grid-template-columns: repeat(2, 64mm); 
             column-gap: 3.5mm;
-            row-gap: 2mm;
+            row-gap: 3mm;
             padding: 8mm 4mm;
             width: 165mm; 
         }
@@ -132,8 +133,9 @@
         /* No. 121 (38x75mm) - 2 Columns */
         .size-121 { 
             grid-template-columns: repeat(2, 75mm); 
-            gap: 3mm;
-            padding: 8mm 3mm;
+            column-gap: 3.5mm;
+            row-gap: 3mm;
+            padding: 8mm 4mm;
             width: 165mm; 
         }
         .size-121 .label-item { width: 75mm; height: 38mm; padding: 2mm; }
