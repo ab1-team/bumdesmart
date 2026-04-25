@@ -44,12 +44,12 @@
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" href="#"
                                         wire:click="detailReturPembelian({{ $purchaseReturn->id }})">
-                                        Detail Retur Pembelian
+                                        <span class="material-symbols-outlined me-2">visibility</span> Detail Retur Pembelian
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item text-danger" href="#"
                                         wire:click="$dispatch('confirm-delete', {id: {{ $purchaseReturn->id }}})">
-                                        Hapus
+                                        <span class="material-symbols-outlined me-2">delete</span> Hapus
                                     </a>
                                 </div>
                             </div>

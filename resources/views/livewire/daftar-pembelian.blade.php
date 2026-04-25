@@ -54,33 +54,33 @@
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" href="#"
                                         wire:click="detailPembelian({{ $purchase->id }})">
-                                        Detail Pembelian
+                                        <span class="material-symbols-outlined me-2">visibility</span> Detail Pembelian
                                     </a>
                                     <a class="dropdown-item" href="/pembelian/edit/{{ $purchase->id }}">
-                                        Edit
+                                        <span class="material-symbols-outlined me-2">edit</span> Edit
                                     </a>
                                     <a class="dropdown-item" href="/pembelian/cetak-nota/{{ $purchase->id }}" target="_blank">
-                                        <i class="fas fa-file-invoice me-2"></i> Cetak Nota (A5)
+                                        <span class="material-symbols-outlined me-2">print</span> Cetak Nota (A5)
                                     </a>
 
                                     <a class="dropdown-item" href="#"
                                         wire:click="lihatPembayaran({{ $purchase->id }})">
-                                        Lihat Pembayaran
+                                        <span class="material-symbols-outlined me-2">history</span> Lihat Pembayaran
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     @if ($purchase->jumlah_utang > 0)
                                         <a class="dropdown-item" href="#"
                                             wire:click="tambahPembayaran({{ $purchase->id }})">
-                                            <i class="fas fa-money-bill-wave me-2"></i> Tambahkan Pembayaran
+                                            <span class="material-symbols-outlined me-2">payments</span> Tambahkan Pembayaran
                                         </a>
                                     @endif
                                     <a class="dropdown-item" href="/pembelian/retur/{{ $purchase->id }}">
-                                        Retur Pembelian
+                                        <span class="material-symbols-outlined me-2">undo</span> Retur Pembelian
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item text-danger" href="#"
                                         wire:click="$dispatch('confirm-delete', {id: {{ $purchase->id }}})">
-                                        Hapus
+                                        <span class="material-symbols-outlined me-2">delete</span> Hapus
                                     </a>
                                 </div>
                             </div>

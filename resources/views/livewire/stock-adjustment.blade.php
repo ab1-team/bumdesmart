@@ -41,21 +41,19 @@
                                         </button>
 
                                         <div class="dropdown-menu">
-                                            {{-- <a class="dropdown-item" href="#">Detail</a> --}}
-
                                             @if ($adj->status == 'draft')
                                                 <a class="dropdown-item" href="#"
                                                     wire:click.prevent="$dispatch('alert', { type: 'info', message: 'Fitur Edit segera hadir' })">
-                                                    Edit
+                                                    <span class="material-symbols-outlined me-2">edit</span> Edit
                                                 </a>
                                                 <a class="dropdown-item text-success" href="#"
                                                     wire:click.prevent="$dispatch('approve-confirmed', { id: {{ $adj->id }} })">
-                                                    Approve & Finalize
+                                                    <span class="material-symbols-outlined me-2">check_circle</span> Approve & Finalize
                                                 </a>
                                                 <div class="dropdown-divider"></div>
                                                 <a class="dropdown-item text-danger" href="#"
                                                     wire:click.prevent="$dispatch('confirm-delete', { id: {{ $adj->id }} })">
-                                                    Hapus
+                                                    <span class="material-symbols-outlined me-2">delete</span> Hapus
                                                 </a>
                                             @endif
                                         </div>

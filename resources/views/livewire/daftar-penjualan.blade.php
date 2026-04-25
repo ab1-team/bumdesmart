@@ -45,43 +45,43 @@
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" href="#"
                                         wire:click="detailPenjualan({{ $sale->id }})">
-                                        <i class="fas fa-eye me-2"></i> Detail Penjualan
+                                        <span class="material-symbols-outlined me-2">visibility</span> Detail Penjualan
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="/penjualan/cetak-struk/{{ $sale->id }}"
                                         target="_blank">
-                                        <i class="fas fa-receipt me-2"></i> Cetak Struk (Thermal)
+                                        <span class="material-symbols-outlined me-2">receipt</span> Cetak Struk (Thermal)
                                     </a>
                                     <a class="dropdown-item" href="/penjualan/cetak-nota/{{ $sale->id }}"
                                         target="_blank">
-                                        <i class="fas fa-file-invoice me-2"></i> Cetak Nota (A5)
+                                        <span class="material-symbols-outlined me-2">print</span> Cetak Nota (A5)
                                     </a>
                                     <a class="dropdown-item" href="/penjualan/cetak-surat-jalan/{{ $sale->id }}"
                                         target="_blank">
-                                        <i class="fas fa-truck me-2"></i> Cetak Surat Jalan
+                                        <span class="material-symbols-outlined me-2">local_shipping</span> Cetak Surat Jalan
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="/penjualan/edit/{{ $sale->id }}">
-                                        <i class="fas fa-edit me-2"></i> Edit
+                                        <span class="material-symbols-outlined me-2">edit</span> Edit
                                     </a>
 
                                     <a class="dropdown-item" href="#"
                                         wire:click="lihatPembayaran({{ $sale->id }})">
-                                        <i class="fas fa-history me-2"></i> Lihat Pembayaran
+                                        <span class="material-symbols-outlined me-2">history</span> Lihat Pembayaran
                                     </a>
                                     @if ($sale->jumlah_utang > 0)
                                         <a class="dropdown-item" href="#"
                                             wire:click="tambahPembayaran({{ $sale->id }})">
-                                            <i class="fas fa-money-bill-wave me-2"></i> Tambahkan Pembayaran
+                                            <span class="material-symbols-outlined me-2">payments</span> Tambahkan Pembayaran
                                         </a>
                                     @endif
                                     <a class="dropdown-item" href="/penjualan/retur/{{ $sale->id }}">
-                                        <i class="fas fa-undo me-2"></i> Retur Penjualan
+                                        <span class="material-symbols-outlined me-2">undo</span> Retur Penjualan
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item text-danger" href="#"
                                         wire:click="$dispatch('confirm-delete', {id: {{ $sale->id }}})">
-                                        <i class="fas fa-trash me-2"></i> Hapus
+                                        <span class="material-symbols-outlined me-2">delete</span> Hapus
                                     </a>
                                 </div>
                             </div>
