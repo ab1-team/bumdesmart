@@ -111,6 +111,7 @@ Route::middleware([
 
             Route::get('/keuangan/pelaporan', Pelaporan::class);
             Route::get('/keuangan/pelaporan/cetak', Cetak::class);
+            Route::get('/keuangan/coa', \App\Livewire\Keuangan\ChartOfAccount::class);
 
             Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
             Route::get('/master-pengaturan', Pengaturan::class);
