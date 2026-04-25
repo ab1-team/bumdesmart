@@ -85,11 +85,22 @@ class TambahPembelian extends Component
             $this->tanggalPembelian = date('Y-m-d');
             $this->nomorPembelian = $this->generatePurchaseNumber();
             
+            // Find default supplier "umum"
+            $defaultSupplier = Supplier::where('business_id', $this->businessId)
+                ->where('nama_supplier', 'LIKE', '%umum%')
+                ->first();
+
             $this->existingData = [
                 'nomorPembelian' => $this->nomorPembelian,
                 'tanggalPembelian' => $this->tanggalPembelian,
                 'jenisPembayaran' => 'cash',
+                'supplier' => $defaultSupplier ? $defaultSupplier->id : null,
+                'supplier_name' => $defaultSupplier ? $defaultSupplier->nama_supplier : '',
             ];
+
+            if ($defaultSupplier) {
+                $this->supplier = $defaultSupplier->id;
+            }
         }
     }
 
