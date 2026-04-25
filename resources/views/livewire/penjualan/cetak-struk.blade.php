@@ -47,6 +47,10 @@
             font-weight: bold;
         }
 
+        .text-small {
+            font-size: 10px;
+        }
+
         .divider {
             border-top: 1px dashed #000;
             margin: 5px 0;
@@ -113,8 +117,8 @@
                         style="max-width: 100px; max-height: 60px; margin-bottom: 5px;">
                 @endif
                 <h3>{{ $business->nama_usaha ?? $owner->nama_usaha ?? '' }}</h3>
-                <p>{{ $business->alamat ?? 'Alamat Toko' }}</p>
-                <p>Telp: {{ $business->no_telp ?? '-' }}</p>
+                <p class="text-small">{{ $business->alamat ?? 'Alamat Toko' }}</p>
+                <p class="text-small">Telp: {{ $business->no_telp ?? '-' }}</p>
             </div>
         </div>
 
@@ -201,7 +205,7 @@
 
         <div class="divider"></div>
 
-        <div class="text-center">
+        <div class="text-center text-small">
             <p>Terima kasih atas kunjungan Anda!</p>
             <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
         </div>

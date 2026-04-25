@@ -46,6 +46,10 @@
             font-weight: bold;
         }
 
+        .text-small {
+            font-size: 10px;
+        }
+
         .divider {
             border-top: 1px dashed #000;
             margin: 5px 0;
@@ -96,7 +100,7 @@
         <div class="receipt-header text-center">
             <h3>LAPORAN TUTUP KASIR</h3>
             <p>{{ $business->nama_usaha ?? $owner->nama_usaha ?? '' }}</p>
-            <p>{{ $business->alamat ?? '' }}</p>
+            <p class="text-small">{{ $business->alamat ?? '' }}</p>
         </div>
 
         <div class="divider"></div>
@@ -156,7 +160,7 @@
 
         <div class="double-divider"></div>
 
-        <div class="text-center" style="margin-top: 20px;">
+        <div class="text-center text-small" style="margin-top: 20px;">
             <p>Dicetak pada: {{ now()->format('d/m/Y H:i') }}</p>
         </div>
     </div>
