@@ -136,7 +136,10 @@
             <div class="modal-footer">
                 @if (!empty($detailSale))
                     <a href="/penjualan/cetak-struk/{{ $detailSale->id }}" target="_blank" class="btn btn-info me-2">
-                        <span class="material-symbols-outlined me-1">print</span> Cetak Struk
+                        <span class="material-symbols-outlined me-1">receipt</span> Cetak Struk
+                    </a>
+                    <a href="/penjualan/cetak-nota/{{ $detailSale->id }}" target="_blank" class="btn btn-dark me-2">
+                        <span class="material-symbols-outlined me-1">description</span> Cetak Nota (A5)
                     </a>
                     <a href="/penjualan/cetak-surat-jalan/{{ $detailSale->id }}" target="_blank" class="btn btn-primary me-2">
                         <span class="material-symbols-outlined me-1">local_shipping</span> Cetak Surat Jalan

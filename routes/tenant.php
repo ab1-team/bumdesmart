@@ -105,6 +105,7 @@ Route::middleware([
             Route::get('/penjualan/daftar-retur', DaftarReturPenjualan::class);
             Route::get('/penjualan/pos', SalePos::class);
             Route::get('/penjualan/cetak-struk/{id}', CetakStruk::class);
+            Route::get('/penjualan/cetak-nota/{id}', \App\Livewire\Penjualan\CetakNota::class);
             Route::get('/penjualan/cetak-struk-kasir/{id}', CetakStrukKasir::class);
             Route::get('/penjualan/cetak-surat-jalan/{id}', \App\Livewire\Penjualan\CetakSuratJalan::class);
 

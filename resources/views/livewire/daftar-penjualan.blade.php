@@ -45,38 +45,43 @@
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" href="#"
                                         wire:click="detailPenjualan({{ $sale->id }})">
-                                        Detail Penjualan
+                                        <i class="fas fa-eye me-2"></i> Detail Penjualan
                                     </a>
+                                    <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="/penjualan/cetak-struk/{{ $sale->id }}"
                                         target="_blank">
-                                        Cetak Struk
+                                        <i class="fas fa-receipt me-2"></i> Cetak Struk (Thermal)
+                                    </a>
+                                    <a class="dropdown-item" href="/penjualan/cetak-nota/{{ $sale->id }}"
+                                        target="_blank">
+                                        <i class="fas fa-file-invoice me-2"></i> Cetak Nota (A5)
                                     </a>
                                     <a class="dropdown-item" href="/penjualan/cetak-surat-jalan/{{ $sale->id }}"
                                         target="_blank">
-                                        Cetak Surat Jalan
+                                        <i class="fas fa-truck me-2"></i> Cetak Surat Jalan
                                     </a>
+                                    <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="/penjualan/edit/{{ $sale->id }}">
-                                        Edit
+                                        <i class="fas fa-edit me-2"></i> Edit
                                     </a>
 
                                     <a class="dropdown-item" href="#"
                                         wire:click="lihatPembayaran({{ $sale->id }})">
-                                        Lihat Pembayaran
+                                        <i class="fas fa-history me-2"></i> Lihat Pembayaran
                                     </a>
-                                    <div class="dropdown-divider"></div>
                                     @if ($sale->total - $sale->payments->sum('total_harga') > 0)
                                         <a class="dropdown-item" href="#"
                                             wire:click="tambahPembayaran({{ $sale->id }})">
-                                            Tambahkan Pembayaran
+                                            <i class="fas fa-money-bill-wave me-2"></i> Tambahkan Pembayaran
                                         </a>
                                     @endif
                                     <a class="dropdown-item" href="/penjualan/retur/{{ $sale->id }}">
-                                        Retur Penjualan
+                                        <i class="fas fa-undo me-2"></i> Retur Penjualan
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item text-danger" href="#"
                                         wire:click="$dispatch('confirm-delete', {id: {{ $sale->id }}})">
-                                        Hapus
+                                        <i class="fas fa-trash me-2"></i> Hapus
                                     </a>
                                 </div>
                             </div>
