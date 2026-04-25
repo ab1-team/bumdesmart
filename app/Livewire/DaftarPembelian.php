@@ -18,6 +18,20 @@ class DaftarPembelian extends Component
     public $businessId;
 
     public $detailPurchase = [];
+    public $bankAccounts = [];
+    public $defaultTransferAccount = null;
+    public $defaultQrisAccount = null;
+
+    public function mount()
+    {
+        $this->businessId = auth()->user()->business_id;
+        $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
+            ->whereNotNull('no_rek_bank')
+            ->get();
+            
+        $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->no_rek_bank;
+        $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->no_rek_bank;
+    }
 
     // Payment Form Properties
     public $nomorPembayaran;

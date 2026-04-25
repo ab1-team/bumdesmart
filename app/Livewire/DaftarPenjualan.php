@@ -16,6 +16,17 @@ class DaftarPenjualan extends Component
 
     public $businessId;
 
+    public function mount()
+    {
+        $this->businessId = auth()->user()->business_id;
+        $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
+            ->whereNotNull('no_rek_bank')
+            ->get();
+            
+        $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->no_rek_bank;
+        $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->no_rek_bank;
+    }
+
     public $detailSale;
 
     // Payment Form Properties
@@ -36,8 +47,10 @@ class DaftarPenjualan extends Component
     public $paymentList = [];
 
     public $metodePembayaran = 'cash';
-
     public $noRekening = '';
+    public $bankAccounts = [];
+    public $defaultTransferAccount = null;
+    public $defaultQrisAccount = null;
 
     public function detailPenjualan($id)
     {
@@ -306,12 +319,12 @@ class DaftarPenjualan extends Component
             $kembalian = $jumlahBayar - $this->sisaTagihan;
             $jumlahBayar = $this->sisaTagihan;
         }
-
         if (empty($this->nomorPembayaran)) {
             $this->nomorPembayaran = 'PAY-SALE-'.date('YmdHis');
         }
 
-        $rekeningKas = ($this->metodePembayaran == 'transfer') ? '1.1.01.03' : '1.1.01.01'; // Default Cash vs Bank
+        $kodeRekening = \App\Utils\PaymentUtil::ambilRekening('sales', 'cash', $this->metodePembayaran, $this->noRekening);
+        $rekeningKas = $kodeRekening['sales']['rekening_debit'];
 
         // Calculate Splits
         $totalHpp = $this->detailSale->saleDetails->sum(function ($detail) {

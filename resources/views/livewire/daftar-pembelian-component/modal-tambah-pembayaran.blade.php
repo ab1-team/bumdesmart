@@ -40,19 +40,46 @@
                             <small class="fw-bold text-success" x-text="formatRupiah(kembalian)"></small>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label class="form-label">Metode Pembayaran</label>
-                        <div wire:ignore>
-                            <select class="form-select" id="metodePembayaranSelect" x-model="metodePembayaran">
-                                <option value="cash">Tunai (Cash)</option>
-                                <option value="transfer">Transfer Bank</option>
-                            </select>
+                        <div class="form-selectgroup w-100">
+                            <label class="form-selectgroup-item flex-grow-1">
+                                <input type="radio" name="payment_method_purchase_modal" value="cash"
+                                    class="form-selectgroup-input" x-model="metodePembayaran">
+                                <span class="form-selectgroup-label">
+                                    <span class="material-symbols-outlined me-1">payments</span>
+                                    Tunai
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item flex-grow-1">
+                                <input type="radio" name="payment_method_purchase_modal" value="transfer"
+                                    class="form-selectgroup-input" x-model="metodePembayaran">
+                                <span class="form-selectgroup-label">
+                                    <span class="material-symbols-outlined me-1">account_balance</span>
+                                    Transfer
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item flex-grow-1">
+                                <input type="radio" name="payment_method_purchase_modal" value="qris"
+                                    class="form-selectgroup-input" x-model="metodePembayaran">
+                                <span class="form-selectgroup-label">
+                                    <span class="material-symbols-outlined me-1">qr_code_2</span>
+                                    QRIS
+                                </span>
+                            </label>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3" x-show="metodePembayaran === 'transfer'" x-transition>
-                        <label class="form-label">No. Referensi / Rekening</label>
-                        <input type="text" class="form-control" wire:model="noRekening"
-                            placeholder="Contoh: BCA 123456789" />
+                    
+                    <div class="col-md-12 mb-3" x-show="['transfer', 'qris'].includes(metodePembayaran)" x-transition>
+                        <label class="form-label">Pilih Bank</label>
+                        <div wire:ignore>
+                            <select id="bankAccountSelectPurchaseModal" class="form-select" x-model="noRekening" placeholder="Pilih Rekening Bank...">
+                                <option value=""></option>
+                                @foreach($bankAccounts as $bank)
+                                    <option value="{{ $bank->no_rek_bank }}">{{ $bank->nama }} ({{ $bank->no_rek_bank }})</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Keterangan</label>
@@ -79,14 +106,15 @@
                 formattedJumlahPembayaran: '',
                 formattedSudahDibayar: '',
                 metodePembayaran: 'cash',
+                noRekening: '',
                 kembalian: 0,
                 picker: null,
-                tomSelect: null,
+                bankSelect: null,
 
                 initModal() {
                     // Sync initial data from Livewire
-                    this.sisaTagihan = @this.sisaTagihan;
-                    this.sudahDibayar = @this.sudahDibayar;
+                    this.sisaTagihan = parseInt(@this.sisaTagihan) || 0;
+                    this.sudahDibayar = parseInt(@this.sudahDibayar) || 0;
                     this.totalTagihan = this.sisaTagihan + this.sudahDibayar;
 
                     this.formattedSudahDibayar = this.formatRupiah(this.sudahDibayar);
@@ -94,22 +122,38 @@
                     this.jumlahPembayaran = 0;
                     this.kembalian = 0;
                     this.metodePembayaran = 'cash';
+                    this.noRekening = '';
 
                     this.initDatePicker();
-                    this.initTomSelect();
-                },
+                    this.initBankSelect();
 
-                initTomSelect() {
-                    if (this.tomSelect) {
-                        this.tomSelect.destroy();
-                    }
-                    this.tomSelect = new TomSelect('#metodePembayaranSelect', {
-                        onChange: (value) => {
-                            this.metodePembayaran = value;
-                            @this.set('metodePembayaran', value);
+                    this.$watch('metodePembayaran', (value) => {
+                        @this.set('metodePembayaran', value);
+                        if (value === 'transfer' && @js($defaultTransferAccount)) {
+                            this.noRekening = @js($defaultTransferAccount);
+                        } else if (value === 'qris' && @js($defaultQrisAccount)) {
+                            this.noRekening = @js($defaultQrisAccount);
                         }
                     });
-                    this.tomSelect.setValue('cash');
+
+                    this.$watch('noRekening', (value) => {
+                        @this.set('noRekening', value);
+                        if (this.bankSelect) {
+                            this.bankSelect.setValue(value, true);
+                        }
+                    });
+                },
+
+                initBankSelect() {
+                    if (this.bankSelect) {
+                        this.bankSelect.destroy();
+                    }
+                    this.bankSelect = new TomSelect('#bankAccountSelectPurchaseModal', {
+                        placeholder: 'Pilih Rekening Bank...',
+                        onChange: (value) => {
+                            this.noRekening = value;
+                        }
+                    });
                 },
 
                 initDatePicker() {
