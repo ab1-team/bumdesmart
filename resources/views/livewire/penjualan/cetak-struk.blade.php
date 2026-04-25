@@ -143,6 +143,26 @@
                 <td class="text-left">Plg</td>
                 <td class="text-right">{{ $sale->customer->nama_pelanggan ?? 'Umum' }}</td>
             </tr>
+            <tr>
+                <td class="text-left">Status</td>
+                <td class="text-right fw-bold">
+                    @php
+                        $payment = $sale->payments->whereNotIn('metode_pembayaran', ['system', 'internal'])->first();
+                        $metode = $payment ? strtoupper($payment->metode_pembayaran) : 'TUNAI';
+                        
+                        $statusPrefix = 'LUNAS';
+                        if ($sale->jumlah_utang > 0) {
+                            $statusPrefix = 'UTANG';
+                        }
+                        $statusBayar = $statusPrefix . ' ' . $metode;
+                        
+                        if (in_array($metode, ['TRANSFER', 'QRIS']) && $payment && $payment->no_referensi) {
+                            $statusBayar .= ' (' . $payment->no_referensi . ')';
+                        }
+                    @endphp
+                    {{ $statusBayar }}
+                </td>
+            </tr>
         </table>
 
         <div class="divider"></div>
@@ -209,7 +229,6 @@
 
         <div class="text-center text-small">
             <p>Terima kasih atas kunjungan Anda!</p>
-            <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
         </div>
     </div>
 

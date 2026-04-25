@@ -20,6 +20,8 @@ class TambahPenjualan extends Component
 
     public $businessId;
     public $bankAccounts = [];
+    public $defaultTransferAccount = null;
+    public $defaultQrisAccount = null;
 
     // View States (Minimal, strictly for initial render/hydration)
     public $nomorPenjualan;
@@ -62,6 +64,9 @@ class TambahPenjualan extends Component
         $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
             ->whereNotNull('no_rek_bank')
             ->get();
+            
+        $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->no_rek_bank;
+        $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->no_rek_bank;
     }
 
     public function loadSaleData($id)

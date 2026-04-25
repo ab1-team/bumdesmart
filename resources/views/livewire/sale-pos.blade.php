@@ -807,6 +807,14 @@
                         .stringify(val)));
 
                     this.resetCheckout();
+
+                    this.$watch('checkOut.payment_method', (value) => {
+                        if (value === 'transfer' && @js($defaultTransferAccount)) {
+                            this.checkOut.no_rekening = @js($defaultTransferAccount);
+                        } else if (value === 'qris' && @js($defaultQrisAccount)) {
+                            this.checkOut.no_rekening = @js($defaultQrisAccount);
+                        }
+                    });
                 },
 
                 getSpecialPrice(productId) {
@@ -1134,7 +1142,7 @@
                     };
                 },
 
-                 calculateItemDiscount(item) {
+                calculateItemDiscount(item) {
                     if (!item || !item.diskon) return 0;
                     let price = parseFloat(item.price);
                     let qty = parseFloat(item.qty);

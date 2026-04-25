@@ -176,6 +176,27 @@
                             <td class="value-col">:</td>
                             <td style="text-align: right;">{{ strtoupper($sale->user->nama_lengkap ?? 'Admin') }}</td>
                         </tr>
+                        <tr>
+                            <td class="label-col">Status</td>
+                            <td class="value-col">:</td>
+                            <td style="text-align: right;" class="fw-bold">
+                                @php
+                                    $payment = $sale->payments->whereNotIn('metode_pembayaran', ['system', 'internal'])->first();
+                                    $metode = $payment ? strtoupper($payment->metode_pembayaran) : 'TUNAI';
+                                    
+                                    $statusPrefix = 'LUNAS';
+                                    if ($sale->jumlah_utang > 0) {
+                                        $statusPrefix = 'UTANG';
+                                    }
+                                    $statusBayar = $statusPrefix . ' ' . $metode;
+                                    
+                                    if (in_array($metode, ['TRANSFER', 'QRIS']) && $payment && $payment->no_referensi) {
+                                        $statusBayar .= ' (' . $payment->no_referensi . ')';
+                                    }
+                                @endphp
+                                {{ $statusBayar }}
+                            </td>
+                        </tr>
                     </table>
                 </td>
             </tr>
@@ -208,12 +229,6 @@
         </div>
 
         <!-- Footer -->
-        <div style="text-align: center; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: 8px;">
-            HARGA SUDAH TERMASUK PPN 11%
-        </div>
-        <div style="text-align: center; font-size: 9px; margin-top: 5px;">
-            Komplain barang dan harga, diterima paling lambat 7 (tujuh) hari dari tanggal terima. Selebihnya dianggap setuju.
-        </div>
 
         <div class="footer-section">
             <div class="signature-section">

@@ -46,8 +46,22 @@
                                                                         <span class="tree-dot">•</span>
                                                                         <span class="badge bg-muted-lt me-2">{{ $acc->kode }}</span>
                                                                         <span class="text-muted">{{ $acc->nama }}</span>
-                                                                        <span class="ms-auto badge {{ $acc->jenis_mutasi == 'debit' ? 'bg-green-lt' : 'bg-red-lt' }} small" style="font-size: 10px;">
-                                                                            {{ strtoupper($acc->jenis_mutasi) }}
+                                                                        <span class="ms-auto d-flex gap-1 align-items-center">
+                                                                            @if($acc->no_rek_bank)
+                                                                                <button wire:click="toggleDefault({{ $acc->id }}, 'transfer')" 
+                                                                                    class="btn btn-icon btn-sm {{ $acc->is_default_transfer ? 'btn-primary' : 'btn-outline-primary' }}"
+                                                                                    title="Set Default Transfer">
+                                                                                    <span class="material-symbols-outlined" style="font-size: 16px;">account_balance</span>
+                                                                                </button>
+                                                                                <button wire:click="toggleDefault({{ $acc->id }}, 'qris')" 
+                                                                                    class="btn btn-icon btn-sm {{ $acc->is_default_qris ? 'btn-success' : 'btn-outline-success' }}"
+                                                                                    title="Set Default QRIS">
+                                                                                    <span class="material-symbols-outlined" style="font-size: 16px;">qr_code_2</span>
+                                                                                </button>
+                                                                            @endif
+                                                                            <span class="badge {{ $acc->jenis_mutasi == 'debit' ? 'bg-green-lt' : 'bg-red-lt' }} small" style="font-size: 10px;">
+                                                                                {{ strtoupper($acc->jenis_mutasi) }}
+                                                                            </span>
                                                                         </span>
                                                                     </div>
                                                                 </li>

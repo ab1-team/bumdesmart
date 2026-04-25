@@ -15,7 +15,7 @@ class CetakStruk extends Component
 
     public function mount($id)
     {
-        $this->sale = Sale::with(['saleDetails.product', 'customer', 'user'])->findOrFail($id);
+        $this->sale = Sale::with(['saleDetails.product', 'customer', 'user', 'payments'])->findOrFail($id);
 
         $this->owner = tenant();
         $this->business = \App\Models\Business::where('id', $this->sale->user->business_id)->first() ?? \App\Models\Business::first();

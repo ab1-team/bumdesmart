@@ -17,6 +17,8 @@ class Account extends Model
         'jenis_mutasi',
         'no_rek_bank',
         'atas_nama_rek',
+        'is_default_transfer',
+        'is_default_qris',
     ];
 
     public function paymentsDebit()

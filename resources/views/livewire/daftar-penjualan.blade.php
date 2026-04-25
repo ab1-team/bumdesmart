@@ -69,7 +69,7 @@
                                         wire:click="lihatPembayaran({{ $sale->id }})">
                                         <i class="fas fa-history me-2"></i> Lihat Pembayaran
                                     </a>
-                                    @if ($sale->total - $sale->payments->sum('total_harga') > 0)
+                                    @if ($sale->jumlah_utang > 0)
                                         <a class="dropdown-item" href="#"
                                             wire:click="tambahPembayaran({{ $sale->id }})">
                                             <i class="fas fa-money-bill-wave me-2"></i> Tambahkan Pembayaran

@@ -9,16 +9,20 @@ class PaymentUtil
     public static function ambilRekening($jenisTransaksi = 'purchase', $jenisPembayaran = 'cash', $metodeBayar = '', $noRekening = null)
     {
         $rekeningKas = '1.1.01.01';
-        if ($metodeBayar == 'transfer') {
+        if ($metodeBayar == 'transfer' || $metodeBayar == 'qris') {
             $rekeningKas = '1.1.01.03';
+            
+            $query = Account::where('business_id', auth()->user()->business_id);
+            
             if ($noRekening) {
-                $rekeningBank = Account::where('business_id', auth()->user()->business_id)
-                    ->where('no_rek_bank', $noRekening)
-                    ->first();
+                $rekeningBank = (clone $query)->where('no_rek_bank', $noRekening)->first();
+            } else {
+                $defaultField = ($metodeBayar == 'transfer') ? 'is_default_transfer' : 'is_default_qris';
+                $rekeningBank = (clone $query)->where($defaultField, true)->first();
+            }
 
-                if ($rekeningBank) {
-                    $rekeningKas = $rekeningBank->kode;
-                }
+            if ($rekeningBank) {
+                $rekeningKas = $rekeningBank->kode;
             }
         }
 

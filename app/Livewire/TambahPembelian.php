@@ -19,6 +19,8 @@ class TambahPembelian extends Component
 
     public $businessId;
     public $bankAccounts = [];
+    public $defaultTransferAccount = null;
+    public $defaultQrisAccount = null;
 
     // Form Fields (Livewire still tracks these for initial binding/validation if needed,
     // but primary interaction is client-side)
@@ -107,6 +109,9 @@ class TambahPembelian extends Component
         $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
             ->whereNotNull('no_rek_bank')
             ->get();
+            
+        $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->no_rek_bank;
+        $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->no_rek_bank;
     }
 
     public function loadPurchaseData($id)

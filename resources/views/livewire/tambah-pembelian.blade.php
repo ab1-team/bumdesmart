@@ -283,10 +283,22 @@
                                                 </div>
                                             </span>
                                         </label>
+                                        <label class="form-selectgroup-item flex-grow-1">
+                                            <input type="radio" name="metodeBayar" value="qris"
+                                                class="form-selectgroup-input" x-model="metodeBayar">
+                                            <span class="form-selectgroup-label">
+                                                <div class="d-flex gap-2 align-items-center">
+                                                    <span class="material-symbols-outlined">
+                                                        qr_code_2
+                                                    </span>
+                                                    <span>QRIS</span>
+                                                </div>
+                                            </span>
+                                        </label>
                                     </div>
                                 </div>
 
-                                <div x-show="metodeBayar === 'transfer' && parseFormatted(bayar) > 0" x-transition
+                                <div x-show="['transfer', 'qris'].includes(metodeBayar) && parseFormatted(bayar) > 0" x-transition
                                     class="mb-3">
                                     <label class="form-label">Pilih Bank</label>
                                     <div wire:ignore>
@@ -592,6 +604,14 @@
                             if (pay < grand) {
                                 this.bayar = this.summary.grandTotal;
                             }
+                        }
+                    });
+
+                    this.$watch('metodeBayar', (value) => {
+                        if (value === 'transfer' && @js($defaultTransferAccount)) {
+                            this.noRekening = @js($defaultTransferAccount);
+                        } else if (value === 'qris' && @js($defaultQrisAccount)) {
+                            this.noRekening = @js($defaultQrisAccount);
                         }
                     });
                 },

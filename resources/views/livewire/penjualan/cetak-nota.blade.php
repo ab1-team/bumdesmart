@@ -150,13 +150,20 @@
         @php
             $logoUrl = $owner && $owner->logo ? asset('storage/' . $owner->logo) : null;
             $tanggal = date('d-m-Y', strtotime($sale->tanggal_transaksi));
-            $tempo = $sale->jumlah_utang > 0 ? date('d-m-Y', strtotime($sale->tanggal_transaksi . ' + 30 days')) : '-';
             
-            // Status Pembayaran Logic
-            $statusBayar = 'LUNAS';
-            if ($sale->jumlah_utang > 0) {
-                $statusBayar = $sale->dibayar > 0 ? 'SEBAGIAN' : 'BELUM BAYAR';
+            // Payment Method Logic
+            $payment = $sale->payments->whereNotIn('metode_pembayaran', ['system', 'internal'])->first();
+            $metode = $payment ? strtoupper($payment->metode_pembayaran) : 'TUNAI';
+            if (in_array($metode, ['TRANSFER', 'QRIS']) && $payment && $payment->no_referensi) {
+                $metode .= ' (' . $payment->no_referensi . ')';
             }
+
+            // Status Pembayaran Logic
+            $statusPrefix = 'LUNAS';
+            if ($sale->jumlah_utang > 0) {
+                $statusPrefix = 'UTANG';
+            }
+            $statusBayar = $statusPrefix . ' ' . $metode;
         @endphp
 
         <!-- Header -->
@@ -191,7 +198,7 @@
                             <td class="fw-bold">{{ $sale->customer->nama_pelanggan ?? 'Umum' }}</td>
                             <td class="label-col" style="text-align: right;">Status</td>
                             <td class="value-col">:</td>
-                            <td style="text-align: right;">{{ $statusBayar }}</td>
+                            <td style="text-align: right;" class="fw-bold">{{ $statusBayar }}</td>
                         </tr>
                     </table>
                 </td>

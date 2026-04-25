@@ -67,10 +67,18 @@
                                 Transfer
                             </span>
                         </label>
+                        <label class="form-selectgroup-item flex-grow-1">
+                            <input type="radio" name="payment_method" value="qris"
+                                class="form-selectgroup-input" x-model="checkOut.payment_method">
+                            <span class="form-selectgroup-label">
+                                <span class="material-symbols-outlined me-1">qr_code_2</span>
+                                QRIS
+                            </span>
+                        </label>
                     </div>
                 </div>
 
-                <div class="mb-3" x-show="checkOut.payment_method === 'transfer'" x-transition>
+                <div class="mb-3" x-show="['transfer', 'qris'].includes(checkOut.payment_method)" x-transition>
                     <label class="form-label">Pilih Bank</label>
                     <div wire:ignore>
                         <select id="bankAccountSelectPos" class="form-select" x-model="checkOut.no_rekening" placeholder="Pilih Rekening Bank...">

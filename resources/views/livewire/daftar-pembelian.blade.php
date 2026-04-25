@@ -15,12 +15,6 @@
 
             <x-table :headers="$headers" :results="$purchases" :sortColumn="$sortBy" :sortDirection="$sortDirection">
                 @forelse ($purchases as $purchase)
-                    @php
-                        $totalDibayar = 0;
-                        foreach ($purchase->payments as $payment) {
-                            $totalDibayar += $payment->total_harga;
-                        }
-                    @endphp
 
                     <tr>
                         <td>{{ $loop->iteration + ($purchases->currentPage() - 1) * $purchases->perPage() }}</td>
@@ -47,8 +41,8 @@
                             @endif
                         </td>
                         <td>{{ number_format($purchase->total, 0, ',', '.') }}</td>
-                        <td>{{ number_format($totalDibayar, 0, ',', '.') }}</td>
-                        <td>{{ number_format($purchase->total - $totalDibayar, 0, ',', '.') }}</td>
+                        <td>{{ number_format($purchase->dibayar, 0, ',', '.') }}</td>
+                        <td>{{ number_format($purchase->jumlah_utang, 0, ',', '.') }}</td>
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-info dropdown-toggle" type="button"
@@ -71,10 +65,10 @@
                                         Lihat Pembayaran
                                     </a>
                                     <div class="dropdown-divider"></div>
-                                    @if ($purchase->total - $totalDibayar > 0)
+                                    @if ($purchase->jumlah_utang > 0)
                                         <a class="dropdown-item" href="#"
                                             wire:click="tambahPembayaran({{ $purchase->id }})">
-                                            Tambahkan Pembayaran
+                                            <i class="fas fa-money-bill-wave me-2"></i> Tambahkan Pembayaran
                                         </a>
                                     @endif
                                     <a class="dropdown-item" href="/pembelian/retur/{{ $purchase->id }}">
