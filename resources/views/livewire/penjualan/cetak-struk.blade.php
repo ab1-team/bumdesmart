@@ -28,7 +28,8 @@
         }
 
         p {
-            margin: 2px 0;
+            margin: 0;
+            line-height: 1.2;
         }
 
         .text-center {
@@ -53,12 +54,12 @@
 
         .divider {
             border-top: 1px dashed #000;
-            margin: 5px 0;
+            margin: 2px 0;
         }
 
         .double-divider {
             border-top: 2px dashed #000;
-            margin: 5px 0;
+            margin: 2px 0;
         }
 
         table {
@@ -68,8 +69,9 @@
 
         th,
         td {
-            padding: 2px 0;
+            padding: 1px 0;
             vertical-align: top;
+            line-height: 1.2;
         }
 
         .item-row td {
