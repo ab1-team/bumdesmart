@@ -134,6 +134,11 @@
                 @endif
             </div>
             <div class="modal-footer">
+                @if (!empty($detailPurchase))
+                    <a href="/pembelian/cetak-nota/{{ $detailPurchase->id }}" target="_blank" class="btn btn-dark me-2">
+                        <span class="material-symbols-outlined me-1">description</span> Cetak Nota (A5)
+                    </a>
+                @endif
                 <button type="button" class="btn ms-auto" data-bs-dismiss="modal">
                     Tutup
                 </button>

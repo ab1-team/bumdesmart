@@ -59,6 +59,9 @@
                                     <a class="dropdown-item" href="/pembelian/edit/{{ $purchase->id }}">
                                         Edit
                                     </a>
+                                    <a class="dropdown-item" href="/pembelian/cetak-nota/{{ $purchase->id }}" target="_blank">
+                                        <i class="fas fa-file-invoice me-2"></i> Cetak Nota (A5)
+                                    </a>
 
                                     <a class="dropdown-item" href="#"
                                         wire:click="lihatPembayaran({{ $purchase->id }})">

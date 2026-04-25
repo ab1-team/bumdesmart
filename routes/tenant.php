@@ -80,6 +80,7 @@ Route::middleware([
             Route::get('/pembelian/tambah', TambahPembelian::class);
             Route::get('/pembelian/daftar', DaftarPembelian::class);
             Route::get('/pembelian/edit/{id}', TambahPembelian::class);
+            Route::get('/pembelian/cetak-nota/{id}', \App\Livewire\Pembelian\CetakNota::class);
 
             Route::get('/pembelian/daftar-retur', DaftarReturPembelian::class);
             Route::get('/pembelian/retur/{id}', TambahReturPembelian::class);
