@@ -38,6 +38,7 @@ class Member extends Component
     {
         $this->reset('namaGroup', 'deskripsi', 'diskon', 'id');
         $this->diskon = 0;
+        $this->deskripsi = '-';
     }
 
     public function create()

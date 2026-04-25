@@ -50,6 +50,8 @@ class Supplier extends Component
     public function resetForm()
     {
         $this->reset('kodeSupplier', 'namaSupplier', 'noHp', 'alamat', 'email', 'id');
+        $this->noHp = '0';
+        $this->alamat = '-';
     }
 
     public function create()
@@ -57,7 +59,15 @@ class Supplier extends Component
         $this->resetForm();
         $this->titleModal = 'Tambah Supplier';
 
+        $this->kodeSupplier = $this->generateKodeSupplier();
+
         $this->dispatch('show-modal', modalId: 'supplierModal');
+    }
+
+    private function generateKodeSupplier()
+    {
+        $count = \App\Models\Supplier::where('business_id', $this->businessId)->count() + 1;
+        return 'SUPP-' . str_pad($count, 5, '0', STR_PAD_LEFT);
     }
 
     public function edit($id)

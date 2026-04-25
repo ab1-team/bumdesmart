@@ -53,6 +53,7 @@ class User extends Component
     public function resetForm()
     {
         $this->reset('role', 'namaLengkap', 'inisial', 'noHp', 'username', 'password', 'id');
+        $this->noHp = '0';
     }
 
     public function create()
@@ -60,7 +61,24 @@ class User extends Component
         $this->resetForm();
         $this->titleModal = 'Tambah User';
 
+        $firstRole = \App\Models\Role::where('business_id', $this->businessId)->first();
+        if ($firstRole) {
+            $this->role = $firstRole->id;
+        }
+
         $this->dispatch('show-modal', modalId: 'userModal');
+    }
+
+    public function updatedNamaLengkap($value)
+    {
+        if (empty($this->inisial)) {
+            $words = explode(' ', $value);
+            $initial = '';
+            foreach ($words as $word) {
+                $initial .= strtoupper(substr($word, 0, 1));
+            }
+            $this->inisial = substr($initial, 0, 3);
+        }
     }
 
     public function edit($id)

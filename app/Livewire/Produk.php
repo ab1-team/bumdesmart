@@ -123,6 +123,8 @@ class Produk extends Component
     public function resetForm()
     {
         $this->reset('productId', 'sku', 'barcode', 'namaProduk', 'kategori', 'merek', 'satuan', 'rakPenyimpanan', 'hargaBeliDefault', 'hargaJualDefault', 'stokMinimal', 'gambar', 'aktif', 'displayGambar');
+        $this->stokMinimal = 0;
+        $this->barcode = '0';
     }
 
     public function create()

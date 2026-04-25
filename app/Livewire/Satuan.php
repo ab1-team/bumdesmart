@@ -44,6 +44,7 @@ class Satuan extends Component
     public function resetForm()
     {
         $this->reset('namaSatuan', 'inisialSatuan', 'deskripsi', 'ijinkanDesimal', 'id');
+        $this->ijinkanDesimal = false;
     }
 
     public function create()

@@ -55,6 +55,9 @@ class Pelanggan extends Component
     public function resetForm()
     {
         $this->reset('member', 'kodePelanggan', 'namaPelanggan', 'noHp', 'alamat', 'username', 'password', 'limitHutang', 'id');
+        $this->limitHutang = 0;
+        $this->noHp = '0';
+        $this->alamat = '-';
     }
 
     public function create()
@@ -62,7 +65,21 @@ class Pelanggan extends Component
         $this->resetForm();
         $this->titleModal = 'Tambah Pelanggan';
 
+        // Set Default Values
+        $this->kodePelanggan = $this->generateKodePelanggan();
+        
+        $firstGroup = \App\Models\CustomerGroup::where('business_id', $this->businessId)->first();
+        if ($firstGroup) {
+            $this->member = $firstGroup->id;
+        }
+
         $this->dispatch('show-modal', modalId: 'pelangganModal');
+    }
+
+    private function generateKodePelanggan()
+    {
+        $count = \App\Models\Customer::where('business_id', $this->businessId)->count() + 1;
+        return 'CUST-' . str_pad($count, 5, '0', STR_PAD_LEFT);
     }
 
     public function edit($id)
