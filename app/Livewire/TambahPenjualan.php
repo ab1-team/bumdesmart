@@ -19,6 +19,7 @@ class TambahPenjualan extends Component
     public $title;
 
     public $businessId;
+    public $bankAccounts = [];
 
     // View States (Minimal, strictly for initial render/hydration)
     public $nomorPenjualan;
@@ -57,6 +58,10 @@ class TambahPenjualan extends Component
                 ];
             }
         }
+
+        $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
+            ->whereNotNull('no_rek_bank')
+            ->get();
     }
 
     public function loadSaleData($id)

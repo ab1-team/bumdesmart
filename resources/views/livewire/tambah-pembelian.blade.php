@@ -288,8 +288,15 @@
 
                                 <div x-show="metodeBayar === 'transfer' && parseFormatted(bayar) > 0" x-transition
                                     class="mb-3">
-                                    <input type="text" class="form-control" x-model="noRekening"
-                                        placeholder="Nomor Rekening">
+                                    <label class="form-label">Pilih Bank</label>
+                                    <div wire:ignore>
+                                        <select id="bankAccountSelectPurchase" class="form-select" x-model="noRekening" placeholder="Pilih Rekening Bank...">
+                                            <option value=""></option>
+                                            @foreach($bankAccounts as $bank)
+                                                <option value="{{ $bank->no_rek_bank }}">{{ $bank->nama }} ({{ $bank->no_rek_bank }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div class="d-flex justify-content-between small">
@@ -1026,6 +1033,17 @@
                     onChange: function(value) {
                         let el = document.querySelector('[x-data]');
                         if (el) Alpine.$data(el).jenisPajak = value;
+                    }
+                });
+            }
+
+            // Bank Account Select
+            if (document.getElementById('bankAccountSelectPurchase')) {
+                new TomSelect('#bankAccountSelectPurchase', {
+                    create: false,
+                    onChange: function(value) {
+                        let el = document.querySelector('[x-data]');
+                        if (el) Alpine.$data(el).noRekening = value;
                     }
                 });
             }

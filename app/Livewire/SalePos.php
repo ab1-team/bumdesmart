@@ -22,6 +22,7 @@ class SalePos extends Component
     use WithPagination;
 
     public $businessId;
+    public $bankAccounts = [];
 
 
     public $cashDrawer = null;
@@ -49,6 +50,10 @@ class SalePos extends Component
         $this->defaultCustomer = Customer::where('business_id', $this->businessId)
             ->where('nama_pelanggan', 'LIKE', '%umum%')
             ->first();
+
+        $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
+            ->whereNotNull('no_rek_bank')
+            ->get();
     }
 
     public function checkCashDrawer()

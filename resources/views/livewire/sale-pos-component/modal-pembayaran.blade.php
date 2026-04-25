@@ -71,8 +71,15 @@
                 </div>
 
                 <div class="mb-3" x-show="checkOut.payment_method === 'transfer'" x-transition>
-                    <label class="form-label">No. Rekening / Ref</label>
-                    <input type="text" class="form-control" x-model="checkOut.no_rekening" placeholder="Opsional...">
+                    <label class="form-label">Pilih Bank</label>
+                    <div wire:ignore>
+                        <select id="bankAccountSelectPos" class="form-select" x-model="checkOut.no_rekening" placeholder="Pilih Rekening Bank...">
+                            <option value=""></option>
+                            @foreach($bankAccounts as $bank)
+                                <option value="{{ $bank->no_rek_bank }}">{{ $bank->nama }} ({{ $bank->no_rek_bank }})</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="mb-3 mt-3">

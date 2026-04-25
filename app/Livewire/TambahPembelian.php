@@ -18,6 +18,7 @@ class TambahPembelian extends Component
     public $title;
 
     public $businessId;
+    public $bankAccounts = [];
 
     // Form Fields (Livewire still tracks these for initial binding/validation if needed,
     // but primary interaction is client-side)
@@ -102,6 +103,10 @@ class TambahPembelian extends Component
                 $this->supplier = $defaultSupplier->id;
             }
         }
+
+        $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
+            ->whereNotNull('no_rek_bank')
+            ->get();
     }
 
     public function loadPurchaseData($id)

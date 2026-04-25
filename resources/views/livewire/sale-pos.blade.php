@@ -1630,6 +1630,22 @@
                     }
                 });
             }
+
+            if (document.getElementById('bankAccountSelectPos')) {
+                new TomSelect('#bankAccountSelectPos', {
+                    create: false,
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    },
+                    onChange: function(value) {
+                        let el = document.querySelector('[x-data]');
+                        if (el) {
+                            Alpine.$data(el).checkOut.no_rekening = value;
+                        }
+                    }
+                });
+            }
         });
 
         document.addEventListener('DOMContentLoaded', function() {
