@@ -130,6 +130,10 @@
             labelField: 'label',
             searchField: 'label',
             options: [],
+            onChange: function(value) {
+                let el = document.querySelector('[x-data]');
+                if (el) Alpine.$data(el).selectedJenisTransaksi = value;
+            }
         });
 
         let sumberDana = new TomSelect('#sumber_dana', {
@@ -137,6 +141,10 @@
             labelField: 'label',
             searchField: 'label',
             options: [],
+            onChange: function(value) {
+                let el = document.querySelector('[x-data]');
+                if (el) Alpine.$data(el).selectedSumberDana = value;
+            }
         });
 
         let disimpanKe = new TomSelect('#disimpan_ke', {
@@ -144,6 +152,10 @@
             labelField: 'label',
             searchField: 'label',
             options: [],
+            onChange: function(value) {
+                let el = document.querySelector('[x-data]');
+                if (el) Alpine.$data(el).selectedDisimpanKe = value;
+            }
         });
 
         document.addEventListener('alpine:init', () => {
@@ -213,7 +225,7 @@
                     })
 
                     jenisTransaksi.clearOptions()
-                    jenisTransaksi.addOption(jenisTransaksiOptions)
+                    jenisTransaksi.addOptions(jenisTransaksiOptions)
                 },
 
                 setKodeAkun(jenisTransaksiId) {
@@ -319,7 +331,7 @@
                         }
 
                     });
-                    sumberDana.addOption(akunSumberDana);
+                    sumberDana.addOptions(akunSumberDana);
 
                     let akunDisimpanKe = [];
                     this.akun.forEach(item => {
@@ -332,7 +344,7 @@
                             label: `${kode}. - ${nama}`
                         });
                     });
-                    disimpanKe.addOption(akunDisimpanKe);
+                    disimpanKe.addOptions(akunDisimpanKe);
                 },
 
                 setAkunJenisTransaksi2() {
@@ -347,7 +359,7 @@
                             label: `${kode}. - ${nama}`
                         });
                     });
-                    sumberDana.addOption(akunSumberDana);
+                    sumberDana.addOptions(akunSumberDana);
 
                     let akunDisimpanKe = [];
                     this.akun.forEach(item => {
@@ -370,7 +382,7 @@
                             });
                         }
                     });
-                    disimpanKe.addOption(akunDisimpanKe);
+                    disimpanKe.addOptions(akunDisimpanKe);
                 },
 
                 setAkunJenisTransaksi3() {
