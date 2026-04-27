@@ -17,7 +17,7 @@
             </div>
         </div>
     @endif
-    <div class="col-12 col-md-5 col-lg-4 d-flex flex-column h-100 mb-3 mb-md-0">
+    <div class="col-12 col-md-5 col-lg-5 d-flex flex-column h-100 mb-3 mb-md-0">
         <div class="mb-3">
             <div class="card">
                 <div class="card-body">
@@ -83,8 +83,8 @@
         <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-1 d-none d-md-block">
             <div class="row g-2">
                 @foreach ($products as $product)
-                    <div class="col-6 mb-2">
-                        <div class="card text-bg-dark border-0 shadow-sm product-card" style="height: 100px;"
+                    <div class="col-6 col-xl-4 mb-2">
+                        <div class="card text-bg-dark border-0 shadow-sm product-card" style="height: 130px;"
                             @click="addToCart({
                                 id: {{ $product->id }},
                                 name: '{{ addslashes($product->nama_produk) }}',
@@ -107,9 +107,9 @@
                                 @endif
                             </div>
                             <div class="card-img-overlay d-flex flex-column justify-content-end p-2">
-                                <h5 class="card-title mb-0 text-truncate" style="font-size: 0.7rem;">
+                                <h5 class="card-title mb-0 text-truncate" style="font-size: 0.85rem;">
                                     {{ $product->nama_produk }}</h5>
-                                <div class="card-text fw-bold text-primary" style="font-size: 0.75rem;">Rp
+                                <div class="card-text fw-bold text-primary" style="font-size: 0.9rem;">Rp
                                     {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
                                 <span class="badge bg-dark-lt position-absolute top-0 end-0 m-1"
                                     style="font-size: 0.6rem;">{{ number_format($product->stok_aktual, $product->stok_aktual == intval($product->stok_aktual) ? 0 : 1, ',', '.') }}</span>
@@ -125,7 +125,7 @@
         </div>
     </div>
 
-    <div class="col-12 col-md-7 col-lg-8 overflow-hidden d-flex flex-column" wire:ignore>
+    <div class="col-12 col-md-7 col-lg-7 overflow-hidden d-flex flex-column" wire:ignore>
         <div class="card h-100">
 
             <div class="card-body p-0 px-3 overflow-x-hidden overflow-y-auto">
@@ -487,6 +487,16 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Ensure Livewire component container fills height */
+        .page-body > .container-fluid {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0 1rem;
         }
 
         @media (max-width: 767.98px) {
@@ -544,21 +554,31 @@
         }
 
         .overflow-y-auto::-webkit-scrollbar {
-            display: none;
+            width: 4px;
+        }
+
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
 
         .overflow-y-auto {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
         }
 
         .category-scroll::-webkit-scrollbar {
-            display: none;
+            height: 4px;
+        }
+
+        .category-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
 
         .category-scroll {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
         }
 
         .product-card {
@@ -1663,18 +1683,24 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-            const scrollContainer = document.querySelector('.overflow-y-auto');
-            if (scrollContainer) {
+            document.querySelectorAll('.overflow-y-auto').forEach(scrollContainer => {
                 let isDown = false;
                 let startY, scrollTop;
                 scrollContainer.addEventListener('mousedown', (e) => {
                     isDown = true;
+                    scrollContainer.style.cursor = 'grabbing';
                     scrollContainer.style.userSelect = 'none';
                     startY = e.pageY - scrollContainer.offsetTop;
                     scrollTop = scrollContainer.scrollTop;
                 });
-                scrollContainer.addEventListener('mouseleave', () => isDown = false);
-                scrollContainer.addEventListener('mouseup', () => isDown = false);
+                scrollContainer.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    scrollContainer.style.cursor = 'default';
+                });
+                scrollContainer.addEventListener('mouseup', () => {
+                    isDown = false;
+                    scrollContainer.style.cursor = 'default';
+                });
                 scrollContainer.addEventListener('mousemove', (e) => {
                     if (!isDown) return;
                     e.preventDefault();
@@ -1682,7 +1708,7 @@
                     const walk = (y - startY) * 2;
                     scrollContainer.scrollTop = scrollTop - walk;
                 });
-            }
+            });
 
             const categoryScroll = document.querySelector('.category-scroll');
             if (categoryScroll) {
