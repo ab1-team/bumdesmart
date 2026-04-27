@@ -99,8 +99,9 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-primary ms-auto" @click="submitSale"
-                    :disabled="!checkOut.bayar && checkOut.bayar !== 0">
-                    Proses Transaksi
+                    :disabled="isProcessing || (!checkOut.bayar && checkOut.bayar !== 0)">
+                    <span x-show="!isProcessing">Proses Transaksi</span>
+                    <span x-show="isProcessing" class="spinner-border spinner-border-sm" role="status"></span>
                 </button>
             </div>
         </div>

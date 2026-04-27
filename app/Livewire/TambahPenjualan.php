@@ -242,7 +242,15 @@ class TambahPenjualan extends Component
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            $nomorPenjualan = ($data['nomorPenjualan'] != '') ? $data['nomorPenjualan'] : $this->generateInvoiceNumber();
+            // 1. Generate/Verify Invoice Number inside transaction
+            if (! $this->saleId) {
+                // For new sales, generate a fresh number to avoid collisions from numbers generated at page load
+                $nomorPenjualan = \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi');
+            } else {
+                // For edits, use the one provided (which should be the existing one)
+                $nomorPenjualan = $data['nomorPenjualan'];
+            }
+
             $tgl = $data['tanggalPenjualan'] ?? date('Y-m-d');
 
             if ($this->saleId) {
@@ -751,13 +759,7 @@ class TambahPenjualan extends Component
 
     private function generateInvoiceNumber()
     {
-        $date = date('Y/m');
-        $today = date('Y-m-d');
-        $count = Sale::where('business_id', $this->businessId)
-            ->whereDate('tanggal_transaksi', $today)
-            ->count() + 1;
-
-        return 'INV/'.$date.'/'.str_pad($count, 4, '0', STR_PAD_LEFT);
+        return \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi');
     }
 
     public function render()

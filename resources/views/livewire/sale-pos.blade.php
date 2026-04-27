@@ -747,6 +747,7 @@
                 currentCameraId: null,
                 cameras: [],
                 heldSales: [],
+                isProcessing: false,
                 init() {
                     // Check if shift/session changed
                     let currentDrawerId = @js($cashDrawer ? $cashDrawer->id : null);
@@ -1283,6 +1284,8 @@
                 },
 
                 submitSale() {
+                    if (this.isProcessing) return;
+
                     if ((this.checkOut.bayar === '' || this.parseNumber(this.checkOut.bayar) < 0) && this
                         .checkOut.payment_method !== 'credit') {
                         Toast.fire({
@@ -1313,7 +1316,10 @@
                         globalCashback: this.globalCashback
                     };
 
-                    this.$wire.saveSale(payload);
+                    this.isProcessing = true;
+                    this.$wire.saveSale(payload).finally(() => {
+                        this.isProcessing = false;
+                    });
                     $('#checkoutModal').modal('hide');
                 },
 

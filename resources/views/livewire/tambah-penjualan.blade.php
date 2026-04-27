@@ -303,8 +303,9 @@
                                 </div>
 
                                 <button class="btn btn-primary w-100 btn-lg mt-3" x-on:click="saveAll"
-                                    :disabled="isLoading">
-                                    <span x-show="!isLoading">SIMPAN</span>
+                                    wire:loading.attr="disabled" :disabled="isLoading">
+                                    <span wire:loading.remove x-show="!isLoading">SIMPAN</span>
+                                    <span wire:loading x-show="true" class="spinner-border spinner-border-sm" role="status"></span>
                                     <span x-show="isLoading" class="spinner-border spinner-border-sm"
                                         role="status"></span>
                                 </button>

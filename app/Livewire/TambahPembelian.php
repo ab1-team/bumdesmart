@@ -319,7 +319,14 @@ class TambahPembelian extends Component
                 $keterangan .= ' [Transfer: '.$data['noRekening'].']';
             }
 
-            $no_pembelian = ($data['nomorPembelian'] != '') ? $data['nomorPembelian'] : $this->generatePurchaseNumber();
+            // 1. Generate/Verify Purchase Number inside transaction
+            if (! $this->purchaseId) {
+                // For new purchases, generate a fresh number
+                $no_pembelian = \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian');
+            } else {
+                // For edits, use the one provided
+                $no_pembelian = $data['nomorPembelian'];
+            }
 
             // Handle Update vs Create
             if ($this->purchaseId) {
@@ -720,13 +727,7 @@ class TambahPembelian extends Component
 
     private function generatePurchaseNumber()
     {
-        $date = date('Y/m');
-        $today = date('Y-m-d');
-        $count = Purchase::where('business_id', $this->businessId)
-            ->whereDate('tanggal_pembelian', $today)
-            ->count() + 1;
-
-        return 'PO/'.$date.'/'.str_pad($count, 4, '0', STR_PAD_LEFT);
+        return \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian');
     }
 
     public function render()

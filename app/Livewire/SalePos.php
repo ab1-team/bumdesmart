@@ -194,7 +194,7 @@ class SalePos extends Component
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            $nomorPenjualan = 'INV-'.time();
+            $nomorPenjualan = \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi');
             $tgl = now();
 
             $sale = $this->createSaleRecord($data, $user, $nomorPenjualan, $tgl);
