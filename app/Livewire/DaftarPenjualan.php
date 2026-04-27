@@ -22,7 +22,7 @@ class DaftarPenjualan extends Component
         $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
             ->whereNotNull('no_rek_bank')
             ->get();
-            
+
         $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->no_rek_bank;
         $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->no_rek_bank;
     }
@@ -47,9 +47,13 @@ class DaftarPenjualan extends Component
     public $paymentList = [];
 
     public $metodePembayaran = 'cash';
+
     public $noRekening = '';
+
     public $bankAccounts = [];
+
     public $defaultTransferAccount = null;
+
     public $defaultQrisAccount = null;
 
     public function detailPenjualan($id)
@@ -416,7 +420,7 @@ class DaftarPenjualan extends Component
         ]);
 
         $headers = [
-            TableUtil::setTableHeader('id', '#', false, false),
+            TableUtil::setTableHeader('id', '#', true, false),
             TableUtil::setTableHeader('no_invoice', 'No. Invoice', true, true),
             TableUtil::setTableHeader('tanggal_transaksi', 'Tanggal Transaksi', true, true),
             TableUtil::setTableHeader('customer.nama_pelanggan', 'Pelanggan', true, true),
