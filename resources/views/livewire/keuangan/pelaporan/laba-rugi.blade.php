@@ -32,23 +32,28 @@
                 </tr>
             @endforeach
 
-            @if ($index > 0)
+            @if ($index >= 0)
                 <tr style="background-color: #d0d0d0;">
                     <td colspan="2" style="padding: 5px; font-weight: bold; text-align: left; border: 0;">Total
                         {{ $lr['nama'] }}</td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah'], 2) }}
+                        {{ number_format($lr['jumlah_display'] ?? $lr['jumlah'], 2) }}
                     </td>
                 </tr>
             @endif
 
             @php
                 $footerLabel = null;
-                // No footer for Group 1 because Laba Kotor row is the footer
-                if ($index == 4) {
-                    $footerLabel = 'Laba Rugi Sebelum Pajak';
-                } elseif ($index == 5) {
-                    $footerLabel = 'Laba Rugi Bersih';
+                $secondaryFooter = null;
+                if ($index == 0) {
+                    $footerLabel = 'Total Pendapatan';
+                } elseif ($index == 1) {
+                    $footerLabel = 'LABA KOTOR';
+                } elseif ($index == 2) {
+                    $footerLabel = 'Total Beban';
+                    $secondaryFooter = 'Laba Sebelum Pajak';
+                } elseif ($index == 3) {
+                    $footerLabel = 'Laba Bersih';
                 }
             @endphp
 
@@ -57,6 +62,17 @@
                     <td colspan="2"
                         style="padding: 5px; font-weight: bold; text-align: left; text-transform: uppercase; border: 0;">
                         {{ $footerLabel }}
+                    </td>
+                    <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
+                        {{ number_format($index == 2 ? ($lr['jumlah_display'] ?? $lr['jumlah']) : ($index == 0 ? $lr['jumlah'] : $lr['total']), 2) }}
+                    </td>
+                </tr>
+            @endif
+
+            @if ($secondaryFooter)
+                <tr style="background-color: #a0a0a0;">
+                    <td colspan="2" style="padding: 5px; font-weight: bold; text-align: left; text-transform: uppercase; border: 0;">
+                        {{ $secondaryFooter }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
                         {{ number_format($lr['total'], 2) }}

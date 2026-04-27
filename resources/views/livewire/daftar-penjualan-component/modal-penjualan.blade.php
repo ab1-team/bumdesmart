@@ -59,11 +59,18 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @php
+                                    $subtotal = 0;
+                                @endphp
                                 @foreach ($detailSale->saleDetails as $saleDetail)
+                                    @php
+                                        $subtotal += $saleDetail->subtotal;
+                                    @endphp
                                     <tr>
                                         <td class="text-center">{{ $loop->iteration }}</td>
                                         <td>{{ $saleDetail->product->nama_produk }}</td>
-                                        <td class="text-end">{{ number_format($saleDetail->harga_satuan, 0, ',', '.') }}</td>
+                                        <td class="text-end">{{ number_format($saleDetail->harga_satuan, 0, ',', '.') }}
+                                        </td>
                                         <td class="text-center">{{ $saleDetail->jumlah }}</td>
                                         <td class="text-end">
                                             @if ($saleDetail->jenis_diskon == 'persen')
@@ -79,14 +86,15 @@
                                                 {{ number_format($saleDetail->jumlah_cashback, 0, ',', '.') }}
                                             @endif
                                         </td>
-                                        <td class="text-end">{{ number_format($saleDetail->subtotal, 0, ',', '.') }}</td>
+                                        <td class="text-end">{{ number_format($saleDetail->subtotal, 0, ',', '.') }}
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                             <tfoot>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total</td>
-                                    <td class="text-end fw-bold">{{ number_format($detailSale->total, 0, ',', '.') }}</td>
+                                    <td class="text-end fw-bold">{{ number_format($subtotal, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Diskon</td>
@@ -110,7 +118,8 @@
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total Keseluruhan</td>
-                                    <td class="text-end fw-bold">{{ number_format($detailSale->total, 0, ',', '.') }}</td>
+                                    <td class="text-end fw-bold">{{ number_format($detailSale->total, 0, ',', '.') }}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total Dibayar</td>
@@ -141,7 +150,8 @@
                     <a href="/penjualan/cetak-nota/{{ $detailSale->id }}" target="_blank" class="btn btn-dark me-2">
                         <span class="material-symbols-outlined me-1">description</span> Cetak Nota (A5)
                     </a>
-                    <a href="/penjualan/cetak-surat-jalan/{{ $detailSale->id }}" target="_blank" class="btn btn-primary me-2">
+                    <a href="/penjualan/cetak-surat-jalan/{{ $detailSale->id }}" target="_blank"
+                        class="btn btn-primary me-2">
                         <span class="material-symbols-outlined me-1">local_shipping</span> Cetak Surat Jalan
                     </a>
                 @endif

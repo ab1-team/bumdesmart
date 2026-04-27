@@ -57,7 +57,7 @@
                     </div>
 
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-github" x-on:click="simpanTransaksi">Simpan
+                        <button type="button" class="btn btn-primary" x-on:click="simpanTransaksi">Simpan
                             Transaksi</button>
                     </div>
                 </div>
@@ -107,7 +107,9 @@
 
                     this.harga_perolehan = new Intl.NumberFormat('id-ID').format(total);
 
-                    Livewire.dispatch('setHargaPerolehan', { total: total });
+                    Livewire.dispatch('setHargaPerolehan', {
+                        total: total
+                    });
                 },
 
                 kirimData() {
@@ -119,7 +121,9 @@
                         harga_perolehan: this.harga_perolehan.replace(/\D/g, '')
                     };
 
-                    window.dispatchEvent(new CustomEvent('inventarisUpdated', { detail: data }));
+                    window.dispatchEvent(new CustomEvent('inventarisUpdated', {
+                        detail: data
+                    }));
                 }
             }
         }
@@ -430,14 +434,18 @@
                         this.formatNominal();
 
                         const payload = {
-                            tanggal_pembayaran: document.getElementById('tanggal_transaksi').value,
+                            tanggal_pembayaran: document.getElementById('tanggal_transaksi')
+                                .value,
                             jenis_transaksi: this.selectedJenisTransaksi,
                             sumber_dana: this.selectedSumberDana,
                             disimpan_ke: this.selectedDisimpanKe,
-                            relasi: this.inputKeterangan.length > 0 ? this.inputKeterangan[0].value : null,
-                            keterangan: this.inputKeterangan.length > 1 ? this.inputKeterangan[1].value : null,
-                            nominal: String(this.nominal).replace(/\D/g, ''), // <-- koma ini penting
-                            inventaris: this.showFormInventaris ? this.inventarisData : null 
+                            relasi: this.inputKeterangan.length > 0 ? this.inputKeterangan[
+                                0].value : null,
+                            keterangan: this.inputKeterangan.length > 1 ? this
+                                .inputKeterangan[1].value : null,
+                            nominal: String(this.nominal).replace(/\D/g,
+                            ''), // <-- koma ini penting
+                            inventaris: this.showFormInventaris ? this.inventarisData : null
                         };
 
                         @this.call('saveJurnalUmum', payload);

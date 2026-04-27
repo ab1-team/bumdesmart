@@ -232,7 +232,9 @@ class Cetak extends Controller
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
 
-        $labaRugi = KeuanganUtil::labaRugi($tahun, $bulan);
+        $result = KeuanganUtil::labaRugi($tahun, $bulan);
+        $labaRugi = $result['groups'];
+        $metrics = $result['metrics'];
 
         $title = 'Laporan Laba Rugi';
         $periodeParts = [];
@@ -242,7 +244,7 @@ class Cetak extends Controller
         $periodeParts[] = $tahun;
         $subtitle = 'Periode: '.implode(' ', $periodeParts);
 
-        $html = view('livewire.keuangan.pelaporan.laba-rugi', compact('title', 'subtitle', 'labaRugi'))->render();
+        $html = view('livewire.keuangan.pelaporan.laba-rugi', compact('title', 'subtitle', 'labaRugi', 'metrics'))->render();
 
         return $this->streamPdf($html, 'laporan-laba-rugi.pdf');
     }
