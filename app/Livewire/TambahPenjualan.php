@@ -19,8 +19,11 @@ class TambahPenjualan extends Component
     public $title;
 
     public $businessId;
+
     public $bankAccounts = [];
+
     public $defaultTransferAccount = null;
+
     public $defaultQrisAccount = null;
 
     // View States (Minimal, strictly for initial render/hydration)
@@ -65,7 +68,7 @@ class TambahPenjualan extends Component
             ->where('parent_id', 111)
             ->where('nama', 'like', 'Bank%')
             ->get();
-            
+
         $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->id;
         $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->id;
     }
@@ -102,7 +105,7 @@ class TambahPenjualan extends Component
                 'harga_jual' => (string) $detail->harga_satuan,
                 'jumlah_jual' => $detail->jumlah,
                 'unit' => $detail->product->unit ? $detail->product->unit->nama_satuan : '-',
-                'allow_decimal' => $detail->product->unit ? (bool)$detail->product->unit->desimal : false,
+                'allow_decimal' => $detail->product->unit ? (bool) $detail->product->unit->desimal : false,
                 'stok_tersedia' => $availableForThisEdit, // Helper for frontend validation
                 'diskon' => [
                     'jenis' => $detail->jenis_diskon,
@@ -201,8 +204,7 @@ class TambahPenjualan extends Component
                 if ($specialPrice) {
                     $finalPrice = $specialPrice->harga_spesial;
                     $promoLabel = 'Harga Spesial Member';
-                }
-                elseif ($customerGroup->diskon_persen > 0) {
+                } elseif ($customerGroup->diskon_persen > 0) {
                     $discAmount = ($p->harga_jual * $customerGroup->diskon_persen) / 100;
                     $finalPrice = max(0, $p->harga_jual - $discAmount);
                     $promoLabel = 'Diskon Member '.\App\Utils\NumberUtil::format($customerGroup->diskon_persen).'%';
@@ -225,7 +227,7 @@ class TambahPenjualan extends Component
                 'unit' => $p->unit ? $p->unit->nama_satuan : '-',
                 'category' => $p->category ? $p->category->nama_kategori : '-',
                 'brand' => $p->brand ? $p->brand->nama_merek : '-',
-                'allow_decimal' => $p->unit ? (bool)$p->unit->desimal : false,
+                'allow_decimal' => $p->unit ? (bool) $p->unit->desimal : false,
             ];
         }
 
@@ -401,6 +403,7 @@ class TambahPenjualan extends Component
         if (strpos($str, ',') !== false) {
             $clean = str_replace('.', '', $str);
             $clean = str_replace(',', '.', $clean);
+
             return (float) $clean;
         }
 
@@ -408,17 +411,17 @@ class TambahPenjualan extends Component
         if (strpos($str, '.') !== false) {
             $lastDotIdx = strrpos($str, '.');
             $remainingLength = strlen($str) - $lastDotIdx - 1;
-            
+
             // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
             if ($remainingLength !== 3) {
                 return (float) $str;
             }
-            
+
             // If there's another dot, it's thousands
             if (strpos($str, '.') !== $lastDotIdx) {
                 return (float) str_replace('.', '', $str);
             }
-            
+
             // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
             return (float) str_replace('.', '', $str);
         }
@@ -648,7 +651,7 @@ class TambahPenjualan extends Component
             $jenisPembayaran = 'credit';
         }
 
-        $kodeRekening = PaymentUtil::ambilRekening('sales', $jenisPembayaran, $metodeBayar, $data['noRekening']);
+        $kodeRekening = PaymentUtil::ambilRekening('sales', 'cash', $metodeBayar, $data['noRekening']);
 
         // Fetch all SaleDetails in one query (OPTIMIZATION)
         $details = \App\Models\SaleDetail::where('sale_id', $sale->id)
@@ -671,7 +674,7 @@ class TambahPenjualan extends Component
 
         // Add global discounts/cashback with proper percentage calculation
         $subtotalAfterItems = $totalGrossAll - $totalDiskonAll;
-        
+
         $globalDiskonVal = $this->parseNumber($data['globalDiskon']['jumlah'] ?? 0);
         if (($data['globalDiskon']['jenis'] ?? 'nominal') === 'persen') {
             $totalDiskonAll += ($subtotalAfterItems * $globalDiskonVal / 100);
@@ -689,38 +692,61 @@ class TambahPenjualan extends Component
         $payments = [];
         $timestamp = now();
 
-        // 1. Revenue Entry (Gross Amount)
-        // Record the full gross revenue regardless of the amount paid
-        $payments[] = [
-            'business_id' => $this->businessId,
-            'user_id' => $user->id,
-            'no_pembayaran' => $nomorPenjualan,
-            'tanggal_pembayaran' => $tgl,
-            'jenis_transaksi' => 'sale',
-            'transaction_id' => $sale->id,
-            'total_harga' => $totalGrossAll,
-            'metode_pembayaran' => $metodeBayar,
-            'no_referensi' => $data['noRekening'] ?? null,
-            'catatan' => 'Penjualan ' . $nomorPenjualan,
-            'rekening_debit' => $kodeRekening['sales']['rekening_debit'],
-            'rekening_kredit' => $kodeRekening['sales']['rekening_kredit'],
-            'created_at' => $timestamp,
-            'updated_at' => $timestamp,
-        ];
+        // 1a. Revenue Entry - Cash Part
+        $cashAmount = ($pay >= $grandTotal) ? $grandTotal : $pay;
+        if ($cashAmount > 0) {
+            $payments[] = [
+                'business_id' => $this->businessId,
+                'user_id' => $user->id,
+                'no_pembayaran' => $nomorPenjualan,
+                'tanggal_pembayaran' => $tgl,
+                'jenis_transaksi' => 'sale',
+                'transaction_id' => $sale->id,
+                'total_harga' => $cashAmount,
+                'metode_pembayaran' => $metodeBayar,
+                'no_referensi' => $data['noRekening'] ?? null,
+                'catatan' => 'Penjualan Tunai '.$nomorPenjualan,
+                'rekening_debit' => $kodeRekening['sales']['rekening_debit'], // Kas/Bank
+                'rekening_kredit' => '4.1.01.01', // Pendapatan
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
+
+        // 1b. Revenue Entry - Credit Part (Piutang)
+        $creditAmount = $grandTotal - $cashAmount;
+        if ($creditAmount > 0) {
+            $payments[] = [
+                'business_id' => $this->businessId,
+                'user_id' => $user->id,
+                'no_pembayaran' => $nomorPenjualan.'-CR',
+                'tanggal_pembayaran' => $tgl,
+                'jenis_transaksi' => 'sale',
+                'transaction_id' => $sale->id,
+                'total_harga' => $creditAmount,
+                'metode_pembayaran' => 'piutang',
+                'no_referensi' => null,
+                'catatan' => 'Piutang Penjualan '.$nomorPenjualan,
+                'rekening_debit' => '1.1.04.01', // Piutang
+                'rekening_kredit' => '4.1.01.01', // Pendapatan
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
 
         // 2. COGS Entry (HPP)
         if ($totalHppAll > 0) {
             $payments[] = [
                 'business_id' => $this->businessId,
                 'user_id' => $user->id,
-                'no_pembayaran' => $nomorPenjualan . '-HPP',
+                'no_pembayaran' => $nomorPenjualan.'-HPP',
                 'tanggal_pembayaran' => $tgl,
                 'jenis_transaksi' => 'sale',
                 'transaction_id' => $sale->id,
                 'total_harga' => $totalHppAll,
-                'metode_pembayaran' => 'system',
+                'metode_pembayaran' => 'hpp',
                 'no_referensi' => null,
-                'catatan' => 'HPP Penjualan ' . $nomorPenjualan,
+                'catatan' => 'HPP Penjualan '.$nomorPenjualan,
                 'rekening_debit' => $kodeRekening['hpp']['rekening_debit'],
                 'rekening_kredit' => $kodeRekening['hpp']['rekening_kredit'],
                 'created_at' => $timestamp,
@@ -738,7 +764,7 @@ class TambahPenjualan extends Component
                 'jenis_transaksi' => 'sale',
                 'transaction_id' => $sale->id,
                 'total_harga' => $totalDiskonAll,
-                'metode_pembayaran' => 'internal',
+                'metode_pembayaran' => 'diskon',
                 'no_referensi' => null,
                 'catatan' => 'Diskon Penjualan',
                 'rekening_debit' => $kodeRekening['sales-diskon']['rekening_debit'],
@@ -758,7 +784,7 @@ class TambahPenjualan extends Component
                 'jenis_transaksi' => 'sale',
                 'transaction_id' => $sale->id,
                 'total_harga' => $totalCashbackAll,
-                'metode_pembayaran' => 'internal',
+                'metode_pembayaran' => 'cashback',
                 'no_referensi' => null,
                 'catatan' => 'Cashback Penjualan',
                 'rekening_debit' => $kodeRekening['sales-cashback']['rekening_debit'],
@@ -773,8 +799,6 @@ class TambahPenjualan extends Component
             \App\Models\Payment::insert($payments);
         }
     }
-
-
 
     private function generateInvoiceNumber()
     {

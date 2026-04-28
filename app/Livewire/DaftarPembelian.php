@@ -156,8 +156,8 @@ class DaftarPembelian extends Component
             'metode_pembayaran' => $this->metodePembayaran,
             'no_referensi' => $this->noRekening ?: null,
             'catatan' => $this->keterangan,
-            'rekening_debit' => $rekening['purchase']['rekening_debit'],
-            'rekening_kredit' => $rekening['purchase']['rekening_kredit'],
+            'rekening_debit' => '2.1.01.01', // Hutang
+            'rekening_kredit' => $rekening['purchase']['rekening_kredit'], // Kas/Bank
         ]);
 
         // Update Purchase Status

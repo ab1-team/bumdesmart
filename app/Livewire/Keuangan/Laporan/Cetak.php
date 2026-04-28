@@ -53,7 +53,7 @@ class Cetak extends Controller
         $bulan = $data['bulan'] ?? '-';
         $hari = $data['periode'] ?? '-';
 
-        $query = Sale::with(['customer'])
+        $query = Sale::with(['customer', 'payments'])
             ->whereYear('tanggal_transaksi', $tahun);
 
         if ($bulan != '-') {
@@ -72,6 +72,38 @@ class Cetak extends Controller
             'avg_transaction' => $sales->count() > 0 ? $sales->avg('total') : 0,
         ];
 
+        $groups = [
+            'Cash' => ['items' => [], 'total' => 0],
+            'Transfer/Qris' => ['items' => [], 'total' => 0],
+            'Piutang' => ['items' => [], 'total' => 0]
+        ];
+
+        foreach ($sales as $sale) {
+            $dibayar = $sale->dibayar;
+            $utang = $sale->jumlah_utang;
+
+            if ($dibayar > 0) {
+                $metode = 'tunai';
+                $payment = $sale->payments->whereIn('metode_pembayaran', ['tunai', 'transfer', 'qris', 'cash'])->first();
+                if ($payment) {
+                    $metode = $payment->metode_pembayaran;
+                }
+
+                if (in_array(strtolower($metode), ['transfer', 'qris'])) {
+                    $groups['Transfer/Qris']['items'][] = ['sale' => $sale, 'amount' => $dibayar, 'metode' => $metode];
+                    $groups['Transfer/Qris']['total'] += $dibayar;
+                } else {
+                    $groups['Cash']['items'][] = ['sale' => $sale, 'amount' => $dibayar, 'metode' => 'Cash'];
+                    $groups['Cash']['total'] += $dibayar;
+                }
+            }
+
+            if ($utang > 0) {
+                $groups['Piutang']['items'][] = ['sale' => $sale, 'amount' => $utang, 'metode' => 'Piutang'];
+                $groups['Piutang']['total'] += $utang;
+            }
+        }
+
         $title = 'Laporan Penjualan Harian';
         $periodeParts = [];
         if ($bulan != '-') {
@@ -80,7 +112,7 @@ class Cetak extends Controller
         $periodeParts[] = $tahun;
         $subtitle = 'Periode: '.implode(' ', $periodeParts);
 
-        $html = view('livewire.keuangan.pelaporan.penjualan-harian', compact('title', 'subtitle', 'sales', 'summary'))->render();
+        $html = view('livewire.keuangan.pelaporan.penjualan-harian', compact('title', 'subtitle', 'groups', 'summary'))->render();
 
         return $this->streamPdf($html, 'laporan-penjualan-harian.pdf');
     }

@@ -350,45 +350,23 @@ class DaftarPenjualan extends Component
 
         $timestamp = now();
 
-        // 1. Payment for HPP (Receivables / Cost Recovery)
-        if ($payForHpp > 0) {
-            \App\Models\Payment::create([
-                'business_id' => $this->businessId,
-                'user_id' => auth()->user()->id,
-                'no_pembayaran' => $this->nomorPembayaran.'-HPP',
-                'tanggal_pembayaran' => $this->tanggalPembayaran,
-                'jenis_transaksi' => 'sale',
-                'transaction_id' => $this->detailSale->id,
-                'total_harga' => $payForHpp,
-                'metode_pembayaran' => $this->metodePembayaran,
-                'no_referensi' => $this->noRekening ?: null,
-                'catatan' => $this->keterangan ?: 'Pembayaran (HPP)',
-                'rekening_debit' => $rekeningKas,
-                'rekening_kredit' => '1.1.03.01', // Piutang (clearing initial HPP debt)
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
-            ]);
-        }
-
-        // 2. Payment for Profit (Margin)
-        if ($payForProfit > 0) {
-            \App\Models\Payment::create([
-                'business_id' => $this->businessId,
-                'user_id' => auth()->user()->id,
-                'no_pembayaran' => $this->nomorPembayaran.'-PROFIT',
-                'tanggal_pembayaran' => $this->tanggalPembayaran,
-                'jenis_transaksi' => 'sale',
-                'transaction_id' => $this->detailSale->id,
-                'total_harga' => $payForProfit,
-                'metode_pembayaran' => $this->metodePembayaran,
-                'no_referensi' => $this->noRekening ?: null,
-                'catatan' => $this->keterangan ?: 'Pembayaran (Laba)',
-                'rekening_debit' => $rekeningKas,
-                'rekening_kredit' => '4.1.01.01', // Laba/Pendapatan
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
-            ]);
-        }
+        // 1. Payment for Piutang (Clearing Receivable)
+        \App\Models\Payment::create([
+            'business_id' => $this->businessId,
+            'user_id' => auth()->user()->id,
+            'no_pembayaran' => $this->nomorPembayaran,
+            'tanggal_pembayaran' => $this->tanggalPembayaran,
+            'jenis_transaksi' => 'sale',
+            'transaction_id' => $this->detailSale->id,
+            'total_harga' => $jumlahBayar,
+            'metode_pembayaran' => $this->metodePembayaran,
+            'no_referensi' => $this->noRekening ?: null,
+            'catatan' => $this->keterangan ?: 'Pembayaran Piutang Penjualan',
+            'rekening_debit' => $rekeningKas,
+            'rekening_kredit' => '1.1.04.01', // Piutang
+            'created_at' => $timestamp,
+            'updated_at' => $timestamp,
+        ]);
 
         // Update Sale
         $totalDibayar = $this->sudahDibayar + $jumlahBayar;

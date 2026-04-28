@@ -18,8 +18,11 @@ class TambahPembelian extends Component
     public $title;
 
     public $businessId;
+
     public $bankAccounts = [];
+
     public $defaultTransferAccount = null;
+
     public $defaultQrisAccount = null;
 
     // Form Fields (Livewire still tracks these for initial binding/validation if needed,
@@ -49,9 +52,9 @@ class TambahPembelian extends Component
     public function scanProduct($barcode)
     {
         $product = Product::where('business_id', $this->businessId)
-            ->where(function($q) use ($barcode) {
+            ->where(function ($q) use ($barcode) {
                 $q->where('sku', $barcode)
-                  ->orWhere('barcode', $barcode);
+                    ->orWhere('barcode', $barcode);
             })
             ->with(['unit', 'category', 'brand'])
             ->first();
@@ -68,8 +71,8 @@ class TambahPembelian extends Component
                     'unit' => $product->unit ? $product->unit->nama_satuan : '-',
                     'category' => $product->category ? $product->category->nama_kategori : '-',
                     'brand' => $product->brand ? $product->brand->nama_merek : '-',
-                    'allow_decimal' => $product->unit ? (bool)$product->unit->desimal : false,
-                ]
+                    'allow_decimal' => $product->unit ? (bool) $product->unit->desimal : false,
+                ],
             ];
         }
 
@@ -87,7 +90,7 @@ class TambahPembelian extends Component
         } else {
             $this->tanggalPembelian = date('Y-m-d');
             $this->nomorPembelian = $this->generatePurchaseNumber();
-            
+
             // Find default supplier "umum"
             $defaultSupplier = Supplier::where('business_id', $this->businessId)
                 ->where('nama_supplier', 'LIKE', '%umum%')
@@ -110,7 +113,7 @@ class TambahPembelian extends Component
             ->where('parent_id', 111)
             ->where('nama', 'like', 'Bank%')
             ->get();
-            
+
         $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->id;
         $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->id;
     }
@@ -148,7 +151,7 @@ class TambahPembelian extends Component
                 'harga_beli' => (string) $detail->harga_satuan, // Pass as string for formatting
                 'jumlah_beli' => $detail->jumlah,
                 'unit' => $detail->product->unit ? $detail->product->unit->nama_satuan : '-',
-                'allow_decimal' => $detail->product->unit ? (bool)$detail->product->unit->desimal : false,
+                'allow_decimal' => $detail->product->unit ? (bool) $detail->product->unit->desimal : false,
                 'tanggal_kadaluarsa' => $batch ? ($batch->tanggal_kadaluarsa ? $batch->tanggal_kadaluarsa->format('Y-m-d') : '') : '',
                 'diskon' => [
                     'jenis' => $detail->jenis_diskon,
@@ -258,7 +261,7 @@ class TambahPembelian extends Component
                 'unit' => $product->unit ? $product->unit->nama_satuan : '-',
                 'category' => $product->category ? $product->category->nama_kategori : '-',
                 'brand' => $product->brand ? $product->brand->nama_merek : '-',
-                'allow_decimal' => $product->unit ? (bool)$product->unit->desimal : false,
+                'allow_decimal' => $product->unit ? (bool) $product->unit->desimal : false,
             ];
         }
 
@@ -595,7 +598,7 @@ class TambahPembelian extends Component
             }
 
             // 5. Create Payment Records (Double-Entry Accounting) - OPTIMIZED
-            $kodeRekening = PaymentUtil::ambilRekening('purchase', $data['jenisPembayaran'], $data['metodeBayar'], $data['noRekening']);
+            $kodeRekening = PaymentUtil::ambilRekening('purchase', 'cash', $data['metodeBayar'], $data['noRekening']);
 
             // Calculate actual discount and cashback amounts (GLOBAL ONLY)
             $globalDiskonVal = $this->parseNumber($data['globalDiskon']['jumlah']);
@@ -615,23 +618,47 @@ class TambahPembelian extends Component
             $payments = [];
             $timestamp = now();
 
-            // 5a. Main Purchase Payment (Inventory Acquisition)
-            $payments[] = [
-                'business_id' => $this->businessId,
-                'user_id' => auth()->user()->id,
-                'no_pembayaran' => $no_pembelian,
-                'tanggal_pembayaran' => $data['tanggalPembelian'],
-                'jenis_transaksi' => 'purchase',
-                'transaction_id' => $purchase->id,
-                'total_harga' => ($bayar >= $total) ? $total : $bayar,
-                'metode_pembayaran' => $data['metodeBayar'],
-                'no_referensi' => $data['noRekening'],
-                'catatan' => 'Pembayaran Pembelian '.$no_pembelian,
-                'rekening_debit' => $kodeRekening['purchase']['rekening_debit'],
-                'rekening_kredit' => $kodeRekening['purchase']['rekening_kredit'],
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
-            ];
+            // 5a. Main Purchase Payment (Inventory Acquisition) - Cash Part
+            $cashAmount = ($bayar >= $total) ? $total : $bayar;
+            if ($cashAmount > 0) {
+                $payments[] = [
+                    'business_id' => $this->businessId,
+                    'user_id' => auth()->user()->id,
+                    'no_pembayaran' => $no_pembelian,
+                    'tanggal_pembayaran' => $data['tanggalPembelian'],
+                    'jenis_transaksi' => 'purchase',
+                    'transaction_id' => $purchase->id,
+                    'total_harga' => $cashAmount,
+                    'metode_pembayaran' => $data['metodeBayar'],
+                    'no_referensi' => $data['noRekening'],
+                    'catatan' => 'Pembayaran Pembelian '.$no_pembelian,
+                    'rekening_debit' => '1.1.03.01', // Persediaan
+                    'rekening_kredit' => $kodeRekening['purchase']['rekening_kredit'], // Kas/Bank
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ];
+            }
+
+            // 5a-2. Main Purchase Payment - Credit Part (Hutang)
+            $creditAmount = $total - $cashAmount;
+            if ($creditAmount > 0) {
+                $payments[] = [
+                    'business_id' => $this->businessId,
+                    'user_id' => auth()->user()->id,
+                    'no_pembayaran' => $no_pembelian.'-CR',
+                    'tanggal_pembayaran' => $data['tanggalPembelian'],
+                    'jenis_transaksi' => 'purchase',
+                    'transaction_id' => $purchase->id,
+                    'total_harga' => $creditAmount,
+                    'metode_pembayaran' => 'piutang',
+                    'no_referensi' => null,
+                    'catatan' => 'Hutang Pembelian '.$no_pembelian,
+                    'rekening_debit' => '1.1.03.01', // Persediaan
+                    'rekening_kredit' => '2.1.01.01', // Hutang (Tercatat sebagai Hutang, bukan Piutang)
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ];
+            }
 
             // 5b. Purchase Discount Received (Reduces Cost)
             if ($totalDiskonAll > 0) {
@@ -643,7 +670,7 @@ class TambahPembelian extends Component
                     'jenis_transaksi' => 'purchase',
                     'transaction_id' => $purchase->id,
                     'total_harga' => $totalDiskonAll,
-                    'metode_pembayaran' => $data['metodeBayar'],
+                    'metode_pembayaran' => 'diskon',
                     'no_referensi' => $data['noRekening'],
                     'catatan' => 'Diskon Pembelian Diterima',
                     'rekening_debit' => $kodeRekening['purchase-diskon']['rekening_debit'],
@@ -663,7 +690,7 @@ class TambahPembelian extends Component
                     'jenis_transaksi' => 'purchase',
                     'transaction_id' => $purchase->id,
                     'total_harga' => $totalCashbackAll,
-                    'metode_pembayaran' => $data['metodeBayar'],
+                    'metode_pembayaran' => 'cashback',
                     'no_referensi' => $data['noRekening'],
                     'catatan' => 'Cashback Pembelian Diterima',
                     'rekening_debit' => $kodeRekening['purchase-cashback']['rekening_debit'],
@@ -704,6 +731,7 @@ class TambahPembelian extends Component
         if (strpos($str, ',') !== false) {
             $clean = str_replace('.', '', $str);
             $clean = str_replace(',', '.', $clean);
+
             return (float) $clean;
         }
 
@@ -711,17 +739,17 @@ class TambahPembelian extends Component
         if (strpos($str, '.') !== false) {
             $lastDotIdx = strrpos($str, '.');
             $remainingLength = strlen($str) - $lastDotIdx - 1;
-            
+
             // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
             if ($remainingLength !== 3) {
                 return (float) $str;
             }
-            
+
             // If there's another dot, it's thousands
             if (strpos($str, '.') !== $lastDotIdx) {
                 return (float) str_replace('.', '', $str);
             }
-            
+
             // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
             return (float) str_replace('.', '', $str);
         }
