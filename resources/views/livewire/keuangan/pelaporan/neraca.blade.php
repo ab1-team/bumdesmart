@@ -2,6 +2,7 @@
     use App\Utils\KeuanganUtil;
 
     $saldoAkunLevel1 = [];
+    $totalLiabilitasEkuitas = 0;
 @endphp
 
 @extends('layouts.pdf')
@@ -65,9 +66,25 @@
                     {{ number_format($saldoAkunLevel1[$akunLevel1->id], 2) }}
                 </td>
             </tr>
+
+            @php
+                if ($akunLevel1->id == 2 || $akunLevel1->id == 3) {
+                    $totalLiabilitasEkuitas += $saldoAkunLevel1[$akunLevel1->id];
+                }
+            @endphp
+
             <tr>
                 <td style="height: 8px !important; border: 0; padding: 0;"></td>
             </tr>
         @endforeach
+
+        <tr style="background-color: #b0b0b0;">
+            <td colspan="2" style="text-align: left; border: 0; font-weight: bold;">
+                Jumlah Liabilitas + Ekuitas
+            </td>
+            <td style="text-align: right; border: 0; font-weight: bold;">
+                {{ number_format($totalLiabilitasEkuitas, 2) }}
+            </td>
+        </tr>
     </table>
 @endsection
