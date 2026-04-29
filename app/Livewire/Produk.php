@@ -79,6 +79,9 @@ class Produk extends Component
         'show_name' => true
     ];
 
+    public $importFile;
+    public $importStep = 'idle';
+
     public function updatedSelectAll($value)
     {
         if ($value) {
@@ -599,6 +602,167 @@ class Produk extends Component
 
         $this->dispatch('open-new-tab', url: $url);
         $this->dispatch('hide-modal', modalId: 'cetakLabelModal');
+    }
+
+    public function openImport()
+    {
+        $this->importFile = null;
+        $this->importStep = 'idle';
+        $this->dispatch('show-modal', modalId: 'importModal');
+    }
+
+    public function processImport()
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:csv,txt|max:10240',
+        ]);
+
+        $this->importStep = 'processing';
+
+        try {
+            $path = $this->importFile->getRealPath();
+            $file = fopen($path, 'r');
+            
+            // Skip header
+            $header = fgetcsv($file);
+            
+            \DB::beginTransaction();
+
+            // Cache Master Data to avoid repetitive queries
+            $categories = \App\Models\Category::where('business_id', $this->businessId)->pluck('id', 'nama_kategori')->toArray();
+            $brands     = \App\Models\Brand::where('business_id', $this->businessId)->pluck('id', 'nama_brand')->toArray();
+            $units      = \App\Models\Unit::where('business_id', $this->businessId)->pluck('id', 'nama_satuan')->toArray();
+
+            $productUpserts  = [];
+            $successCount    = 0;
+            $now             = now();
+
+            while (($row = fgetcsv($file)) !== FALSE) {
+                if (count($row) < 5) continue;
+
+                $namaProduk = $row[0];
+                $kategori   = $row[1] ?: 'General';
+                $brand      = $row[2] ?: 'N/A';
+                $satuan     = $row[3] ?: 'Pcs';
+                $sku        = $row[4] ?: 'SKU-' . strtoupper(\Str::random(8));
+                $barcode    = $row[5] ?: (string) mt_rand(100000, 999999) . mt_rand(1000000, 9999999);
+                $hargaBeli  = (float) str_replace(['.', ','], ['', '.'], $row[6] ?? 0);
+                $hargaJual  = (float) str_replace(['.', ','], ['', '.'], $row[7] ?? 0);
+                $stok       = (float) str_replace(['.', ','], ['', '.'], $row[8] ?? 0);
+
+                // Find/Create Master Data from Cache
+                if (!isset($categories[$kategori])) {
+                    $cat = \App\Models\Category::create(['nama_kategori' => $kategori, 'business_id' => $this->businessId, 'icon' => 'box']);
+                    $categories[$kategori] = $cat->id;
+                }
+                if (!isset($brands[$brand])) {
+                    $brd = \App\Models\Brand::create(['nama_brand' => $brand, 'business_id' => $this->businessId]);
+                    $brands[$brand] = $brd->id;
+                }
+                if (!isset($units[$satuan])) {
+                    $unt = \App\Models\Unit::create(['nama_satuan' => $satuan, 'business_id' => $this->businessId, 'inisial_satuan' => $satuan]);
+                    $units[$satuan] = $unt->id;
+                }
+
+                $productUpserts[] = [
+                    'business_id'     => $this->businessId,
+                    'sku'             => $sku,
+                    'barcode'         => $barcode,
+                    'category_id'     => $categories[$kategori],
+                    'brand_id'        => $brands[$brand],
+                    'unit_id'         => $units[$satuan],
+                    'nama_produk'     => $namaProduk,
+                    'harga_beli'      => $hargaBeli,
+                    'harga_jual'      => $hargaJual,
+                    'stok_aktual'     => $stok,
+                    'metode_biaya'    => 'FIFO',
+                    'biaya_rata_rata' => $hargaBeli,
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ];
+                $successCount++;
+            }
+
+            foreach (array_chunk($productUpserts, 100) as $chunk) {
+                foreach ($chunk as $pData) {
+                    \App\Models\Product::updateOrCreate(
+                        ['business_id' => $pData['business_id'], 'sku' => $pData['sku']],
+                        $pData
+                    );
+                }
+            }
+
+            // Re-fetch product IDs to link Batches and Movements
+            $allProducts = \App\Models\Product::where('business_id', $this->businessId)
+                ->whereIn('sku', array_column($productUpserts, 'sku'))
+                ->pluck('id', 'sku');
+
+            $batchInserts    = [];
+            $movementInserts = [];
+
+            foreach ($productUpserts as $pData) {
+                $sku = $pData['sku'];
+                $stok = $pData['stok_aktual'];
+                if (isset($allProducts[$sku])) {
+                    $pId = $allProducts[$sku];
+                    
+                    $batchInserts[] = [
+                        'business_id'        => $this->businessId,
+                        'product_id'         => $pId,
+                        'no_batch'           => 'MIGRATION-' . date('Ymd'),
+                        'tanggal_pembelian'  => $now,
+                        'harga_satuan'       => $pData['harga_beli'],
+                        'jumlah_awal'        => $stok,
+                        'jumlah_saat_ini'    => $stok,
+                        'tanggal_kadaluarsa' => null,
+                        'status'             => 'ACTIVE',
+                        'created_at'         => $now,
+                        'updated_at'         => $now,
+                    ];
+
+                    $movementInserts[] = [
+                        'business_id'            => $this->businessId,
+                        'product_id'             => $pId,
+                        'tanggal_perubahan_stok' => $now,
+                        'jenis_perubahan'        => 'adjustment',
+                        'jumlah_perubahan'       => $stok,
+                        'reference_id'           => 0,
+                        'reference_type'         => 'migration',
+                        'catatan'                => 'Migrasi data awal sistem',
+                        'created_at'             => $now,
+                        'updated_at'             => $now,
+                    ];
+                }
+            }
+
+            if (!empty($batchInserts)) {
+                \App\Models\ProductBatch::insert($batchInserts);
+            }
+            if (!empty($movementInserts)) {
+                \App\Models\StockMovement::insert($movementInserts);
+            }
+
+            \DB::commit();
+            fclose($file);
+
+            $this->dispatch('hide-modal', modalId: 'importModal');
+            $this->dispatch('alert', type: 'success', message: $successCount . ' data produk berhasil diimport!');
+            $this->reset('importFile', 'importStep');
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            $this->dispatch('alert', type: 'error', message: 'Gagal import: ' . $e->getMessage());
+        }
+
+        $this->importStep = 'idle';
+    }
+
+    public function downloadTemplate()
+    {
+        return response()->streamDownload(function () {
+            echo "Nama Produk,Kategori,Brand,Satuan,SKU,Barcode,Harga Beli,Harga Jual,Stok\n";
+            echo "Indomie Goreng,Makanan & Snack,Indofood,Pcs,IDM-001,8998866200293,2500,3000,100\n";
+            echo "Aqua 600ml,Minuman,Danone,Pcs,AQUA-600,8886008101053,2800,3500,500\n";
+        }, 'template_import_produk.csv');
     }
 
     #[\Livewire\Attributes\Computed]

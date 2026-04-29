@@ -21,13 +21,16 @@
                             <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                 placeholder="🔍 Cari produk...">
                         </div>
-                        <div class="col-md-3 d-flex gap-2">
+                        <div class="col-md-5 d-flex gap-2">
                             @if(count($selectedProducts) > 0)
                                 <button class="btn btn-outline-primary" wire:click="modalCetakMassal">
                                     <span class="material-symbols-outlined me-1">print</span>
                                     Cetak ({{ count($selectedProducts) }})
                                 </button>
                             @endif
+                            <button class="btn btn-outline-info" wire:click="openImport">
+                                <i class="fas fa-file-import me-1"></i> Import Excel
+                            </button>
                             <button class="btn btn-primary flex-fill" wire:click="create">
                                 <i class="fas fa-plus"></i> Tambah Produk
                             </button>
@@ -400,6 +403,48 @@
                     </button>
                     <button type="button" class="btn btn-primary px-4 shadow-sm" @click="closeScanner()">
                         <span class="material-symbols-outlined me-2">done_all</span> Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Import --}}
+    <div wire:ignore.self class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Data Produk & Stok</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Pilih File (CSV)</label>
+                        <input type="file" class="form-control" wire:model="importFile" accept=".csv">
+                        <div wire:loading wire:target="importFile" class="text-info small">Memproses file...</div>
+                        @error('importFile')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Pastikan file Anda mengikuti format yang benar. 
+                        <a href="javascript:void(0)" wire:click="downloadTemplate" class="fw-bold text-decoration-underline">Unduh Template Disini</a>
+                    </div>
+
+                    @if ($importStep === 'processing')
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary mb-2"></div>
+                            <p>Sedang mengimport data... Mohon tunggu.</p>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" wire:click="processImport"
+                        wire:loading.attr="disabled" {{ !$importFile ? 'disabled' : '' }}>
+                        Mulai Import
                     </button>
                 </div>
             </div>
