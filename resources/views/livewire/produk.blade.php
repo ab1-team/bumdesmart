@@ -337,11 +337,17 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted small uppercase fw-bold">Ukuran (T&J)</label>
                             <select class="form-select" wire:model="labelOptions.size">
-                                <option value="107">No. 107 (18x50mm)</option>
-                                <option value="108">No. 108 (18x38mm)</option>
-                                <option value="103">No. 103 (32x64mm)</option>
-                                <option value="121">No. 121 (38x75mm)</option>
-                                <option value="A4_3_9">A4 (3 Kolom x 9 Baris)</option>
+                                <optgroup label="Stiker T&J">
+                                    <option value="107">No. 107 (18x50mm)</option>
+                                    <option value="108">No. 108 (18x38mm)</option>
+                                    <option value="103">No. 103 (32x64mm)</option>
+                                    <option value="121">No. 121 (38x75mm)</option>
+                                    <option value="A4_3_9">A4 (3 Kolom x 9 Baris)</option>
+                                </optgroup>
+                                <optgroup label="Label Rak (Kertas/Karton)">
+                                    <option value="shelf_80_40">Label Rak (80x40mm)</option>
+                                    <option value="shelf_90_55">Label Rak (90x55mm) - Kartu Nama</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div class="col-md-12 mb-3">

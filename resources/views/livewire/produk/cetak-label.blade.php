@@ -10,30 +10,62 @@
     <div class="label-container size-{{ $size }}">
         @foreach ($products as $product)
             @for ($i = 0; $i < $qty; $i++)
-                <div class="label-item">
-                    @if ($showName)
-                        <div class="product-name">{{ $product->nama_produk }}</div>
-                    @endif
-                    
-                    <div class="barcode-wrapper">
-                        @if ($type == 'barcode')
-                            <svg class="barcode" 
-                                 jsbarcode-value="{{ $product->barcode ?: $product->sku }}"
-                                 jsbarcode-format="CODE128"
-                                 jsbarcode-width="1.2"
-                                 jsbarcode-height="35"
-                                 jsbarcode-fontSize="12"
-                                 jsbarcode-margin="0">
-                            </svg>
-                        @else
-                            <div class="qrcode" data-value="{{ $product->barcode ?: $product->sku }}"></div>
+                @if (str_starts_with($size, 'shelf_'))
+                    <div class="shelf-tag-item">
+                        <div class="shelf-tag-main">
+                            <div class="shelf-tag-name">{{ $product->nama_produk }}</div>
+                            <div class="shelf-tag-price-wrapper">
+                                <span class="shelf-tag-currency">Rp</span>
+                                <span class="shelf-tag-price">{{ number_format($product->harga_jual, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                        <div class="shelf-tag-side">
+                            <div class="shelf-tag-barcode-wrapper">
+                                @if ($type == 'barcode')
+                                    <svg class="barcode" 
+                                         jsbarcode-value="{{ $product->barcode ?: $product->sku }}"
+                                         jsbarcode-format="CODE128"
+                                         jsbarcode-width="1"
+                                         jsbarcode-height="20"
+                                         jsbarcode-fontSize="10"
+                                         jsbarcode-margin="0">
+                                    </svg>
+                                @else
+                                    <div class="qrcode" data-value="{{ $product->barcode ?: $product->sku }}" data-size="40"></div>
+                                @endif
+                            </div>
+                            <div class="shelf-tag-info">
+                                <div class="shelf-tag-sku">{{ $product->sku }}</div>
+                                <div class="shelf-tag-unit">{{ $product->unit->nama_satuan }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="label-item">
+                        @if ($showName)
+                            <div class="product-name">{{ $product->nama_produk }}</div>
+                        @endif
+                        
+                        <div class="barcode-wrapper">
+                            @if ($type == 'barcode')
+                                <svg class="barcode" 
+                                     jsbarcode-value="{{ $product->barcode ?: $product->sku }}"
+                                     jsbarcode-format="CODE128"
+                                     jsbarcode-width="1.2"
+                                     jsbarcode-height="35"
+                                     jsbarcode-fontSize="12"
+                                     jsbarcode-margin="0">
+                                </svg>
+                            @else
+                                <div class="qrcode" data-value="{{ $product->barcode ?: $product->sku }}"></div>
+                            @endif
+                        </div>
+
+                        @if ($showPrice)
+                            <div class="product-price">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
                         @endif
                     </div>
-
-                    @if ($showPrice)
-                        <div class="product-price">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
-                    @endif
-                </div>
+                @endif
             @endfor
         @endforeach
     </div>
@@ -165,6 +197,105 @@
         .size-A4_3_9 .label-item { width: 63mm; height: 30mm; padding: 2mm; }
         .size-A4_3_9 .barcode-wrapper svg { height: 40px !important; }
 
+        /* --- Shelf Tag Design --- */
+        .shelf-tag-item {
+            display: flex;
+            background: white;
+            border: 1px solid #000;
+            box-sizing: border-box;
+            padding: 2mm;
+            overflow: hidden;
+            page-break-inside: avoid;
+            position: relative;
+        }
+
+        .shelf-tag-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-right: 2mm;
+            border-right: 1px dashed #ccc;
+        }
+
+        .shelf-tag-name {
+            font-size: 11pt;
+            font-weight: 800;
+            line-height: 1.1;
+            color: #000;
+            text-transform: uppercase;
+        }
+
+        .shelf-tag-price-wrapper {
+            margin-top: auto;
+            display: flex;
+            align-items: baseline;
+        }
+
+        .shelf-tag-currency {
+            font-size: 10pt;
+            font-weight: 700;
+            margin-right: 1mm;
+        }
+
+        .shelf-tag-price {
+            font-size: 24pt;
+            font-weight: 900;
+            color: #000;
+        }
+
+        .shelf-tag-side {
+            width: 30mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding-left: 1mm;
+        }
+
+        .shelf-tag-barcode-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .shelf-tag-info {
+            width: 100%;
+            text-align: right;
+            font-size: 7pt;
+            color: #444;
+        }
+
+        .shelf-tag-sku {
+            font-family: monospace;
+        }
+
+        .shelf-tag-unit {
+            font-weight: bold;
+            font-size: 8pt;
+        }
+
+        /* --- Shelf Tag Sizes --- */
+        .size-shelf_80_40 {
+            grid-template-columns: repeat(2, 80mm);
+            column-gap: 5mm;
+            row-gap: 5mm;
+            padding: 10mm;
+            width: 180mm;
+        }
+        .size-shelf_80_40 .shelf-tag-item { width: 80mm; height: 40mm; }
+
+        .size-shelf_90_55 {
+            grid-template-columns: repeat(2, 90mm);
+            column-gap: 5mm;
+            row-gap: 5mm;
+            padding: 10mm;
+            width: 200mm;
+        }
+        .size-shelf_90_55 .shelf-tag-item { width: 90mm; height: 55mm; }
+        .size-shelf_90_55 .shelf-tag-price { font-size: 32pt; }
+        .size-shelf_90_55 .shelf-tag-name { font-size: 14pt; }
+
         @media print {
             @page {
                 size: auto;
@@ -195,10 +326,11 @@
 
             // Generate QRCodes
             document.querySelectorAll('.qrcode').forEach(el => {
+                let size = parseInt(el.dataset.size) || 60;
                 new QRCode(el, {
                     text: el.dataset.value,
-                    width: 60,
-                    height: 60,
+                    width: size,
+                    height: size,
                     colorDark : "#000000",
                     colorLight : "#ffffff",
                     correctLevel : QRCode.CorrectLevel.H
