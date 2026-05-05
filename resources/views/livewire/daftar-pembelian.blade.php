@@ -40,9 +40,9 @@
                                 <span class="badge text-light bg-danger">Pending</span>
                             @endif
                         </td>
-                        <td>{{ number_format($purchase->total, 0, ',', '.') }}</td>
-                        <td>{{ number_format($purchase->dibayar, 0, ',', '.') }}</td>
-                        <td>{{ number_format($purchase->jumlah_utang, 0, ',', '.') }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($purchase->total) }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($purchase->dibayar) }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($purchase->jumlah_utang) }}</td>
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-info dropdown-toggle" type="button"

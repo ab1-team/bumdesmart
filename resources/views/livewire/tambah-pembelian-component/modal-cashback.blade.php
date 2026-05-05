@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="col">
-                            <input type="text" class="form-control" x-mask:dynamic="$money($input)"
+                            <input type="text" class="form-control" x-mask:dynamic="$money($input, ',', '.', 2)"
                                 x-model="modalProduct.cashback.jumlah">
                         </div>
                     </div>

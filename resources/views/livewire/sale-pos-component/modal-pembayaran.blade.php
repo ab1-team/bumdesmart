@@ -18,7 +18,7 @@
                 <!-- Payment Input -->
                 <div class="mb-3">
                     <label class="form-label">Jumlah Bayar</label>
-                    <input type="text" class="form-control" x-mask:dynamic="$money($input, ',', '.')"
+                    <input type="text" class="form-control" x-mask:dynamic="$money($input, ',', '.', 2)"
                         x-model="checkOut.bayar" placeholder="0" id="paymentInput" />
                     <!-- Quick Amounts -->
                     <div class="mt-2 d-flex gap-2 flex-wrap justify-content-center">

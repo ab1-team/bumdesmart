@@ -32,7 +32,7 @@
                                 <span class="badge text-light bg-danger">Ditolak</span>
                             @endif
                         </td>
-                        <td>{{ number_format($purchaseReturn->total_return, 0, ',', '.') }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($purchaseReturn->total_return) }}</td>
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-info dropdown-toggle" type="button"

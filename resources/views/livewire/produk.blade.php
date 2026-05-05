@@ -216,7 +216,8 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Harga Beli Default</label>
                                             <input type="text" class="form-control" wire:model="hargaBeliDefault"
-                                                name="hargaBeliDefault" x-mask:dynamic="$money($input)"
+                                                name="hargaBeliDefault" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                                x-on:focus="$el.select()"
                                                 placeholder="Harga Beli Default" />
                                             @error('hargaBeliDefault')
                                                 <small class="text-danger">{{ $message }}</small>
@@ -225,7 +226,8 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Harga Jual Default</label>
                                             <input type="text" class="form-control" wire:model="hargaJualDefault"
-                                                name="hargaJualDefault" x-mask:dynamic="$money($input)"
+                                                name="hargaJualDefault" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                                x-on:focus="$el.select()"
                                                 placeholder="Harga Jual Default" />
                                             @error('hargaJualDefault')
                                                 <small class="text-danger">{{ $message }}</small>

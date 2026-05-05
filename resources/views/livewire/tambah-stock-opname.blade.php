@@ -194,11 +194,12 @@
                         isSaving: false,
 
                         formatDecimal(val) {
-                            if (val === null || val === undefined) return '';
-                            return Number(val).toLocaleString('id-ID', {
+                            if (val === null || val === undefined || val === '') return '0';
+                            let number = (typeof val === 'string') ? parseFloat(val.replace(/\./g, '').replace(/,/g, '.')) : val;
+                            return new Intl.NumberFormat('id-ID', {
                                 maximumFractionDigits: 2,
                                 minimumFractionDigits: 0
-                            });
+                            }).format(number);
                         },
 
                         init() {

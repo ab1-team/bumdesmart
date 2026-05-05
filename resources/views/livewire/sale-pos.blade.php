@@ -110,7 +110,7 @@
                                 <h5 class="card-title mb-0 text-truncate" style="font-size: 0.85rem;">
                                     {{ $product->nama_produk }}</h5>
                                 <div class="card-text fw-bold text-primary" style="font-size: 0.9rem;">Rp
-                                    {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
+                                    {{ \App\Utils\NumberUtil::format($product->harga_jual) }}</div>
                                 <span class="badge bg-dark-lt position-absolute top-0 end-0 m-1"
                                     style="font-size: 0.6rem;">{{ number_format($product->stok_aktual, $product->stok_aktual == intval($product->stok_aktual) ? 0 : 1, ',', '.') }}</span>
                             </div>
@@ -1275,7 +1275,7 @@
                 },
 
                 formatDecimal(num) {
-                    if (num === null || num === undefined || num === '') return '';
+                    if (num === null || num === undefined || num === '') return '0';
                     let val = (typeof num === 'string') ? this.parseNumber(num) : num;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 3,
@@ -1284,7 +1284,7 @@
                 },
 
                 formatRupiah(num) {
-                    if (num === null || num === undefined || num === '') return '';
+                    if (num === null || num === undefined || num === '') return '0';
                     let val = (typeof num === 'string') ? this.parseNumber(num) : num;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
@@ -1296,18 +1296,28 @@
                     if (typeof val === 'number') return val;
                     if (!val) return 0;
                     let str = String(val).trim();
-                    // Indonesia: . (titik) ribuan, , (koma) desimal. 
-                    if (str.includes(',')) {
-                        let clean = str.replace(/\./g, '').replace(/,/g, '.');
-                        return parseFloat(clean) || 0;
+                    
+                    // If the string has both dot and comma (e.g., 1.234,56)
+                    if (str.includes('.') && str.includes(',')) {
+                        return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
                     }
+                    
+                    // If it only has a comma, it's definitely a decimal separator in ID format
+                    if (str.includes(',')) {
+                        return parseFloat(str.replace(/,/g, '.')) || 0;
+                    }
+                    
+                    // If it only has a dot:
                     if (str.includes('.')) {
                         let parts = str.split('.');
-                        if (parts[parts.length - 1].length === 3 || parts.length > 2) {
-                            return parseFloat(str.replace(/\./g, '')) || 0;
+                        // If it looks like a decimal (e.g., 2800.00 from DB), keep the dot
+                        if (parts[parts.length - 1].length !== 3) {
+                            return parseFloat(str) || 0;
                         }
-                        return parseFloat(str) || 0;
+                        // Otherwise, treat as thousands and remove
+                        return parseFloat(str.replace(/\./g, '')) || 0;
                     }
+                    
                     return parseFloat(str) || 0;
                 },
 

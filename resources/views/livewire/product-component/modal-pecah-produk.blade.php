@@ -21,7 +21,7 @@
                                     <h4 class="alert-title mb-1">Informasi Produk Asal (Bulk)</h4>
                                     <div class="text-secondary">
                                         Stok Saat Ini: <strong>{{ \App\Utils\NumberUtil::format($detailProduk->stok_aktual) }} {{ $detailProduk->unit->nama_satuan }}</strong><br>
-                                        Harga Beli: <strong>Rp {{ number_format($detailProduk->harga_beli, 0, ',', '.') }}</strong>
+                                        Harga Beli: <strong>Rp {{ \App\Utils\NumberUtil::format($detailProduk->harga_beli) }}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -75,7 +75,7 @@
                                     <input type="number" step="any" class="form-control text-center" wire:model.live="retailJumlahPecahBulk">
                                     <span class="input-group-text">{{ $detailProduk->unit->nama_satuan }}</span>
                                 </div>
-                                <small class="text-muted">Maks: {{ $detailProduk->stok_aktual }}</small>
+                                <small class="text-muted">Maks: {{ \App\Utils\NumberUtil::format($detailProduk->stok_aktual) }}</small>
                                 @error('retailJumlahPecahBulk') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
 
@@ -83,7 +83,7 @@
                                 <label class="form-label required">Harga Jual Eceran</label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="text" class="form-control" wire:model="retailHargaJual" x-mask:dynamic="$money($input)">
+                                    <input type="text" class="form-control" wire:model="retailHargaJual" x-mask:dynamic="$money($input, ',', '.', 2)" x-on:focus="$el.select()">
                                 </div>
                                 @error('retailHargaJual') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
@@ -109,7 +109,7 @@
                                     </div>
                                     <div class="col-6">
                                         <div class="text-uppercase text-secondary small fw-bold">Harga Beli Baru</div>
-                                        <div class="fs-2 fw-bold text-primary">Rp {{ number_format($retailHasilPecah > 0 ? $detailProduk->harga_beli / $retailHasilPecah : 0, 0, ',', '.') }}</div>
+                                        <div class="fs-2 fw-bold text-primary">Rp {{ \App\Utils\NumberUtil::format($retailHasilPecah > 0 ? $detailProduk->harga_beli / $retailHasilPecah : 0) }}</div>
                                     </div>
                                 </div>
                             </div>

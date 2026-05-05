@@ -157,8 +157,8 @@ class Produk extends Component
         $this->merek = $product->brand_id;
         $this->satuan = $product->unit_id;
         $this->rakPenyimpanan = $product->shelf_id;
-        $this->hargaBeliDefault = number_format($product->harga_beli);
-        $this->hargaJualDefault = number_format($product->harga_jual);
+        $this->hargaBeliDefault = \App\Utils\NumberUtil::format($product->harga_beli);
+        $this->hargaJualDefault = \App\Utils\NumberUtil::format($product->harga_jual);
         $this->stokMinimal = $product->stok_minimal;
         $this->aktif = $product->is_active;
         $this->productId = $product->id;
@@ -201,8 +201,8 @@ class Produk extends Component
             'sku' => $this->sku,
             'barcode' => $this->barcode,
             'nama_produk' => $this->namaProduk,
-            'harga_beli' => floatval(str_replace(',', '', $this->hargaBeliDefault)),
-            'harga_jual' => floatval(str_replace(',', '', $this->hargaJualDefault)),
+            'harga_beli' => \App\Utils\NumberUtil::parse($this->hargaBeliDefault),
+            'harga_jual' => \App\Utils\NumberUtil::parse($this->hargaJualDefault),
             'stok_minimal' => $this->stokMinimal,
             'stok_aktual' => 0,
             'metode_biaya' => 'FIFO',
@@ -321,7 +321,7 @@ class Produk extends Component
         ])->first();
 
         foreach ($this->detailProduk->productPrices as $productPrice) {
-            $this->hargaJualMember[$productPrice->customer_group_id] = number_format($productPrice->harga_spesial);
+            $this->hargaJualMember[$productPrice->customer_group_id] = \App\Utils\NumberUtil::format($productPrice->harga_spesial);
             $this->tanggalMulai[$productPrice->customer_group_id] = $productPrice->tanggal_mulai;
             $this->tanggalAkhir[$productPrice->customer_group_id] = $productPrice->tanggal_akhir;
         }
@@ -357,7 +357,7 @@ class Produk extends Component
             $this->retailSatuanId = $existingRetail->unit_id;
             $this->retailSku = $existingRetail->sku;
             $this->retailBarcode = $existingRetail->barcode;
-            $this->retailHargaJual = number_format($existingRetail->harga_jual);
+            $this->retailHargaJual = \App\Utils\NumberUtil::format($existingRetail->harga_jual);
             // Hint for Hasil Pecah (can be recalculated from previous)
             $this->retailHasilPecah = $existingRetail->harga_beli > 0 ? ($this->detailProduk->harga_beli / $existingRetail->harga_beli) : 0;
         } else {
@@ -400,7 +400,7 @@ class Produk extends Component
                 // Update produk eceran yang sudah ada
                 $retailProduct->stok_aktual += $totalStokEceranBaru;
                 $retailProduct->harga_beli = $hargaBeliEceran; // Update harga beli jika bulk berubah
-                $retailProduct->harga_jual = floatval(str_replace(',', '', $this->retailHargaJual));
+                $retailProduct->harga_jual = \App\Utils\NumberUtil::parse($this->retailHargaJual);
                 $retailProduct->save();
                 $message = 'Stok produk eceran berhasil ditambahkan';
             } else {
@@ -426,7 +426,7 @@ class Produk extends Component
                     'barcode' => $this->retailBarcode,
                     'nama_produk' => $this->retailNamaProduk,
                     'harga_beli' => $hargaBeliEceran,
-                    'harga_jual' => floatval(str_replace(',', '', $this->retailHargaJual)),
+                    'harga_jual' => \App\Utils\NumberUtil::parse($this->retailHargaJual),
                     'stok_minimal' => 0,
                     'stok_aktual' => $totalStokEceranBaru,
                     'metode_biaya' => 'FIFO',
@@ -550,7 +550,7 @@ class Produk extends Component
                 $productPrices[] = [
                     'product_id' => $this->productId,
                     'customer_group_id' => $customerGroup->id,
-                    'harga_spesial' => floatval(str_replace(',', '', $hargaJualMember)),
+                    'harga_spesial' => \App\Utils\NumberUtil::parse($hargaJualMember),
                     'tanggal_mulai' => $tanggalMulai,
                     'tanggal_akhir' => $tanggalAkhir,
                 ];

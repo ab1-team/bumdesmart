@@ -210,7 +210,7 @@
                     }
                 },
                 formatRupiah(num) {
-                    if (num === null || num === undefined || num === '') return '';
+                    if (num === null || num === undefined || num === '') return '0';
                     let val = (typeof num === 'string') ? this.parseFormatted(num) : num;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
@@ -222,17 +222,28 @@
                     if (typeof val === 'number') return val;
                     if (!val) return 0;
                     let str = String(val).trim();
-                    if (str.includes(',')) {
-                        let clean = str.replace(/\./g, '').replace(/,/g, '.');
-                        return parseFloat(clean) || 0;
+                    
+                    // If the string has both dot and comma (e.g., 1.234,56)
+                    if (str.includes('.') && str.includes(',')) {
+                        return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
                     }
+                    
+                    // If it only has a comma, it's definitely a decimal separator in ID format
+                    if (str.includes(',')) {
+                        return parseFloat(str.replace(/,/g, '.')) || 0;
+                    }
+                    
+                    // If it only has a dot:
                     if (str.includes('.')) {
                         let parts = str.split('.');
-                        if (parts[parts.length - 1].length === 3 || parts.length > 2) {
-                            return parseFloat(str.replace(/\./g, '')) || 0;
+                        // If it looks like a decimal (e.g., 2800.00 from DB), keep the dot
+                        if (parts[parts.length - 1].length !== 3) {
+                            return parseFloat(str) || 0;
                         }
-                        return parseFloat(str) || 0;
+                        // Otherwise, treat as thousands and remove
+                        return parseFloat(str.replace(/\./g, '')) || 0;
                     }
+                    
                     return parseFloat(str) || 0;
                 },
             }))

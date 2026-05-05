@@ -31,9 +31,9 @@
                                 <span class="badge text-light bg-danger">Pending</span>
                             @endif
                         </td>
-                        <td>{{ number_format($sale->total, 0, ',', '.') }}</td>
-                        <td>{{ number_format($sale->dibayar, 0, ',', '.') }}</td>
-                        <td>{{ number_format(max(0, $sale->total - $sale->dibayar), 0, ',', '.') }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($sale->total) }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($sale->dibayar) }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format(max(0, $sale->total - $sale->dibayar)) }}</td>
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-info dropdown-toggle" type="button"

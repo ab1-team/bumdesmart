@@ -40,7 +40,7 @@
                                     <td>
                                         <input type="text" class="form-control"
                                             wire:model="hargaJualMember.{{ $customerGroup->id }}"
-                                            x-mask:dynamic="$money($input)" value="{{ $hargaJualPerMember }}">
+                                            x-mask:dynamic="$money($input, ',', '.', 2)" x-on:focus="$el.select()" value="{{ $hargaJualPerMember }}">
                                     </td>
                                     <td>
                                         <input type="text" class="form-control litepicker"
