@@ -42,7 +42,7 @@ class PaymentUtil
                 'rekening_debit' => $rekeningKredit,
             ];
 
-            $rekeningDebit = '4.1.01.06';
+            $rekeningDebit = '5.1.01.06';
             $return['purchase-cashback'] = [
                 'rekening_kredit' => $rekeningKredit,
                 'rekening_debit' => $rekeningDebit,

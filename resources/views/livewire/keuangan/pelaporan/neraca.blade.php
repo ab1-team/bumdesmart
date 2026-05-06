@@ -34,7 +34,7 @@
                         $saldoAkun = 0;
                         foreach ($akunLevel3->accounts as $account) {
                             $saldo = KeuanganUtil::sumSaldo($account, $bulan);
-                            if ($account->kode == '3.2.01.02') {
+                            if ($account->kode == '3.2.02.01') {
                                 $saldo = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
                             }
 

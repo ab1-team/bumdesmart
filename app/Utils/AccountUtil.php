@@ -3,10 +3,7 @@
 namespace App\Utils;
 
 use App\Models\Account;
-use App\Models\AkunLevel1;
-use App\Models\AkunLevel2;
 use App\Models\AkunLevel3;
-use Illuminate\Support\Facades\DB;
 
 class AccountUtil
 {
@@ -300,7 +297,14 @@ class AccountUtil
             [
                 'id' => '80',
                 'kode' => '3.2.01.00',
-                'nama' => 'Laba',
+                'nama' => 'Laba Ditahan',
+                'parent_id' => '79',
+                'jenis_mutasi' => 'kredit',
+            ],
+            [
+                'id' => '82',
+                'kode' => '3.2.02.00',
+                'nama' => 'Laba Rugi Berjalan ',
                 'parent_id' => '79',
                 'jenis_mutasi' => 'kredit',
             ],
@@ -319,10 +323,10 @@ class AccountUtil
                 'jenis_mutasi' => 'debit',
             ],
             [
-                'id' => '101',
+                'id' => '103',
                 'kode' => '6.1.01.00',
                 'nama' => 'Beban Gaji',
-                'parent_id' => '101',
+                'parent_id' => '102',
                 'jenis_mutasi' => 'debit',
             ],
             [
@@ -738,9 +742,9 @@ class AccountUtil
                 'jenis_mutasi' => 'kredit',
             ],
             [
-                'kode' => '3.2.01.02',
+                'kode' => '3.2.02.01',
                 'nama' => 'Ikhtisar Laba Rugi Berjalan',
-                'parent_id' => '80',
+                'parent_id' => '82',
                 'jenis_mutasi' => 'kredit',
             ],
             [
@@ -971,7 +975,7 @@ class AccountUtil
             $kodeAkun = explode('.', $rek['kode']);
             if (count($kodeAkun) === 4 && intval($kodeAkun[3]) > 0) {
                 // This is a Level 4 account
-                $parentKode = $kodeAkun[0] . '.' . $kodeAkun[1] . '.' . $kodeAkun[2] . '.00';
+                $parentKode = $kodeAkun[0].'.'.$kodeAkun[1].'.'.$kodeAkun[2].'.00';
                 $parentId = $level3Map[$parentKode] ?? null;
 
                 if ($parentId) {

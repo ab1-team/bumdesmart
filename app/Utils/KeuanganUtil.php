@@ -129,16 +129,18 @@ class KeuanganUtil
             ['kode' => '4.1.01.03', 'nama' => 'Retur Penjualan', 'saldo_bulan_ini' => $returPenjualan, 'saldo_bulan_lalu' => $getS('4.1.01.03', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.03', '00')],
             ['kode' => '4.1.01.06', 'nama' => 'Cashback Penjualan', 'saldo_bulan_ini' => $cashbackPenjualan, 'saldo_bulan_lalu' => $getS('4.1.01.06', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.06', '00')],
             ['kode' => '', 'nama' => 'Penjualan Bersih', 'saldo_bulan_ini' => $penjualanBersih, 'saldo_bulan_lalu' => 0, 'saldo_tahun_lalu' => 0, 'is_bold' => true],
+            ['kode' => '4.1.01.04', 'nama' => 'Pendapatan Sewa Ruang/Rak', 'saldo_bulan_ini' => (float)self::sumSaldo($accounts->get('4.1.01.04'), $bulan), 'saldo_bulan_lalu' => $getS('4.1.01.04', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.04', '00')],
+            ['kode' => '4.1.01.05', 'nama' => 'Pendapatan Lain-lain', 'saldo_bulan_ini' => (float)self::sumSaldo($accounts->get('4.1.01.05'), $bulan), 'saldo_bulan_lalu' => $getS('4.1.01.05', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.05', '00')],
         ];
 
         $group2_kode = [
             ['kode' => '', 'nama' => 'Persediaan Awal', 'saldo_bulan_ini' => $persediaanAwal, 'saldo_bulan_lalu' => 0, 'saldo_tahun_lalu' => 0],
             ['kode' => '1.1.03.01', 'nama' => 'Pembelian', 'saldo_bulan_ini' => $pembelianGross, 'saldo_bulan_lalu' => $getS('1.1.03.01', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('1.1.03.01', '00')],
-            ['kode' => '5.1.01.02', 'nama' => 'Diskon Pembelian', 'saldo_bulan_ini' => $diskonPenjualan, 'saldo_bulan_lalu' => $getS('5.1.01.02', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.02', '00')],
-            ['kode' => '5.1.01.03', 'nama' => 'Retur Pembelian', 'saldo_bulan_ini' => $returPenjualan, 'saldo_bulan_lalu' => $getS('5.1.01.03', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.03', '00')],
+            ['kode' => '5.1.01.02', 'nama' => 'Diskon Pembelian', 'saldo_bulan_ini' => $diskonPembelian, 'saldo_bulan_lalu' => $getS('5.1.01.02', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.02', '00')],
+            ['kode' => '5.1.01.03', 'nama' => 'Retur Pembelian', 'saldo_bulan_ini' => $returPembelian, 'saldo_bulan_lalu' => $getS('5.1.01.03', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.03', '00')],
             ['kode' => '5.1.01.04', 'nama' => 'Beban Produksi', 'saldo_bulan_ini' => $bebanProduksi, 'saldo_bulan_lalu' => $getS('5.1.01.04', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.04', '00')],
             ['kode' => '5.1.01.05', 'nama' => 'Beban Transport Produk', 'saldo_bulan_ini' => $bebanTransport, 'saldo_bulan_lalu' => $getS('5.1.01.05', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.05', '00')],
-            ['kode' => '5.1.01.06', 'nama' => 'Cashback Pembelian', 'saldo_bulan_ini' => $cashbackPenjualan, 'saldo_bulan_lalu' => $getS('5.1.01.06', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.06', '00')],
+            ['kode' => '5.1.01.06', 'nama' => 'Cashback Pembelian', 'saldo_bulan_ini' => $cashbackPembelian, 'saldo_bulan_lalu' => $getS('5.1.01.06', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('5.1.01.06', '00')],
             ['kode' => '', 'nama' => 'Total Pembelian', 'saldo_bulan_ini' => $pembelianBersih, 'saldo_bulan_lalu' => 0, 'saldo_tahun_lalu' => 0, 'is_bold' => true],
             ['kode' => '', 'nama' => 'Total Persediaan', 'saldo_bulan_ini' => $totalPersediaan, 'saldo_bulan_lalu' => 0, 'saldo_tahun_lalu' => 0, 'is_bold' => true],
             ['kode' => '', 'nama' => 'Persediaan Akhir', 'saldo_bulan_ini' => $persediaanAkhir, 'saldo_bulan_lalu' => 0, 'saldo_tahun_lalu' => 0],
@@ -179,6 +181,7 @@ class KeuanganUtil
             $kode2 = explode('.', $kode)[1];
             
             if ($kode == '4.1.01.01' || $kode == '4.1.01.02' || $kode == '4.1.01.03' || $kode == '4.1.01.06' ||
+                $kode == '4.1.01.04' || $kode == '4.1.01.05' ||
                 $kode == '5.1.01.01' || $kode == '5.1.01.02' || $kode == '5.1.01.03' || $kode == '5.1.01.04' ||
                 $kode == '5.1.01.05' || $kode == '5.1.01.06' || $kode == '1.1.03.01') {
                 continue;
