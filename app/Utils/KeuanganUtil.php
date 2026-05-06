@@ -199,13 +199,15 @@ class KeuanganUtil
         }
 
         $group['1']['total'] = $group['1']['jumlah'];
+        $labaKotorFinal = $group['1']['total'] - $hpp; 
+        $group['2']['total'] = $labaKotorFinal;
         $group['3']['total'] = $group['2']['total'] + $group['3']['jumlah'];
         $group['4']['total'] = $group['3']['total'] + $group['4']['jumlah'];
 
         return [
             'groups' => array_values($group),
             'metrics' => [
-                'margin_kotor' => $penjualanBersih > 0 ? ($labaKotor / $penjualanBersih) * 100 : 0,
+                'margin_kotor' => $penjualanBersih > 0 ? ($labaKotorFinal / $penjualanBersih) * 100 : 0,
                 'margin_bersih' => $penjualanBersih > 0 ? ($group['4']['total'] / $penjualanBersih) * 100 : 0,
             ],
         ];
