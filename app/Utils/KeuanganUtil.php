@@ -51,9 +51,7 @@ class KeuanganUtil
 
     public static function saldoLabaRugi($tahun, $bulan = '00'): string
     {
-        $labaRugi = self::labaRugi($tahun, $bulan, true); // Use YTD for Neraca
-        // labaRugi returns ['groups' => [...], 'metrics' => [...]]
-        // Laba Bersih is in the 4th group (index 3) -> 'total'
+        $labaRugi = self::labaRugi($tahun, $bulan);
         if (isset($labaRugi['groups']) && isset($labaRugi['groups'][3]['total'])) {
             return (string) $labaRugi['groups'][3]['total'];
         }
@@ -61,12 +59,11 @@ class KeuanganUtil
         return '0';
     }
 
-    public static function labaRugi($tahun, $bulan = '00', $isYtd = false): array
+    public static function labaRugi($tahun, $bulan = '00'): array
     {
         $business_id = auth()->user()->business_id;
         $bulanInt = intval($bulan);
 
-        // Fetch all relevant accounts in one go
         $accounts = Account::where('business_id', $business_id)
             ->where(function ($q) {
                 $q->where('kode', 'LIKE', '4.%')
@@ -81,30 +78,16 @@ class KeuanganUtil
             ->get()
             ->keyBy('kode');
 
-        // Helper to get monthly movement or YTD movement
-        $getM = function ($kode) use ($accounts, $bulan, $isYtd) {
+        $getM = function ($kode) use ($accounts, $bulan) {
             $acc = $accounts->get($kode);
             if (!$acc || !$acc->balance) return ['debit' => 0, 'kredit' => 0];
-            
-            if ($isYtd) {
-                $debit = 0;
-                $kredit = 0;
-                for ($i = 0; $i <= intval($bulan); $i++) {
-                    $b = str_pad($i, 2, '0', STR_PAD_LEFT);
-                    $debit += (float)($acc->balance->{"debit_$b"} ?? 0);
-                    $kredit += (float)($acc->balance->{"kredit_$b"} ?? 0);
-                }
-                return ['debit' => $debit, 'kredit' => $kredit];
-            } else {
-                $b = str_pad(intval($bulan), 2, '0', STR_PAD_LEFT);
-                return [
-                    'debit' => (float)($acc->balance->{"debit_$b"} ?? 0),
-                    'kredit' => (float)($acc->balance->{"kredit_$b"} ?? 0)
-                ];
-            }
+            $b = str_pad(intval($bulan), 2, '0', STR_PAD_LEFT);
+            return [
+                'debit' => (float)($acc->balance->{"debit_$b"} ?? 0),
+                'kredit' => (float)($acc->balance->{"kredit_$b"} ?? 0)
+            ];
         };
 
-        // Helper to get balance at end of month
         $getS = function ($kode, $bln) use ($accounts) {
             $acc = $accounts->get($kode);
             if (!$acc) return 0;
@@ -141,8 +124,6 @@ class KeuanganUtil
             ['kode' => '4.1.01.03', 'nama' => 'Retur Penjualan', 'saldo_bulan_ini' => $returPenjualan, 'saldo_bulan_lalu' => $getS('4.1.01.03', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.03', '00')],
             ['kode' => '4.1.01.06', 'nama' => 'Cashback Penjualan', 'saldo_bulan_ini' => $cashbackPenjualan, 'saldo_bulan_lalu' => $getS('4.1.01.06', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.06', '00')],
             ['kode' => '', 'nama' => 'Penjualan Bersih', 'saldo_bulan_ini' => $penjualanBersih, 'saldo_bulan_lalu' => 0, 'saldo_tahun_lalu' => 0, 'is_bold' => true],
-            ['kode' => '4.1.01.04', 'nama' => 'Pendapatan Sewa Ruang/Rak', 'saldo_bulan_ini' => (float)self::sumSaldo($accounts->get('4.1.01.04'), $bulan), 'saldo_bulan_lalu' => $getS('4.1.01.04', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.04', '00')],
-            ['kode' => '4.1.01.05', 'nama' => 'Pendapatan Lain-lain', 'saldo_bulan_ini' => (float)self::sumSaldo($accounts->get('4.1.01.05'), $bulan), 'saldo_bulan_lalu' => $getS('4.1.01.05', $bulanInt - 1), 'saldo_tahun_lalu' => $getS('4.1.01.05', '00')],
         ];
 
         $group2_kode = [
@@ -193,7 +174,6 @@ class KeuanganUtil
             $kode2 = explode('.', $kode)[1];
             
             if ($kode == '4.1.01.01' || $kode == '4.1.01.02' || $kode == '4.1.01.03' || $kode == '4.1.01.06' ||
-                $kode == '4.1.01.04' || $kode == '4.1.01.05' ||
                 $kode == '5.1.01.01' || $kode == '5.1.01.02' || $kode == '5.1.01.03' || $kode == '5.1.01.04' ||
                 $kode == '5.1.01.05' || $kode == '5.1.01.06' || $kode == '1.1.03.01') {
                 continue;
@@ -218,129 +198,75 @@ class KeuanganUtil
             }
         }
 
-        // Final Totals
-        $group['1']['total'] = $group['1']['jumlah']; // Total Pendapatan (Gambar 2)
-        $labaKotorFix = $group['1']['total'] - $group['2']['jumlah']; 
-        $group['2']['total'] = $labaKotorFix; // LABA KOTOR (Tambahan)
-        
-        $totalBebanGambar2 = $group['2']['jumlah'] - $group['3']['jumlah']; // HPP + Other Expenses
-        $group['3']['jumlah_display'] = $totalBebanGambar2; // Total Beban (Gambar 2)
-        $group['3']['total'] = $group['1']['total'] - $totalBebanGambar2; // Laba Sebelum Pajak (Gambar 2)
-        
-        $group['4']['total'] = $group['3']['total'] + $group['4']['jumlah']; // Laba Bersih (Gambar 2)
-
-        // Add Margins
-        $marginKotor = $penjualanBersih > 0 ? ($labaKotorFix / $penjualanBersih) * 100 : 0;
-        $marginBersih = $penjualanBersih > 0 ? ($group['4']['total'] / $penjualanBersih) * 100 : 0;
+        $group['1']['total'] = $group['1']['jumlah'];
+        $group['3']['total'] = $group['2']['total'] + $group['3']['jumlah'];
+        $group['4']['total'] = $group['3']['total'] + $group['4']['jumlah'];
 
         return [
             'groups' => array_values($group),
             'metrics' => [
-                'margin_kotor' => $marginKotor,
-                'margin_bersih' => $marginBersih,
-            ]
+                'margin_kotor' => $penjualanBersih > 0 ? ($labaKotor / $penjualanBersih) * 100 : 0,
+                'margin_bersih' => $penjualanBersih > 0 ? ($group['4']['total'] / $penjualanBersih) * 100 : 0,
+            ],
         ];
     }
 
-    public static function arusKas(string $tanggalMulai, string $tanggalAkhir)
+    public static function arusKas($tahun, $bulan): array
     {
-        $semuaArusKas = ArusKas::with('rekenings')->orderBy('id')->get()->keyBy('id');
+        $bulanInt = intval($bulan);
+        $business_id = auth()->user()->business_id;
 
-        $leafNodes = $semuaArusKas->filter(fn($a) => $a->rekenings->isNotEmpty());
-        $semuaArusKas->each(fn($a) => $a->total = 0);
+        $rootNodes = ArusKas::whereNull('parent_id')->with('children.rekenings')->get();
 
-        if ($leafNodes->isNotEmpty()) {
-            $cases = 'CASE ';
-            $bindings = [];
+        $data = [];
+        foreach ($rootNodes as $root) {
+            $totalRoot = 0;
+            $childrenData = [];
 
-            foreach ($leafNodes as $arusKas) {
-                $whens = $arusKas->rekenings->map(function ($r) use (&$bindings) {
-                    $bindings[] = $r->rekening_debit;
-                    $bindings[] = $r->rekening_kredit;
+            foreach ($root->children as $child) {
+                $totalChild = 0;
+                $leafNodes = $child->children->count() > 0 ? $child->children : collect([$child]);
 
-                    return '(rekening_debit LIKE ? AND rekening_kredit LIKE ?)';
-                })->implode(' OR ');
+                foreach ($leafNodes as $arusKas) {
+                    $saldo = 0;
+                    foreach ($arusKas->rekenings as $rek) {
+                        $payments = Payment::where('business_id', $business_id)
+                            ->whereYear('tanggal', $tahun)
+                            ->whereMonth('tanggal', $bulan)
+                            ->where(function ($q) use ($rek) {
+                                $q->where([
+                                    ['rekening_debit', 'LIKE', $rek->rekening_debit],
+                                    ['rekening_kredit', 'LIKE', $rek->rekening_kredit],
+                                ])->orWhere([
+                                    ['rekening_debit', 'LIKE', $rek->rekening_kredit],
+                                    ['rekening_kredit', 'LIKE', $rek->rekening_debit],
+                                ]);
+                            })->get();
 
-                $cases .= "WHEN {$whens} THEN {$arusKas->id} ";
+                        foreach ($payments as $p) {
+                            if (str_starts_with($p->rekening_debit, explode('%', $rek->rekening_debit)[0])) {
+                                $saldo += $p->nominal;
+                            } else {
+                                $saldo -= $p->nominal;
+                            }
+                        }
+                    }
+                    $totalChild += $saldo;
+                }
+                $totalRoot += $totalChild;
+                $childrenData[] = [
+                    'nama' => $child->nama,
+                    'total' => $totalChild,
+                ];
             }
 
-            $cases .= 'END';
-
-            $innerQuery = Payment::selectRaw("{$cases} as arus_kas_id, total_harga", $bindings)
-                ->whereRaw("{$cases} IS NOT NULL", $bindings)
-                ->whereBetween('tanggal_pembayaran', [$tanggalMulai, $tanggalAkhir]);
-
-            $totals = Payment::selectRaw('arus_kas_id, SUM(total_harga) as total')
-                ->fromSub($innerQuery, 'grouped')
-                ->groupBy('arus_kas_id')
-                ->pluck('total', 'arus_kas_id');
-
-            foreach ($leafNodes as $id => $arusKas) {
-                $arusKas->total = (float) ($totals->get($id) ?? 0);
-            }
+            $data[] = [
+                'nama' => $root->nama,
+                'total' => $totalRoot,
+                'children' => $childrenData,
+            ];
         }
 
-        $visited = [];
-
-        $aggregate = function ($node) use (&$aggregate, $semuaArusKas, &$visited) {
-            if (isset($visited[$node->id])) {
-                return;
-            }
-            $visited[$node->id] = true;
-
-            $children = $semuaArusKas->filter(
-                fn($n) => $n->sub == $node->id || $n->super_sub == $node->id
-            );
-
-            foreach ($children as $child) {
-                $aggregate($child);
-                $node->total += $child->total;
-            }
-        };
-
-        $semuaArusKas->each(fn($node) => $aggregate($node));
-
-        $result = collect();
-        $curSection = null;
-        $curGroup = null;
-
-        foreach ($semuaArusKas->sortBy('id') as $node) {
-            $isHeader = $node->sub == 0 && $node->super_sub != 0;
-            $isSubHeader = $node->sub == 0 && $node->rekenings->isEmpty() && ! $isHeader;
-            $isLeaf = ! $isHeader && ! $isSubHeader;
-
-            if ($isHeader) {
-                if ($curGroup !== null) {
-                    $curSection['groups']->push($curGroup);
-                    $curGroup = null;
-                }
-                if ($curSection !== null) {
-                    $result->push($curSection);
-                }
-                $curSection = ['header' => $node, 'groups' => collect()];
-            } elseif ($isSubHeader) {
-                if ($curGroup !== null && $curSection !== null) {
-                    $curSection['groups']->push($curGroup);
-                }
-                if ($curSection === null) {
-                    $curSection = ['header' => null, 'groups' => collect()];
-                }
-                $curGroup = ['subheader' => $node, 'items' => collect()];
-            } elseif ($isLeaf) {
-                if ($curGroup === null) {
-                    $curGroup = ['subheader' => null, 'items' => collect()];
-                }
-                $curGroup['items']->push($node);
-            }
-        }
-
-        if ($curGroup !== null && $curSection !== null) {
-            $curSection['groups']->push($curGroup);
-        }
-        if ($curSection !== null) {
-            $result->push($curSection);
-        }
-
-        return $result;
+        return $data;
     }
 }
