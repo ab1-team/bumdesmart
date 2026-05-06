@@ -51,7 +51,7 @@ class KeuanganUtil
 
     public static function saldoLabaRugi($tahun, $bulan = '00'): string
     {
-        $labaRugi = self::labaRugi($tahun, $bulan);
+        $labaRugi = self::labaRugi($tahun, $bulan, true); // Use YTD for Neraca
         // labaRugi returns ['groups' => [...], 'metrics' => [...]]
         // Laba Bersih is in the 4th group (index 3) -> 'total'
         if (isset($labaRugi['groups']) && isset($labaRugi['groups'][3]['total'])) {
@@ -61,7 +61,7 @@ class KeuanganUtil
         return '0';
     }
 
-    public static function labaRugi($tahun, $bulan = '00'): array
+    public static function labaRugi($tahun, $bulan = '00', $isYtd = false): array
     {
         $business_id = auth()->user()->business_id;
         $bulanInt = intval($bulan);
@@ -81,15 +81,27 @@ class KeuanganUtil
             ->get()
             ->keyBy('kode');
 
-        // Helper to get monthly movement
-        $getM = function ($kode) use ($accounts, $bulan) {
+        // Helper to get monthly movement or YTD movement
+        $getM = function ($kode) use ($accounts, $bulan, $isYtd) {
             $acc = $accounts->get($kode);
             if (!$acc || !$acc->balance) return ['debit' => 0, 'kredit' => 0];
-            $b = str_pad(intval($bulan), 2, '0', STR_PAD_LEFT);
-            return [
-                'debit' => (float)($acc->balance->{"debit_$b"} ?? 0),
-                'kredit' => (float)($acc->balance->{"kredit_$b"} ?? 0)
-            ];
+            
+            if ($isYtd) {
+                $debit = 0;
+                $kredit = 0;
+                for ($i = 0; $i <= intval($bulan); $i++) {
+                    $b = str_pad($i, 2, '0', STR_PAD_LEFT);
+                    $debit += (float)($acc->balance->{"debit_$b"} ?? 0);
+                    $kredit += (float)($acc->balance->{"kredit_$b"} ?? 0);
+                }
+                return ['debit' => $debit, 'kredit' => $kredit];
+            } else {
+                $b = str_pad(intval($bulan), 2, '0', STR_PAD_LEFT);
+                return [
+                    'debit' => (float)($acc->balance->{"debit_$b"} ?? 0),
+                    'kredit' => (float)($acc->balance->{"kredit_$b"} ?? 0)
+                ];
+            }
         };
 
         // Helper to get balance at end of month

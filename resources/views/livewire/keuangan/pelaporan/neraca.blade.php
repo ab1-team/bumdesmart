@@ -32,13 +32,13 @@
                 @foreach ($akunLevel2->akunLevel3 as $index => $akunLevel3)
                     @php
                         $saldoAkun = 0;
-                        foreach ($akunLevel3->accounts as $account) {
-                            $saldo = KeuanganUtil::sumSaldo($account, $bulan);
-                            if ($account->kode == '3.2.02.01') {
-                                $saldo = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
+                        if ($akunLevel3->kode == '3.2.02.00') {
+                            $saldoAkun = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
+                        } else {
+                            foreach ($akunLevel3->accounts as $account) {
+                                $saldo = KeuanganUtil::sumSaldo($account, $bulan);
+                                $saldoAkun += $saldo;
                             }
-
-                            $saldoAkun += $saldo;
                         }
 
                         $saldoAkunLevel1[$akunLevel1->id] += $saldoAkun;

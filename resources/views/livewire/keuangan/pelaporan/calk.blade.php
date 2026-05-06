@@ -41,17 +41,23 @@
 
                     @php
                         $saldoAkunLevel3 = 0;
+                        if ($akunLevel3->kode == '3.2.02.00') {
+                            $saldoAkunLevel3 = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
+                        }
                     @endphp
                     @foreach ($akunLevel3->accounts as $index => $account)
                         @php
-                            $saldo = KeuanganUtil::sumSaldo($account, $bulan);
-                            if ($account->kode == '3.2.02.01') {
-                                $saldo = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
+                            if ($akunLevel3->kode == '3.2.02.00') {
+                                // Already handled at Level 3
+                                $saldo = 0; 
+                            } else {
+                                $saldo = KeuanganUtil::sumSaldo($account, $bulan);
                             }
                             $saldoAkunLevel3 += $saldo;
                             $saldoAkunLevel1[$akunLevel1->id] += $saldo;
                         @endphp
-
+                        
+                        @if ($akunLevel3->kode != '3.2.02.00')
                         <tr style="background-color: {{ $index % 2 == 0 ? '#f9f9f9' : '#ffffff' }};">
                             <td style="border: 0; padding-left: 30px; font-size: 0.9em; width: 15%;">
                                 {{ $account->kode }}
@@ -63,7 +69,13 @@
                                 {{ number_format($saldo, 2) }}
                             </td>
                         </tr>
+                        @endif
                     @endforeach
+                    @php
+                        if ($akunLevel3->kode == '3.2.02.00') {
+                             $saldoAkunLevel1[$akunLevel1->id] += $saldoAkunLevel3;
+                        }
+                    @endphp
                 @endforeach
             @endforeach
 
