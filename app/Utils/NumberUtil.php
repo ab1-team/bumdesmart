@@ -34,6 +34,56 @@ class NumberUtil
         return $formatted;
     }
 
+    /**
+     * Parse an Indonesian formatted number string into a float.
+     * Removes dots (thousands separator) and replaces commas with dots (decimal separator).
+     *
+     * @param mixed $value
+     * @return float
+     */
+    public static function parse($value)
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $str = trim((string) $value);
+
+        // If it contains a comma, it's definitely Indonesian format (dot=thousands, comma=decimal)
+        if (strpos($str, ',') !== false) {
+            $clean = str_replace('.', '', $str);
+            $clean = str_replace(',', '.', $clean);
+
+            return (float) $clean;
+        }
+
+        // If it contains a dot:
+        if (strpos($str, '.') !== false) {
+            $lastDotIdx = strrpos($str, '.');
+            $remainingLength = strlen($str) - $lastDotIdx - 1;
+
+            // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
+            if ($remainingLength !== 3) {
+                // Could be English decimal (e.g. 1.2) or just a dot not following thousand rules
+                return (float) $str;
+            }
+
+            // If there's another dot, it's thousands
+            if (strpos($str, '.') !== $lastDotIdx) {
+                return (float) str_replace('.', '', $str);
+            }
+
+            // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
+            return (float) str_replace('.', '', $str);
+        }
+
+        return (float) $str;
+    }
+
     public static function terbilang($nilai)
     {
         $nilai = abs($nilai);

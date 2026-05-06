@@ -303,8 +303,8 @@ class TambahPenjualan extends Component
                 \App\Models\Payment::where('transaction_id', $sale->id)->where('jenis_transaksi', 'sale')->delete();
 
                 // 3. UPDATE HEADER
-                $pay = $this->parseNumber($data['bayar']);
-                $grandTotal = $this->parseNumber($data['grandTotal']);
+                $pay = \App\Utils\NumberUtil::parse($data['bayar']);
+                $grandTotal = \App\Utils\NumberUtil::parse($data['grandTotal']);
                 $jenisPembayaran = $data['jenisPembayaran'];
                 $status = 'completed';
 
@@ -330,14 +330,14 @@ class TambahPenjualan extends Component
                     'tanggal_transaksi' => $tgl,
                     'customer_id' => $data['customer'] ?: null,
                     'jenis_pembayaran' => $jenisPembayaran,
-                    'subtotal' => $this->parseNumber($data['subtotal']),
+                    'subtotal' => \App\Utils\NumberUtil::parse($data['subtotal']),
                     'jenis_diskon' => $data['globalDiskon']['jenis'],
-                    'jumlah_diskon' => $this->parseNumber($data['globalDiskon']['jumlah']),
+                    'jumlah_diskon' => \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah']),
                     'jenis_cashback' => $data['globalCashback']['jenis'],
-                    'jumlah_cashback' => $this->parseNumber($data['globalCashback']['jumlah']),
+                    'jumlah_cashback' => \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah']),
                     'total' => $grandTotal,
                     'dibayar' => $pay,
-                    'kembalian' => $this->parseNumber($data['kembalian']),
+                    'kembalian' => \App\Utils\NumberUtil::parse($data['kembalian']),
                     'jumlah_utang' => max(0, $grandTotal - $pay),
                     'status' => $status,
                     'keterangan' => $keterangan,
@@ -388,47 +388,6 @@ class TambahPenjualan extends Component
         }
     }
 
-    private function parseNumber($val)
-    {
-        if (is_numeric($val)) {
-            return (float) $val;
-        }
-        if (empty($val)) {
-            return 0;
-        }
-
-        $str = trim($val);
-
-        // If it contains a comma, it's definitely Indonesian format (dot=thousands, comma=decimal)
-        if (strpos($str, ',') !== false) {
-            $clean = str_replace('.', '', $str);
-            $clean = str_replace(',', '.', $clean);
-
-            return (float) $clean;
-        }
-
-        // If it contains a dot:
-        if (strpos($str, '.') !== false) {
-            $lastDotIdx = strrpos($str, '.');
-            $remainingLength = strlen($str) - $lastDotIdx - 1;
-
-            // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
-            if ($remainingLength !== 3) {
-                return (float) $str;
-            }
-
-            // If there's another dot, it's thousands
-            if (strpos($str, '.') !== $lastDotIdx) {
-                return (float) str_replace('.', '', $str);
-            }
-
-            // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
-            return (float) str_replace('.', '', $str);
-        }
-
-        return (float) $str;
-    }
-
     private function validateRequest($data)
     {
         if (empty($data['products'])) {
@@ -452,8 +411,8 @@ class TambahPenjualan extends Component
 
     private function createSaleRecord($data, $user, $nomorPenjualan, $tgl)
     {
-        $pay = $this->parseNumber($data['bayar']);
-        $grandTotal = $this->parseNumber($data['grandTotal']);
+        $pay = \App\Utils\NumberUtil::parse($data['bayar']);
+        $grandTotal = \App\Utils\NumberUtil::parse($data['grandTotal']);
         $jenisPembayaran = $data['jenisPembayaran']; // cash/credit
         $status = 'completed';
 
@@ -482,15 +441,15 @@ class TambahPenjualan extends Component
             'no_invoice' => $nomorPenjualan,
             'tanggal_transaksi' => $tgl,
             'jenis_pembayaran' => $jenisPembayaran, // cash/credit
-            'subtotal' => $this->parseNumber($data['subtotal']),
+            'subtotal' => \App\Utils\NumberUtil::parse($data['subtotal']),
             'jenis_diskon' => $data['globalDiskon']['jenis'],
-            'jumlah_diskon' => $this->parseNumber($data['globalDiskon']['jumlah']),
+            'jumlah_diskon' => \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah']),
             'jenis_cashback' => $data['globalCashback']['jenis'],
-            'jumlah_cashback' => $this->parseNumber($data['globalCashback']['jumlah']),
+            'jumlah_cashback' => \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah']),
             'jumlah_pajak' => 0,
             'total' => $grandTotal,
             'dibayar' => $pay,
-            'kembalian' => $this->parseNumber($data['kembalian']),
+            'kembalian' => \App\Utils\NumberUtil::parse($data['kembalian']),
             'jumlah_utang' => max(0, $grandTotal - $pay),
             'status' => $status, // COMPLETED/PARTIAL
             'keterangan' => $keterangan,
@@ -561,14 +520,14 @@ class TambahPenjualan extends Component
             $detail = $sale->saleDetails()->create([
                 'product_id' => $productId,
                 'jumlah' => $qty,
-                'harga_satuan' => $this->parseNumber($item['harga_jual']),
+                'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_jual']),
                 'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                'jumlah_diskon' => $this->parseNumber($item['diskon']['jumlah'] ?? 0),
+                'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
                 'jenis_cashback' => 'nominal',
                 'jumlah_cashback' => 0,
-                'subtotal' => $this->parseNumber($item['subtotal']),
+                'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
                 'hpp' => $avgHpp,
-                'profit' => $this->parseNumber($item['subtotal']) - $totalHpp,
+                'profit' => \App\Utils\NumberUtil::parse($item['subtotal']) - $totalHpp,
             ]);
 
             // 3. Prepare Batch Movements for bulk insert (now we have detail ID)
@@ -642,8 +601,8 @@ class TambahPenjualan extends Component
     private function processPayments($sale, $data, $user, $nomorPenjualan, $tgl)
     {
         // 6. Create Payment Records (Double-Entry Accounting) - OPTIMIZED
-        $pay = $this->parseNumber($data['bayar']);
-        $grandTotal = $this->parseNumber($data['grandTotal']);
+        $pay = \App\Utils\NumberUtil::parse($data['bayar']);
+        $grandTotal = \App\Utils\NumberUtil::parse($data['grandTotal']);
         $metodeBayar = $data['metodeBayar'];
         $jenisPembayaran = $data['jenisPembayaran'];
 
@@ -675,14 +634,14 @@ class TambahPenjualan extends Component
         // Add global discounts/cashback with proper percentage calculation
         $subtotalAfterItems = $totalGrossAll - $totalDiskonAll;
 
-        $globalDiskonVal = $this->parseNumber($data['globalDiskon']['jumlah'] ?? 0);
+        $globalDiskonVal = \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah'] ?? 0);
         if (($data['globalDiskon']['jenis'] ?? 'nominal') === 'persen') {
             $totalDiskonAll += ($subtotalAfterItems * $globalDiskonVal / 100);
         } else {
             $totalDiskonAll += $globalDiskonVal;
         }
 
-        $globalCashbackVal = $this->parseNumber($data['globalCashback']['jumlah'] ?? 0);
+        $globalCashbackVal = \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah'] ?? 0);
         if (($data['globalCashback']['jenis'] ?? 'nominal') === 'persen') {
             $totalCashbackAll += ($subtotalAfterItems * $globalCashbackVal / 100);
         } else {

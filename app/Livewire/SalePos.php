@@ -221,8 +221,8 @@ class SalePos extends Component
 
     private function createSaleRecord($data, $user, $nomorPenjualan, $tgl)
     {
-        $pay = $this->parseNumber($data['bayar']);
-        $grandTotal = $this->parseNumber($data['grandTotal']);
+        $pay = \App\Utils\NumberUtil::parse($data['bayar']);
+        $grandTotal = \App\Utils\NumberUtil::parse($data['grandTotal']);
         $jenisPembayaran = $data['payment_method'] == 'credit' ? 'credit' : 'cash';
         $status = 'completed';
 
@@ -246,16 +246,16 @@ class SalePos extends Component
             'no_invoice' => $nomorPenjualan,
             'tanggal_transaksi' => $tgl,
             'jenis_pembayaran' => $jenisPembayaran,
-            'subtotal' => $this->parseNumber($data['grandTotal']) + $this->calculateGlobalValue($data['globalDiskon'] ?? [], $data['grandTotal']),
+            'subtotal' => \App\Utils\NumberUtil::parse($data['grandTotal']) + $this->calculateGlobalValue($data['globalDiskon'] ?? [], $data['grandTotal']),
 
             'jenis_diskon' => $data['globalDiskon']['jenis'] ?? 'nominal',
-            'jumlah_diskon' => $this->parseNumber($data['globalDiskon']['jumlah'] ?? 0),
+            'jumlah_diskon' => \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah'] ?? 0),
             'jenis_cashback' => $data['globalCashback']['jenis'] ?? 'nominal',
-            'jumlah_cashback' => $this->parseNumber($data['globalCashback']['jumlah'] ?? 0),
+            'jumlah_cashback' => \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah'] ?? 0),
             'jumlah_pajak' => 0,
             'total' => $grandTotal,
             'dibayar' => $pay,
-            'kembalian' => $this->parseNumber($data['kembalian']),
+            'kembalian' => \App\Utils\NumberUtil::parse($data['kembalian']),
             'jumlah_utang' => max(0, $grandTotal - $pay),
             'status' => $status,
             'keterangan' => $keterangan,
@@ -264,7 +264,7 @@ class SalePos extends Component
 
     private function calculateGlobalValue($setting, $baseTotal)
     {
-        $amt = $this->parseNumber($setting['jumlah'] ?? 0);
+        $amt = \App\Utils\NumberUtil::parse($setting['jumlah'] ?? 0);
         $type = $setting['jenis'] ?? 'nominal';
 
         if ($type == 'persen') {
@@ -326,13 +326,13 @@ class SalePos extends Component
             }
 
             $avgHpp = ($qty > 0) ? ($totalHpp / $qty) : 0;
-            $itemSubtotal = $this->parseNumber($item['price']) * $qty;
+            $itemSubtotal = \App\Utils\NumberUtil::parse($item['price']) * $qty;
             $itemDiscount = isset($item['diskon']) ? $this->calculateItemDiscount($item) : 0;
 
             $detail = $sale->saleDetails()->create([
                 'product_id' => $productId,
                 'jumlah' => $qty,
-                'harga_satuan' => $this->parseNumber($item['price']),
+                'harga_satuan' => \App\Utils\NumberUtil::parse($item['price']),
                 'jenis_diskon' => 'nominal',
                 'jumlah_diskon' => $itemDiscount,
                 'jenis_cashback' => 'nominal',
@@ -395,8 +395,8 @@ class SalePos extends Component
 
     private function processPayments($sale, $data, $user, $nomorPenjualan, $tgl)
     {
-        $pay = $this->parseNumber($data['bayar']);
-        $grandTotal = $this->parseNumber($data['grandTotal']);
+        $pay = \App\Utils\NumberUtil::parse($data['bayar']);
+        $grandTotal = \App\Utils\NumberUtil::parse($data['grandTotal']);
         $metodeBayar = $data['payment_method'];
 
         $jenisPembayaran = ($pay < $grandTotal) ? 'credit' : 'cash';
@@ -510,7 +510,7 @@ class SalePos extends Component
 
     private function calculateRealValue($setting, $baseInfo)
     {
-        $amt = $this->parseNumber($setting['jumlah'] ?? 0);
+        $amt = \App\Utils\NumberUtil::parse($setting['jumlah'] ?? 0);
         $type = $setting['jenis'] ?? 'nominal';
 
         if ($amt <= 0) {
@@ -537,51 +537,10 @@ class SalePos extends Component
         }
         $d = $item['diskon'];
         if ($d['jenis'] == 'nominal') {
-            return $this->parseNumber($d['jumlah']);
+            return \App\Utils\NumberUtil::parse($d['jumlah']);
         }
 
-        return ($this->parseNumber($item['price']) * $item['qty'] * $this->parseNumber($d['jumlah'])) / 100;
-    }
-
-    private function parseNumber($value)
-    {
-        if (is_numeric($value)) {
-            return (float) $value;
-        }
-        if (empty($value)) {
-            return 0;
-        }
-
-        $str = trim($value);
-
-        // If it contains a comma, it's definitely Indonesian format (dot=thousands, comma=decimal)
-        if (strpos($str, ',') !== false) {
-            $clean = str_replace('.', '', $str);
-            $clean = str_replace(',', '.', $clean);
-
-            return (float) $clean;
-        }
-
-        // If it contains a dot:
-        if (strpos($str, '.') !== false) {
-            $lastDotIdx = strrpos($str, '.');
-            $remainingLength = strlen($str) - $lastDotIdx - 1;
-
-            // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
-            if ($remainingLength !== 3) {
-                return (float) $str;
-            }
-
-            // If there's another dot, it's thousands
-            if (strpos($str, '.') !== $lastDotIdx) {
-                return (float) str_replace('.', '', $str);
-            }
-
-            // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
-            return (float) str_replace('.', '', $str);
-        }
-
-        return (float) $str;
+        return (\App\Utils\NumberUtil::parse($item['price']) * $item['qty'] * \App\Utils\NumberUtil::parse($d['jumlah'])) / 100;
     }
 
     #[Layout('layouts.app')]

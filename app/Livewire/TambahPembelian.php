@@ -280,8 +280,8 @@ class TambahPembelian extends Component
             return;
         }
 
-        $bayar = $this->parseNumber($data['bayar']);
-        $total = $this->parseNumber($data['grandTotal']);
+        $bayar = \App\Utils\NumberUtil::parse($data['bayar']);
+        $total = \App\Utils\NumberUtil::parse($data['grandTotal']);
 
         $jenisPembayaran = $data['jenisPembayaran'];
         $status = $data['status'] ?? 'pending';
@@ -308,9 +308,9 @@ class TambahPembelian extends Component
 
         DB::beginTransaction();
         try {
-            $subtotal = $this->parseNumber($data['subtotal']);
+            $subtotal = \App\Utils\NumberUtil::parse($data['subtotal']);
 
-            $globalDiskonVal = $this->parseNumber($data['globalDiskon']['jumlah']);
+            $globalDiskonVal = \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah']);
             $globalDiskonAmt = ($data['globalDiskon']['jenis'] === 'nominal')
                 ? $globalDiskonVal
                 : ($subtotal * $globalDiskonVal / 100);
@@ -372,11 +372,11 @@ class TambahPembelian extends Component
                     'jenis_diskon' => $data['globalDiskon']['jenis'],
                     'jumlah_diskon' => $globalDiskonVal,
                     'jenis_cashback' => $data['globalCashback']['jenis'],
-                    'jumlah_cashback' => $this->parseNumber($data['globalCashback']['jumlah']),
+                    'jumlah_cashback' => \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah']),
                     'jumlah_pajak' => $taxAmount,
                     'total' => $total,
                     'dibayar' => $bayar,
-                    'kembalian' => $this->parseNumber($data['kembalian']),
+                    'kembalian' => \App\Utils\NumberUtil::parse($data['kembalian']),
                     'jumlah_utang' => max(0, $total - $bayar),
                     'status' => $status,
                     'keterangan' => $keterangan,
@@ -403,10 +403,10 @@ class TambahPembelian extends Component
                             'jumlah' => $newQty,
                             'harga_satuan' => $newPrice,
                             'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                            'jumlah_diskon' => $this->parseNumber($item['diskon']['jumlah'] ?? 0),
+                            'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
                             'jenis_cashback' => $item['cashback']['jenis'] ?? 'nominal',
-                            'jumlah_cashback' => $this->parseNumber($item['cashback']['jumlah'] ?? 0),
-                            'subtotal' => $this->parseNumber($item['subtotal']),
+                            'jumlah_cashback' => \App\Utils\NumberUtil::parse($item['cashback']['jumlah'] ?? 0),
+                            'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
                         ]);
 
                         $processedDetailIds[] = $detail->id;
@@ -431,10 +431,10 @@ class TambahPembelian extends Component
                             'jumlah' => $newQty,
                             'harga_satuan' => $newPrice,
                             'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                            'jumlah_diskon' => $this->parseNumber($item['diskon']['jumlah'] ?? 0),
+                            'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
                             'jenis_cashback' => $item['cashback']['jenis'] ?? 'nominal',
-                            'jumlah_cashback' => $this->parseNumber($item['cashback']['jumlah'] ?? 0),
-                            'subtotal' => $this->parseNumber($item['subtotal']),
+                            'jumlah_cashback' => \App\Utils\NumberUtil::parse($item['cashback']['jumlah'] ?? 0),
+                            'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
                         ]);
 
                         $batch = \App\Models\ProductBatch::create([
@@ -517,11 +517,11 @@ class TambahPembelian extends Component
                     'jenis_diskon' => $data['globalDiskon']['jenis'],
                     'jumlah_diskon' => $globalDiskonVal,
                     'jenis_cashback' => $data['globalCashback']['jenis'],
-                    'jumlah_cashback' => $this->parseNumber($data['globalCashback']['jumlah']),
+                    'jumlah_cashback' => \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah']),
                     'jumlah_pajak' => $taxAmount,
                     'total' => $total,
                     'dibayar' => $bayar,
-                    'kembalian' => $this->parseNumber($data['kembalian']),
+                    'kembalian' => \App\Utils\NumberUtil::parse($data['kembalian']),
                     'jumlah_utang' => max(0, $total - $bayar),
                     'status' => $status,
                     'keterangan' => $keterangan,
@@ -536,12 +536,12 @@ class TambahPembelian extends Component
                     $detail = $purchase->purchaseDetails()->create([
                         'product_id' => $item['id'],
                         'jumlah' => $item['jumlah_beli'],
-                        'harga_satuan' => $this->parseNumber($item['harga_beli']),
+                        'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
                         'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                        'jumlah_diskon' => $this->parseNumber($item['diskon']['jumlah'] ?? 0),
+                        'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
                         'jenis_cashback' => $item['cashback']['jenis'] ?? 'nominal',
-                        'jumlah_cashback' => $this->parseNumber($item['cashback']['jumlah'] ?? 0),
-                        'subtotal' => $this->parseNumber($item['subtotal']),
+                        'jumlah_cashback' => \App\Utils\NumberUtil::parse($item['cashback']['jumlah'] ?? 0),
+                        'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
                     ]);
 
                     // 2. Create Product Batch (One by one to get ID)
@@ -551,7 +551,7 @@ class TambahPembelian extends Component
                         'purchase_detail_id' => $detail->id,
                         'no_batch' => 'BATCH-'.$purchase->id.'-'.time().'-'.$item['id'],
                         'tanggal_pembelian' => $data['tanggalPembelian'],
-                        'harga_satuan' => $this->parseNumber($item['harga_beli']),
+                        'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
                         'jumlah_awal' => $item['jumlah_beli'],
                         'jumlah_saat_ini' => $item['jumlah_beli'],
                         'tanggal_kadaluarsa' => $item['tanggal_kadaluarsa'] ?? null,
@@ -581,7 +581,7 @@ class TambahPembelian extends Component
                             'transaction_detail_id' => $detail->id,
                             'jumlah' => $item['jumlah_beli'], // Positive for incoming in context of batch size? Or just magnitude?
                             // Usually BatchMovement tracks "change". For initial creation, it's the full amount.
-                            'harga_satuan' => $this->parseNumber($item['harga_beli']),
+                            'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
                             'created_at' => $timestamp,
                             'updated_at' => $timestamp,
                         ];
@@ -601,12 +601,12 @@ class TambahPembelian extends Component
             $kodeRekening = PaymentUtil::ambilRekening('purchase', 'cash', $data['metodeBayar'], $data['noRekening']);
 
             // Calculate actual discount and cashback amounts (GLOBAL ONLY)
-            $globalDiskonVal = $this->parseNumber($data['globalDiskon']['jumlah']);
+            $globalDiskonVal = \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah']);
             $globalDiskonAmt = ($data['globalDiskon']['jenis'] === 'nominal')
                 ? $globalDiskonVal
                 : ($subtotal * $globalDiskonVal / 100);
 
-            $globalCashbackVal = $this->parseNumber($data['globalCashback']['jumlah']);
+            $globalCashbackVal = \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah']);
             $globalCashbackAmt = ($data['globalCashback']['jenis'] === 'nominal')
                 ? $globalCashbackVal
                 : ($subtotal * $globalCashbackVal / 100);
@@ -714,47 +714,6 @@ class TambahPembelian extends Component
             DB::rollBack();
             $this->dispatch('alert', type: 'error', message: $e->getMessage());
         }
-    }
-
-    private function parseNumber($value)
-    {
-        if (is_numeric($value)) {
-            return (float) $value;
-        }
-        if (empty($value)) {
-            return 0;
-        }
-
-        $str = trim($value);
-
-        // If it contains a comma, it's definitely Indonesian format (dot=thousands, comma=decimal)
-        if (strpos($str, ',') !== false) {
-            $clean = str_replace('.', '', $str);
-            $clean = str_replace(',', '.', $clean);
-
-            return (float) $clean;
-        }
-
-        // If it contains a dot:
-        if (strpos($str, '.') !== false) {
-            $lastDotIdx = strrpos($str, '.');
-            $remainingLength = strlen($str) - $lastDotIdx - 1;
-
-            // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
-            if ($remainingLength !== 3) {
-                return (float) $str;
-            }
-
-            // If there's another dot, it's thousands
-            if (strpos($str, '.') !== $lastDotIdx) {
-                return (float) str_replace('.', '', $str);
-            }
-
-            // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
-            return (float) str_replace('.', '', $str);
-        }
-
-        return (float) $str;
     }
 
     private function generatePurchaseNumber()
