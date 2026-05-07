@@ -313,12 +313,16 @@ class MasterBusiness extends Component
             tenancy()->run($owner, function () use ($business, $owner, $username, $password) {
                 // 1. Ensure Migrations have run
                 try {
+                    $currentDb = DB::connection()->getDatabaseName();
+                    \Log::info("Syncing tenant {$owner->id} using database: {$currentDb}");
+
                     if (! Schema::hasTable('migrations') || DB::table('migrations')->count() == 0) {
                         \Log::info('Running migrations for tenant: '.$owner->id);
-                        Artisan::call('tenants:migrate', [
+                        $exitCode = Artisan::call('tenants:migrate', [
                             '--tenants' => [$owner->id],
                             '--force' => true,
                         ]);
+                        \Log::info("Migration exit code: {$exitCode}. Output: " . Artisan::output());
                     }
                 } catch (\Exception $e) {
                     \Log::error("Migration failed for tenant {$owner->id}: ".$e->getMessage());
