@@ -108,7 +108,7 @@ class Pelanggan extends Component
         $this->noHp = $customer->no_hp;
         $this->alamat = $customer->alamat;
         $this->username = $customer->username;
-        $this->limitHutang = number_format($customer->limit_hutang);
+        $this->limitHutang = \App\Utils\NumberUtil::format($customer->limit_hutang);
         $this->id = $customer->id;
 
         $this->dispatch('show-modal', modalId: 'pelangganModal', value: $this->member);
@@ -125,7 +125,7 @@ class Pelanggan extends Component
             'nama_pelanggan' => $this->namaPelanggan,
             'no_hp' => $this->noHp,
             'alamat' => $this->alamat,
-            'limit_hutang' => $this->limitHutang ? floatval(str_replace(',', '', $this->limitHutang)) : 0,
+            'limit_hutang' => \App\Utils\NumberUtil::parse($this->limitHutang),
             'username' => $this->username,
         ];
 

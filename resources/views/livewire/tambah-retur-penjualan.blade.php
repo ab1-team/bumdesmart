@@ -214,7 +214,7 @@
                     let val = (typeof num === 'string') ? this.parseFormatted(num) : num;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
-                        minimumFractionDigits: 0
+                        minimumFractionDigits: 2
                     }).format(val);
                 },
 

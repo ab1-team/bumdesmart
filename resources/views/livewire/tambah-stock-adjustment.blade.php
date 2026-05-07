@@ -216,7 +216,7 @@
                                     ${item.gambar ? `<span class="avatar me-2" style="background-image: url(${escape(item.gambar)})"></span>` : ''}
                                     <div class="flex-fill">
                                         <div class="fw-bold">${escape(item.nama_produk)}</div>
-                                        <div class="text-muted small">SKU: ${escape(item.sku)} | Stok: ${Number(item.stok_aktual).toLocaleString('id-ID', { maximumFractionDigits: 2, minimumFractionDigits: 0 })} ${escape(item.unit)}</div>
+                                        <div class="text-muted small">SKU: ${escape(item.sku)} | Stok: ${Number(item.stok_aktual).toLocaleString('id-ID', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} ${escape(item.unit)}</div>
                                     </div>
                                 </div>`
                             },
@@ -276,7 +276,7 @@
                     let number = (typeof val === 'string') ? this.parseFormatted(val) : val;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
-                        minimumFractionDigits: 0
+                        minimumFractionDigits: 2
                     }).format(number);
                 },
 

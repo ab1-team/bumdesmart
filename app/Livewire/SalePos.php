@@ -75,6 +75,7 @@ class SalePos extends Component
 
     public function openCashier()
     {
+        $this->openingBalance = \App\Utils\NumberUtil::parse($this->openingBalance);
         $this->validate([
             'openingBalance' => 'required|numeric|min:0',
         ]);
@@ -96,6 +97,8 @@ class SalePos extends Component
         if (! $this->cashDrawer) {
             return;
         }
+
+        $this->closingBalanceManual = \App\Utils\NumberUtil::parse($this->closingBalanceManual);
 
         $salesTotal = Sale::where('business_id', $this->businessId)
             ->where('user_id', auth()->id())

@@ -22,7 +22,7 @@
                         <td>{{ $customer->nama_pelanggan }}</td>
                         <td>{{ $customer->no_hp }}</td>
                         <td>{{ $customer->customerGroup->nama_group }}</td>
-                        <td>{{ number_format($customer->limit_hutang, 0, ',', '.') }}</td>
+                        <td>{{ \App\Utils\NumberUtil::format($customer->limit_hutang) }}</td>
                         <td>
                             <button class="btn btn-sm btn-primary" wire:click="edit({{ $customer->id }})">
                                 <i class="fas fa-edit"></i> Edit

@@ -195,11 +195,31 @@
 
                         formatDecimal(val) {
                             if (val === null || val === undefined || val === '') return '0';
-                            let number = (typeof val === 'string') ? parseFloat(val.replace(/\./g, '').replace(/,/g, '.')) : val;
+                            let number = (typeof val === 'string') ? this.parseNumber(val) : val;
                             return new Intl.NumberFormat('id-ID', {
                                 maximumFractionDigits: 2,
-                                minimumFractionDigits: 0
+                                minimumFractionDigits: 2
                             }).format(number);
+                        },
+
+                        parseNumber(val) {
+                            if (typeof val === 'number') return val;
+                            if (!val) return 0;
+                            let str = String(val).trim();
+                            if (str.includes('.') && str.includes(',')) {
+                                return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                            }
+                            if (str.includes(',')) {
+                                return parseFloat(str.replace(/,/g, '.')) || 0;
+                            }
+                            if (str.includes('.')) {
+                                let parts = str.split('.');
+                                if (parts[parts.length - 1].length !== 3) {
+                                    return parseFloat(str) || 0;
+                                }
+                                return parseFloat(str.replace(/\./g, '')) || 0;
+                            }
+                            return parseFloat(str) || 0;
                         },
 
                         init() {

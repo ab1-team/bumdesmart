@@ -342,21 +342,10 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Saldo Awal</label>
-                            <div class="input-group" x-data="{
-                                displayValue: '',
-                                format(val) {
-                                    if (!val) return '';
-                                    return new Intl.NumberFormat('id-ID').format(val);
-                                },
-                                updateRaw(val) {
-                                    let raw = val.replace(/\./g, '').replace(/[^0-9]/g, '');
-                                    this.displayValue = this.format(raw);
-                                    @this.set('openingBalance', raw);
-                                }
-                            }" x-init="displayValue = format($wire.openingBalance)">
+                            <div class="input-group">
                                 <span class="input-group-text">Rp</span>
-                                <input type="text" class="form-control" x-model="displayValue"
-                                    @input="updateRaw($event.target.value)" placeholder="0" required>
+                                <input type="text" class="form-control" wire:model="openingBalance"
+                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
                             </div>
                             @error('openingBalance')
                                 <span class="text-danger small">{{ $message }}</span>
@@ -385,21 +374,10 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Saldo Akhir di Tangan (Tunai)</label>
-                            <div class="input-group" x-data="{
-                                displayValue: '',
-                                format(val) {
-                                    if (!val) return '';
-                                    return new Intl.NumberFormat('id-ID').format(val);
-                                },
-                                updateRaw(val) {
-                                    let raw = val.replace(/\./g, '').replace(/[^0-9]/g, '');
-                                    this.displayValue = this.format(raw);
-                                    @this.set('closingBalanceManual', raw);
-                                }
-                            }" x-init="displayValue = format($wire.closingBalanceManual)">
+                            <div class="input-group">
                                 <span class="input-group-text">Rp</span>
-                                <input type="text" class="form-control" x-model="displayValue"
-                                    @input="updateRaw($event.target.value)" placeholder="0" required>
+                                <input type="text" class="form-control" wire:model="closingBalanceManual"
+                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -1279,7 +1257,7 @@
                     let val = (typeof num === 'string') ? this.parseNumber(num) : num;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 3,
-                        minimumFractionDigits: 0
+                        minimumFractionDigits: 2
                     }).format(val);
                 },
 
@@ -1288,7 +1266,7 @@
                     let val = (typeof num === 'string') ? this.parseNumber(num) : num;
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
-                        minimumFractionDigits: 0
+                        minimumFractionDigits: 2
                     }).format(val);
                 },
 
