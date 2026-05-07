@@ -389,36 +389,8 @@
         </div>
     </div>
 
-    <!-- Scanner Modal -->
-    <div class="modal modal-blur fade" id="scannerModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static" wire:ignore.self>
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content shadow-lg overflow-hidden">
-                <div class="modal-status-top bg-primary"></div>
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <span class="material-symbols-outlined me-2 text-primary">qr_code_scanner</span>
-                        Scan Barcode
-                    </h5>
-                    <button type="button" class="btn-close" @click="closeScanner()"></button>
-                </div>
-                <div class="modal-body p-0 position-relative border-top border-bottom">
-                    <div id="reader" style="width: 100%; min-height: 350px; background: #1d273b;"></div>
-                    <div class="scanner-overlay">
-                        <div class="scanner-laser"></div>
-                        <div class="scanner-frame"></div>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light d-flex justify-content-between py-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="toggleCamera()">
-                        <span class="material-symbols-outlined me-2">cached</span> Ganti Kamera
-                    </button>
-                    <button type="button" class="btn btn-primary px-4 shadow-sm" @click="closeScanner()">
-                        <span class="material-symbols-outlined me-2">done_all</span> Selesai
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Scanner Modal Shared -->
+    @include('livewire.common.scanner-modal')
 
     {{-- Modal Import --}}
     <div wire:ignore.self class="modal fade" id="importModal" tabindex="-1">
@@ -526,7 +498,7 @@
                     }
                 }).catch(err => {
                     console.error("Gagal mendapatkan kamera:", err);
-                    alert("Kamera tidak ditemukan atau izin ditolak.");
+                    Toast.fire({ icon: 'error', title: 'Kamera tidak ditemukan atau izin ditolak' });
                 });
             }, 500);
         }
@@ -618,34 +590,4 @@
             });
         });
     </script>
-    <style>
-        .scanner-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 5;
-        }
-        .scanner-frame {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 250px; height: 250px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
-        }
-        .scanner-laser {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 230px; height: 2px;
-            background: #ff3b30;
-            box-shadow: 0 0 15px #ff3b30;
-            animation: scan 2s infinite ease-in-out;
-        }
-        @keyframes scan {
-            0%, 100% { top: calc(50% - 110px); }
-            50% { top: calc(50% + 110px); }
-        }
-    </style>
 </div>
