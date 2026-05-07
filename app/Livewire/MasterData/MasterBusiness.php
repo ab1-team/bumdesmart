@@ -291,85 +291,107 @@ class MasterBusiness extends Component
         ]);
 
         // START CROSS-DATABASE SYNC: Push to Tenant Database
-        $owner = Owner::find($this->ownerId);
-        tenancy()->initialize($owner);
+        DB::beginTransaction();
+        try {
+            $owner = Owner::find($this->ownerId);
+            tenancy()->initialize($owner);
 
-        // 1. Create Business Locally (Operational - TENANT DB)
-        Business::create([
-            'id'         => $business->id, // Use same ID as central
-            'owner_id'   => $this->ownerId,
-            'nama_usaha' => $this->businessName,
-            'alamat'     => $this->address,
-            'no_telp'    => $this->phone,
-            'email'      => $this->email,
-        ]);
-
-        // 2. Initialize accounting accounts (CoA Level 4) in Tenant DB
-        \App\Utils\AccountUtil::initializeBusinessAccounts($business->id);
-
-        // 3. Create default roles in Tenant DB
-        $roles = [
-            [
-                'business_id' => $business->id,
-                'nama_role'   => 'owner',
-                'deskripsi'   => 'Role owner',
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ],
-            [
-                'business_id' => $business->id,
-                'nama_role'   => 'admin',
-                'deskripsi'   => 'Role admin',
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ],
-        ];
-        Role::insert($roles);
-
-        // Assign All Menus to 'owner' and 'admin' roles
-        $newRoleIds = Role::where('business_id', $business->id)->pluck('id');
-        $menuIds = DB::table('menus')->pluck('id');
-        
-        $roleMenus = [];
-        foreach ($newRoleIds as $roleId) {
-            foreach ($menuIds as $menuId) {
-                $roleMenus[] = [
-                    'role_id' => $roleId,
-                    'menu_id' => $menuId,
-                ];
+            // 1. Ensure Base Data Exists (Fallback if initial seeding failed)
+            if (DB::table('menus')->count() == 0) {
+                (new \Database\Seeders\MenuSeeder())->run();
             }
-        }
-        DB::table('role_menu')->insert($roleMenus);
-
-        // 4. Create default user (owner) in Tenant DB
-        $ownerRole = Role::where('business_id', $business->id)->where('nama_role', 'owner')->first();
-        
-        if ($this->username) {
-            $username = $this->username;
-        } else {
-            $baseUsername = strtolower(str_replace(' ', '_', $this->businessName)) . '_owner';
-            $username    = $baseUsername;
-            $counter     = 1;
-
-            while (User::where('username', $username)->exists()) {
-                $username = $baseUsername . $counter;
-                $counter++;
+            if (DB::table('akun_level3s')->count() == 0) {
+                (new \Database\Seeders\AccountSeeder())->run();
             }
+
+            // 2. Create Business Locally (Operational - TENANT DB)
+            Business::updateOrCreate(
+                ['id' => $business->id],
+                [
+                    'owner_id'   => $this->ownerId,
+                    'nama_usaha' => $this->businessName,
+                    'alamat'     => $this->address,
+                    'no_telp'    => $this->phone,
+                    'email'      => $this->email,
+                ]
+            );
+
+            // 3. Initialize accounting accounts (CoA Level 4) in Tenant DB
+            \App\Utils\AccountUtil::initializeBusinessAccounts($business->id);
+
+            // 4. Create default roles in Tenant DB
+            $roleData = [
+                ['nama_role' => 'owner', 'deskripsi' => 'Role owner'],
+                ['nama_role' => 'admin', 'deskripsi' => 'Role admin'],
+            ];
+
+            foreach ($roleData as $rd) {
+                Role::updateOrCreate(
+                    ['business_id' => $business->id, 'nama_role' => $rd['nama_role']],
+                    ['deskripsi' => $rd['deskripsi']]
+                );
+            }
+
+            // Assign All Menus to 'owner' and 'admin' roles
+            $newRoleIds = Role::where('business_id', $business->id)->pluck('id');
+            $menuIds = DB::table('menus')->pluck('id');
+            
+            if ($menuIds->isNotEmpty()) {
+                $roleMenus = [];
+                foreach ($newRoleIds as $roleId) {
+                    foreach ($menuIds as $menuId) {
+                        $roleMenus[] = [
+                            'role_id' => $roleId,
+                            'menu_id' => $menuId,
+                        ];
+                    }
+                }
+                // Use insertOrIgnore or just clear first to avoid duplicates if partially seeded
+                DB::table('role_menu')->whereIn('role_id', $newRoleIds)->delete();
+                DB::table('role_menu')->insert($roleMenus);
+            }
+
+            // 5. Create default user (owner) in Tenant DB
+            $ownerRole = Role::where('business_id', $business->id)->where('nama_role', 'owner')->first();
+            
+            if (!$ownerRole) {
+                throw new \Exception("Gagal membuat Role Owner di database tenant.");
+            }
+
+            if ($this->username) {
+                $username = $this->username;
+            } else {
+                $baseUsername = strtolower(str_replace(' ', '_', $this->businessName)) . '_owner';
+                $username    = $baseUsername;
+                $counter     = 1;
+
+                while (User::where('username', $username)->exists()) {
+                    $username = $baseUsername . $counter;
+                    $counter++;
+                }
+            }
+
+            $password = $this->password ? $this->password : 'password';
+
+            User::updateOrCreate(
+                ['business_id' => $business->id, 'username' => $username],
+                [
+                    'role_id'      => $ownerRole->id,
+                    'nama_lengkap' => $owner->nama_usaha,
+                    'initial'      => substr($owner->nama_usaha, 0, 3),
+                    'no_hp'        => $this->phone,
+                    'password'     => Hash::make($password),
+                ]
+            );
+
+            DB::commit();
+            tenancy()->end();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (tenancy()->initialized) tenancy()->end();
+            $this->dispatch('alert', type: 'error', message: 'Gagal sinkronisasi tenant: ' . $e->getMessage());
+            return;
         }
-
-        $password = $this->password ? $this->password : 'password';
-
-        User::create([
-            'business_id'  => $business->id,
-            'role_id'      => $ownerRole->id,
-            'nama_lengkap' => $owner->nama_usaha,
-            'initial'      => substr($owner->nama_usaha, 0, 3),
-            'no_hp'        => $this->phone,
-            'username'     => $username,
-            'password'     => Hash::make($password),
-        ]);
-
-        tenancy()->end();
         // END CROSS-DATABASE SYNC
 
         $message = "Business berhasil ditambahkan. Username Default: {$username} / Password: {$password}";

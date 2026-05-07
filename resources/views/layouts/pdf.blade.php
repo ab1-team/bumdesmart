@@ -7,9 +7,10 @@
     <title>{{ $title ?? 'Laporan' }}</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 10pt;
             margin: 0;
+            letter-spacing: 0.3px;
         }
 
         /* ============ JUDUL LAPORAN ============ */

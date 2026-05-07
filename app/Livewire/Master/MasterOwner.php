@@ -115,7 +115,7 @@ class MasterOwner extends Component
                 'email'      => Str::slug($this->namaUsaha) . '@bumdes.com',
             ]);
 
-            $message = "Owner & Bisnis Berhasil Dibuat.";
+            $message = "Owner & Bisnis Berhasil Dibuat. Silahkan masuk ke menu Master Business untuk melengkapi data dan sinkronisasi database operasional.";
         }
 
         $this->dispatch('hide-modal', modalId: 'masterOwnerModal');
