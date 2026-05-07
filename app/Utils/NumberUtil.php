@@ -12,7 +12,7 @@ class NumberUtil
      * @param int $maxDecimals
      * @return string
      */
-    public static function format($value, $maxDecimals = 2)
+    public static function format($value, $maxDecimals = 2, $trimZeros = false)
     {
         if ($value === null || $value === '') {
             return '';
@@ -26,8 +26,8 @@ class NumberUtil
         // Format with separators
         $formatted = number_format($rounded, $maxDecimals, ',', '.');
         
-        // Remove trailing zeros and possible decimal separator if not needed
-        if (strpos($formatted, ',') !== false) {
+        // Remove trailing zeros and possible decimal separator if requested
+        if ($trimZeros && strpos($formatted, ',') !== false) {
             $formatted = rtrim(rtrim($formatted, '0'), ',');
         }
         
@@ -47,38 +47,36 @@ class NumberUtil
             return 0;
         }
 
-        if (is_numeric($value)) {
+        if (is_int($value) || is_float($value)) {
             return (float) $value;
         }
 
         $str = trim((string) $value);
+        
+        // Remove common currency symbols and spaces
+        $str = str_replace(['Rp', 'rp', ' ', 'IDR'], '', $str);
 
-        // If it contains a comma, it's definitely Indonesian format (dot=thousands, comma=decimal)
+        // If it contains a comma, it's definitely Indonesian format or has decimals
         if (strpos($str, ',') !== false) {
-            $clean = str_replace('.', '', $str);
-            $clean = str_replace(',', '.', $clean);
+            $clean = str_replace('.', '', $str); // Remove thousands
+            $clean = str_replace(',', '.', $clean); // Change decimal to dot
 
             return (float) $clean;
         }
 
-        // If it contains a dot:
+        // If it only contains a dot:
         if (strpos($str, '.') !== false) {
             $lastDotIdx = strrpos($str, '.');
             $remainingLength = strlen($str) - $lastDotIdx - 1;
 
-            // In Indonesian, thousands dots are ALWAYS followed by 3 digits.
-            if ($remainingLength !== 3) {
-                // Could be English decimal (e.g. 1.2) or just a dot not following thousand rules
-                return (float) $str;
-            }
-
-            // If there's another dot, it's thousands
-            if (strpos($str, '.') !== $lastDotIdx) {
+            // In Indonesian, thousands dots are followed by exactly 3 digits.
+            // If there's another dot, it's definitely thousands (e.g. 1.000.000)
+            if ($remainingLength === 3 || strpos($str, '.') !== $lastDotIdx) {
                 return (float) str_replace('.', '', $str);
             }
 
-            // Ambiguous 1.250 -> Treat as 1250 for Indonesian apps
-            return (float) str_replace('.', '', $str);
+            // Otherwise treat as decimal (e.g. 1.5)
+            return (float) $str;
         }
 
         return (float) $str;
