@@ -70,14 +70,16 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Icon</label>
-                                <select class="form-select tom-select select-icon" id="icon" wire:model="icon">
-                                    <option value=""></option>
-                                    @foreach ($icons as $icon)
-                                        <option value="{{ $icon }}">
-                                            {{ ucwords(str_replace('_', ' ', $icon)) }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <div wire:ignore>
+                                    <select class="form-select tom-select select-icon" id="icon" wire:model="icon">
+                                        <option value=""></option>
+                                        @foreach ($icons as $icon)
+                                            <option value="{{ $icon }}">
+                                                {{ ucwords(str_replace('_', ' ', $icon)) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 @error('icon')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
