@@ -9,48 +9,56 @@ use App\Models\User;
 use App\Traits\WithTable;
 use App\Utils\TableUtil;
 use Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 
 class MasterBusiness extends Component
 {
-    use WithTable, WithFileUploads;
+    use \App\Traits\TenantSync, WithFileUploads, WithTable;
 
     public $titleModal;
 
     public $id;      // Business ID
+
     public $ownerId; // Selected Owner ID
 
     // Form fields
     public $businessName;
+
     public $address;
+
     public $phone;
+
     public $email;
 
     public $username;
+
     public $password;
 
     // Owners list for dropdown
     public $ownersList = [];
 
     public $importFile;
+
     public $importStep = 'idle';
+
     public $isContextual = false; // Flag for owner context
+
     public $selectedBusinessId;
 
     protected function rules()
     {
         return [
-            'ownerId'      => 'required|exists:owners,id',
+            'ownerId' => 'required|exists:owners,id',
             'businessName' => 'required|string|max:255',
-            'address'      => 'required|string',
-            'phone'        => 'required|string|max:25',
-            'email'        => 'required|email|max:255',
+            'address' => 'required|string',
+            'phone' => 'required|string|max:25',
+            'email' => 'required|email|max:255',
         ];
     }
 
@@ -62,10 +70,10 @@ class MasterBusiness extends Component
             $this->ownerId = $owner_id;
             $this->isContextual = true;
             $this->headers = ['no', 'business name', 'email', 'no. telp', 'address', 'aksi'];
-            
+
             // Hanya buka modal otomatis jika belum punya bisnis sama sekali
             $hasBusiness = Business::where('owner_id', $owner_id)->exists();
-            if (!$hasBusiness) {
+            if (! $hasBusiness) {
                 $this->create();
             }
         }
@@ -101,7 +109,7 @@ class MasterBusiness extends Component
 
             // Fetch the business record from the tenant database to get the correct local ID
             $tenantBusiness = \App\Models\Business::where('owner_id', $owner->id)->first();
-            if (!$tenantBusiness) {
+            if (! $tenantBusiness) {
                 // Fallback to central business if not found, but this shouldn't happen
                 $tenantBusiness = $business;
             }
@@ -109,63 +117,65 @@ class MasterBusiness extends Component
 
             $path = $this->importFile->getRealPath();
             $file = fopen($path, 'r');
-            
+
             // Skip header
             $header = fgetcsv($file);
-            
+
             DB::beginTransaction();
 
             // 2. Cache Master Data (Tenant DB) to avoid repetitive queries
             $categories = \App\Models\Category::pluck('id', 'nama_kategori')->toArray();
-            $brands     = \App\Models\Brand::pluck('id', 'nama_brand')->toArray();
-            $units      = \App\Models\Unit::pluck('id', 'nama_satuan')->toArray();
+            $brands = \App\Models\Brand::pluck('id', 'nama_brand')->toArray();
+            $units = \App\Models\Unit::pluck('id', 'nama_satuan')->toArray();
 
-            $productUpserts  = [];
-            $successCount    = 0;
-            $now             = now();
+            $productUpserts = [];
+            $successCount = 0;
+            $now = now();
 
-            while (($row = fgetcsv($file)) !== FALSE) {
-                if (count($row) < 5) continue;
+            while (($row = fgetcsv($file)) !== false) {
+                if (count($row) < 5) {
+                    continue;
+                }
 
                 $namaProduk = $row[0];
-                $kategori   = $row[1] ?: 'General';
-                $brand      = $row[2] ?: 'N/A';
-                $satuan     = $row[3] ?: 'Pcs';
-                $sku        = $row[4] ?: 'SKU-' . strtoupper(Str::random(8));
-                $barcode    = $row[5] ?: (string) mt_rand(100000, 999999) . mt_rand(1000000, 9999999);
-                $hargaBeli  = (float) str_replace(['.', ','], ['', '.'], $row[6] ?? 0);
-                $hargaJual  = (float) str_replace(['.', ','], ['', '.'], $row[7] ?? 0);
-                $stok       = (float) str_replace(['.', ','], ['', '.'], $row[8] ?? 0);
+                $kategori = $row[1] ?: 'General';
+                $brand = $row[2] ?: 'N/A';
+                $satuan = $row[3] ?: 'Pcs';
+                $sku = $row[4] ?: 'SKU-'.strtoupper(Str::random(8));
+                $barcode = $row[5] ?: (string) mt_rand(100000, 999999).mt_rand(1000000, 9999999);
+                $hargaBeli = (float) str_replace(['.', ','], ['', '.'], $row[6] ?? 0);
+                $hargaJual = (float) str_replace(['.', ','], ['', '.'], $row[7] ?? 0);
+                $stok = (float) str_replace(['.', ','], ['', '.'], $row[8] ?? 0);
 
                 // Find/Create Master Data from Cache
-                if (!isset($categories[$kategori])) {
+                if (! isset($categories[$kategori])) {
                     $cat = \App\Models\Category::create(['nama_kategori' => $kategori, 'business_id' => $activeBusinessId, 'icon' => 'box']);
                     $categories[$kategori] = $cat->id;
                 }
-                if (!isset($brands[$brand])) {
+                if (! isset($brands[$brand])) {
                     $brd = \App\Models\Brand::create(['nama_brand' => $brand, 'business_id' => $activeBusinessId]);
                     $brands[$brand] = $brd->id;
                 }
-                if (!isset($units[$satuan])) {
+                if (! isset($units[$satuan])) {
                     $unt = \App\Models\Unit::create(['nama_satuan' => $satuan, 'business_id' => $activeBusinessId, 'inisial_satuan' => $satuan]);
                     $units[$satuan] = $unt->id;
                 }
 
                 $productUpserts[] = [
-                    'business_id'     => $activeBusinessId,
-                    'sku'             => $sku,
-                    'barcode'         => $barcode,
-                    'category_id'     => $categories[$kategori],
-                    'brand_id'        => $brands[$brand],
-                    'unit_id'         => $units[$satuan],
-                    'nama_produk'     => $namaProduk,
-                    'harga_beli'      => $hargaBeli,
-                    'harga_jual'      => $hargaJual,
-                    'stok_aktual'     => $stok,
-                    'metode_biaya'    => 'SYSTEM',
+                    'business_id' => $activeBusinessId,
+                    'sku' => $sku,
+                    'barcode' => $barcode,
+                    'category_id' => $categories[$kategori],
+                    'brand_id' => $brands[$brand],
+                    'unit_id' => $units[$satuan],
+                    'nama_produk' => $namaProduk,
+                    'harga_beli' => $hargaBeli,
+                    'harga_jual' => $hargaJual,
+                    'stok_aktual' => $stok,
+                    'metode_biaya' => 'SYSTEM',
                     'biaya_rata_rata' => $hargaBeli,
-                    'created_at'      => $now,
-                    'updated_at'      => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
                 ];
                 $successCount++;
             }
@@ -187,7 +197,7 @@ class MasterBusiness extends Component
                 ->whereIn('sku', array_column($productUpserts, 'sku'))
                 ->pluck('id', 'sku');
 
-            $batchInserts    = [];
+            $batchInserts = [];
             $movementInserts = [];
 
             foreach ($productUpserts as $pData) {
@@ -195,40 +205,40 @@ class MasterBusiness extends Component
                 $stok = $pData['stok_aktual'];
                 if (isset($allProducts[$sku])) {
                     $pId = $allProducts[$sku];
-                    
+
                     $batchInserts[] = [
-                        'business_id'        => $activeBusinessId,
-                        'product_id'         => $pId,
-                        'no_batch'           => 'MIGRATION-' . date('Ymd'),
-                        'tanggal_pembelian'  => $now,
-                        'harga_satuan'       => $pData['harga_beli'],
-                        'jumlah_awal'        => $stok,
-                        'jumlah_saat_ini'    => $stok,
+                        'business_id' => $activeBusinessId,
+                        'product_id' => $pId,
+                        'no_batch' => 'MIGRATION-'.date('Ymd'),
+                        'tanggal_pembelian' => $now,
+                        'harga_satuan' => $pData['harga_beli'],
+                        'jumlah_awal' => $stok,
+                        'jumlah_saat_ini' => $stok,
                         'tanggal_kadaluarsa' => null,
-                        'created_at'         => $now,
-                        'updated_at'         => $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
 
                     $movementInserts[] = [
-                        'business_id'            => $activeBusinessId,
-                        'product_id'             => $pId,
+                        'business_id' => $activeBusinessId,
+                        'product_id' => $pId,
                         'tanggal_perubahan_stok' => $now,
-                        'jenis_perubahan'        => 'adjustment',
-                        'jumlah_perubahan'       => $stok,
-                        'reference_id'           => 0,
-                        'reference_type'         => 'migration',
-                        'catatan'                => 'Migrasi data awal sistem',
-                        'created_at'             => $now,
-                        'updated_at'             => $now,
+                        'jenis_perubahan' => 'adjustment',
+                        'jumlah_perubahan' => $stok,
+                        'reference_id' => 0,
+                        'reference_type' => 'migration',
+                        'catatan' => 'Migrasi data awal sistem',
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                 }
             }
 
             // Bulk Insert Batches & Movements
-            if (!empty($batchInserts)) {
+            if (! empty($batchInserts)) {
                 \App\Models\ProductBatch::insert($batchInserts);
             }
-            if (!empty($movementInserts)) {
+            if (! empty($movementInserts)) {
                 \App\Models\StockMovement::insert($movementInserts);
             }
 
@@ -237,11 +247,13 @@ class MasterBusiness extends Component
             tenancy()->end();
 
             $this->dispatch('hide-modal', modalId: 'importModal');
-            $this->dispatch('alert', type: 'success', message: $successCount . ' data produk + Barcode berhasil dimigrasikan ke Toko!');
+            $this->dispatch('alert', type: 'success', message: $successCount.' data produk + Barcode berhasil dimigrasikan ke Toko!');
         } catch (\Exception $e) {
             DB::rollBack();
-            if (tenancy()->initialized) tenancy()->end();
-            $this->dispatch('alert', type: 'error', message: 'Gagal import: ' . $e->getMessage());
+            if (tenancy()->initialized) {
+                tenancy()->end();
+            }
+            $this->dispatch('alert', type: 'error', message: 'Gagal import: '.$e->getMessage());
         }
 
         $this->importStep = 'idle';
@@ -260,7 +272,7 @@ class MasterBusiness extends Component
     {
         $currentOwner = $this->ownerId;
         $this->reset('id', 'businessName', 'address', 'phone', 'email', 'username', 'password');
-        
+
         if ($this->isContextual) {
             $this->ownerId = $currentOwner;
         } else {
@@ -276,18 +288,17 @@ class MasterBusiness extends Component
         $this->dispatch('show-modal', modalId: 'masterBusinessModal');
     }
 
-
     public function store()
     {
         $this->validate();
 
         // Create new Business under selected owner (CENTRAL)
         $business = Business::create([
-            'owner_id'   => $this->ownerId,
+            'owner_id' => $this->ownerId,
             'nama_usaha' => $this->businessName,
-            'alamat'     => $this->address,
-            'no_telp'    => $this->phone,
-            'email'      => $this->email,
+            'alamat' => $this->address,
+            'no_telp' => $this->phone,
+            'email' => $this->email,
         ]);
 
         // START CROSS-DATABASE SYNC: Push to Tenant Database
@@ -298,21 +309,21 @@ class MasterBusiness extends Component
 
             // 1. Ensure Base Data Exists (Fallback if initial seeding failed)
             if (DB::table('menus')->count() == 0) {
-                (new \Database\Seeders\MenuSeeder())->run();
+                (new \Database\Seeders\MenuSeeder)->run();
             }
             if (DB::table('akun_level3s')->count() == 0) {
-                (new \Database\Seeders\AccountSeeder())->run();
+                (new \Database\Seeders\AccountSeeder)->run();
             }
 
             // 2. Create Business Locally (Operational - TENANT DB)
             Business::updateOrCreate(
                 ['id' => $business->id],
                 [
-                    'owner_id'   => $this->ownerId,
+                    'owner_id' => $this->ownerId,
                     'nama_usaha' => $this->businessName,
-                    'alamat'     => $this->address,
-                    'no_telp'    => $this->phone,
-                    'email'      => $this->email,
+                    'alamat' => $this->address,
+                    'no_telp' => $this->phone,
+                    'email' => $this->email,
                 ]
             );
 
@@ -335,7 +346,7 @@ class MasterBusiness extends Component
             // Assign All Menus to 'owner' and 'admin' roles
             $newRoleIds = Role::where('business_id', $business->id)->pluck('id');
             $menuIds = DB::table('menus')->pluck('id');
-            
+
             if ($menuIds->isNotEmpty()) {
                 $roleMenus = [];
                 foreach ($newRoleIds as $roleId) {
@@ -353,20 +364,20 @@ class MasterBusiness extends Component
 
             // 5. Create default user (owner) in Tenant DB
             $ownerRole = Role::where('business_id', $business->id)->where('nama_role', 'owner')->first();
-            
-            if (!$ownerRole) {
-                throw new \Exception("Gagal membuat Role Owner di database tenant.");
+
+            if (! $ownerRole) {
+                throw new \Exception('Gagal membuat Role Owner di database tenant.');
             }
 
             if ($this->username) {
                 $username = $this->username;
             } else {
-                $baseUsername = strtolower(str_replace(' ', '_', $this->businessName)) . '_owner';
-                $username    = $baseUsername;
-                $counter     = 1;
+                $baseUsername = strtolower(str_replace(' ', '_', $this->businessName)).'_owner';
+                $username = $baseUsername;
+                $counter = 1;
 
                 while (User::where('username', $username)->exists()) {
-                    $username = $baseUsername . $counter;
+                    $username = $baseUsername.$counter;
                     $counter++;
                 }
             }
@@ -376,11 +387,11 @@ class MasterBusiness extends Component
             User::updateOrCreate(
                 ['business_id' => $business->id, 'username' => $username],
                 [
-                    'role_id'      => $ownerRole->id,
+                    'role_id' => $ownerRole->id,
                     'nama_lengkap' => $owner->nama_usaha,
-                    'initial'      => substr($owner->nama_usaha, 0, 3),
-                    'no_hp'        => $this->phone,
-                    'password'     => Hash::make($password),
+                    'initial' => substr($owner->nama_usaha, 0, 3),
+                    'no_hp' => $this->phone,
+                    'password' => Hash::make($password),
                 ]
             );
 
@@ -388,8 +399,11 @@ class MasterBusiness extends Component
             tenancy()->end();
         } catch (\Exception $e) {
             DB::rollBack();
-            if (tenancy()->initialized) tenancy()->end();
-            $this->dispatch('alert', type: 'error', message: 'Gagal sinkronisasi tenant: ' . $e->getMessage());
+            if (tenancy()->initialized) {
+                tenancy()->end();
+            }
+            $this->dispatch('alert', type: 'error', message: 'Gagal sinkronisasi tenant: '.$e->getMessage());
+
             return;
         }
         // END CROSS-DATABASE SYNC
@@ -405,7 +419,7 @@ class MasterBusiness extends Component
     public function destroy($id)
     {
         $business = Business::with('owner')->find($id);
-        
+
         if ($business) {
             DB::beginTransaction();
             try {
@@ -420,11 +434,11 @@ class MasterBusiness extends Component
 
                 // 2. DELETE DETAIL DATA WITHOUT CASCADE (TENANT DB)
                 // Only sale_details and purchase_details need manual cleanup before their parents
-                DB::connection('tenant')->table('sale_details')->whereIn('sale_id', function($query) use ($bId) {
+                DB::connection('tenant')->table('sale_details')->whereIn('sale_id', function ($query) use ($bId) {
                     $query->select('id')->from('sales')->where('business_id', $bId);
                 })->delete();
-                
-                DB::connection('tenant')->table('purchase_details')->whereIn('purchase_id', function($query) use ($bId) {
+
+                DB::connection('tenant')->table('purchase_details')->whereIn('purchase_id', function ($query) use ($bId) {
                     $query->select('id')->from('purchases')->where('business_id', $bId);
                 })->delete();
 
@@ -434,7 +448,7 @@ class MasterBusiness extends Component
                     'payments', 'stock_movements', 'batch_movements', 'product_batches',
                     'sales', 'purchases', 'sales_returns', 'purchases_returns',
                     'stock_opnames', 'stock_adjustments', 'inventories', 'cash_drawers',
-                    'company_settings'
+                    'company_settings',
                 ];
 
                 foreach ($tablesWithBusinessId as $tableName) {
@@ -443,7 +457,7 @@ class MasterBusiness extends Component
 
                 // 4. DELETE MASTER DATA (TENANT DB)
                 // product_prices depends on products
-                DB::connection('tenant')->table('product_prices')->whereIn('product_id', function($query) use ($bId) {
+                DB::connection('tenant')->table('product_prices')->whereIn('product_id', function ($query) use ($bId) {
                     $query->select('id')->from('products')->where('business_id', $bId);
                 })->delete();
 
@@ -453,7 +467,7 @@ class MasterBusiness extends Component
                 }
 
                 // 5. DELETE AUTH & BUSINESS (TENANT DB)
-                // Note: jurnals, balances, and accounts have cascadeOnDelete in migrations, 
+                // Note: jurnals, balances, and accounts have cascadeOnDelete in migrations,
                 // so they will be deleted automatically when the business record is deleted.
                 DB::connection('tenant')->table('users')->where('business_id', $bId)->delete();
                 DB::connection('tenant')->table('roles')->where('business_id', $bId)->delete();
@@ -475,7 +489,7 @@ class MasterBusiness extends Component
                     DB::connection('tenant')->rollBack();
                     tenancy()->end();
                 }
-                $this->dispatch('alert', type: 'error', message: 'Gagal membersihkan data: ' . $e->getMessage());
+                $this->dispatch('alert', type: 'error', message: 'Gagal membersihkan data: '.$e->getMessage());
             }
         }
     }
@@ -496,7 +510,7 @@ class MasterBusiness extends Component
         ];
 
         // Only show owner column if not in contextual mode
-        if (!$this->ownerId) {
+        if (! $this->ownerId) {
             $headers[] = TableUtil::setTableHeader('owner.nama_usaha', 'Owner', true, true);
         }
 
@@ -512,7 +526,7 @@ class MasterBusiness extends Component
 
         return view('livewire.master-data.master-business', [
             'businesses' => $businesses,
-            'headers'    => $headers,
+            'headers' => $headers,
         ]);
     }
 }
