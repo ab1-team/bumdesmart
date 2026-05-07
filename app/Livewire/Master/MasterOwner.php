@@ -13,7 +13,7 @@ use Livewire\Component;
 
 class MasterOwner extends Component
 {
-    use WithTable;
+    use WithTable, \App\Traits\TenantSync;
 
     public $titleModal;
 
@@ -107,15 +107,19 @@ class MasterOwner extends Component
             }
 
             // 3. Create Central Business Record (Agar Dashboard Pusat tidak 0)
-            \App\Models\Business::create([
+            $businessData = [
                 'owner_id'   => $owner->id,
                 'nama_usaha' => $this->namaUsaha,
                 'alamat'     => '-',
                 'no_telp'    => '-',
                 'email'      => Str::slug($this->namaUsaha) . '@bumdes.com',
-            ]);
+            ];
+            $business = \App\Models\Business::create($businessData);
 
-            $message = "Owner & Bisnis Berhasil Dibuat. Silahkan masuk ke menu Master Business untuk melengkapi data dan sinkronisasi database operasional.";
+            // 4. AUTOMATIC SYNC TO TENANT
+            $this->syncTenantData($owner->id, $business->id, $businessData);
+
+            $message = "Owner & Bisnis Berhasil Dibuat. Database operasional telah diinisialisasi secara otomatis.";
         }
 
         $this->dispatch('hide-modal', modalId: 'masterOwnerModal');

@@ -21,7 +21,7 @@ use Livewire\WithFileUploads;
 
 class MasterBusiness extends Component
 {
-    use WithFileUploads, WithTable;
+    use WithFileUploads, WithTable, \App\Traits\TenantSync;
 
     public $titleModal;
 
@@ -317,12 +317,12 @@ class MasterBusiness extends Component
                     \Log::info("Syncing tenant {$owner->id} using database: {$currentDb}");
 
                     if (! Schema::hasTable('migrations') || DB::table('migrations')->count() == 0) {
-                        \Log::info('Running migrations for tenant: '.$owner->id);
+                        \Log::error('Running migrations for tenant: '.$owner->id);
                         $exitCode = Artisan::call('tenants:migrate', [
                             '--tenants' => [$owner->id],
                             '--force' => true,
                         ]);
-                        \Log::info("Migration exit code: {$exitCode}. Output: " . Artisan::output());
+                        \Log::error("Migration exit code: {$exitCode}. Output: " . Artisan::output());
                     }
                 } catch (\Exception $e) {
                     \Log::error("Migration failed for tenant {$owner->id}: ".$e->getMessage());
@@ -330,11 +330,11 @@ class MasterBusiness extends Component
 
                 // 2. Ensure Base Data Exists (Fallback if initial seeding failed)
                 if (! Schema::hasTable('menus') || DB::table('menus')->count() == 0) {
-                    \Log::info('Seeding menus for tenant: '.$owner->id);
+                    \Log::error('Seeding menus for tenant: '.$owner->id);
                     (new \Database\Seeders\MenuSeeder)->run();
                 }
                 if (! Schema::hasTable('akun_level3s') || DB::table('akun_level3s')->count() == 0) {
-                    \Log::info('Seeding accounts for tenant: '.$owner->id);
+                    \Log::error('Seeding accounts for tenant: '.$owner->id);
                     (new \Database\Seeders\AccountSeeder)->run();
                 }
 
@@ -407,7 +407,7 @@ class MasterBusiness extends Component
                     ]
                 );
 
-                \Log::info("Successfully synchronized business {$business->id} to tenant ".tenant('id'));
+                \Log::error("Successfully synchronized business {$business->id} to tenant ".tenant('id'));
             });
 
         } catch (\Exception $e) {
