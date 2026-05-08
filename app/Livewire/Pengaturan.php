@@ -29,6 +29,8 @@ class Pengaturan extends Component
 
     public $new_logo;
 
+    public $signature_laporan;
+
     public function mount()
     {
         $user = auth()->user();
@@ -40,6 +42,7 @@ class Pengaturan extends Component
             $this->alamat_toko = $business->alamat;
             $this->no_telp_toko = $business->no_telp;
             $this->email_toko = $business->email;
+            $this->signature_laporan = $business->signature_laporan;
 
             $owner = \App\Models\Owner::find($business->owner_id);
             if ($owner) {
@@ -59,6 +62,7 @@ class Pengaturan extends Component
             'email_toko' => 'nullable|email',
             'nama_perusahaan' => 'required',
             'new_logo' => 'nullable|image|max:2048', // max 2MB
+            'signature_laporan' => 'nullable',
         ]);
 
         if ($this->business_id) {
@@ -69,6 +73,7 @@ class Pengaturan extends Component
                     'alamat' => $this->alamat_toko,
                     'no_telp' => $this->no_telp_toko,
                     'email' => $this->email_toko,
+                    'signature_laporan' => $this->signature_laporan,
                 ]);
 
                 if ($this->owner_id) {

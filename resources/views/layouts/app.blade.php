@@ -110,13 +110,15 @@
 
         /* Fix for dropdown menus to flow freely */
         .dropdown-menu {
-            z-index: 1060; /* Ensure it's above other elements */
+            z-index: 1060;
+            /* Ensure it's above other elements */
         }
 
         /* Prevent table-responsive from clipping dropdowns and hide vertical scroll */
         .table-responsive {
             overflow-x: auto;
-            overflow-y: hidden; /* Prevent vertical scrollbar from dropdowns */
+            overflow-y: hidden;
+            /* Prevent vertical scrollbar from dropdowns */
         }
     </style>
     <!-- END CUSTOM FONT -->
@@ -263,10 +265,12 @@
                 // Force sync Tom Select with Livewire state on modal open
                 $(this).find('.tom-select').each(function() {
                     if (this.tomselect) {
-                        const model = this.getAttribute('wire:model') || this.getAttribute('wire:model.live');
+                        const model = this.getAttribute('wire:model') || this.getAttribute(
+                            'wire:model.live');
                         if (model) {
                             try {
-                                const component = this.__livewire || Livewire.find($(this).closest('[wire:id]').attr('wire:id'));
+                                const component = this.__livewire || Livewire.find($(this).closest(
+                                    '[wire:id]').attr('wire:id'));
                                 if (component) {
                                     const val = component.get(model);
                                     if (val !== undefined && val !== null) {
@@ -495,7 +499,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initDropdownViewport();
-            
+
             const dropdownSubmenus = document.querySelectorAll('.dropdown-submenu');
 
             dropdownSubmenus.forEach(function(submenu) {

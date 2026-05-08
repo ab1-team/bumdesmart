@@ -23,8 +23,8 @@
                             </div>
                             <div class="col-12 mb-3">
                                 <label class="form-label required font-weight-bold">Alamat Lengkap</label>
-                                <textarea class="form-control @error('alamat_toko') is-invalid @enderror" 
-                                    wire:model="alamat_toko" rows="4" placeholder="Alamat lengkap operasional toko"></textarea>
+                                <textarea class="form-control @error('alamat_toko') is-invalid @enderror" wire:model="alamat_toko" rows="4"
+                                    placeholder="Alamat lengkap operasional toko"></textarea>
                                 @error('alamat_toko')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -55,7 +55,8 @@
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-light">
                         <h3 class="card-title text-primary">
-                            <span class="material-symbols-outlined me-2" style="vertical-align: middle;">corporate_fare</span>
+                            <span class="material-symbols-outlined me-2"
+                                style="vertical-align: middle;">corporate_fare</span>
                             Identitas Pengelola (Owner)
                         </h3>
                     </div>
@@ -80,8 +81,10 @@
                                         <span class="avatar avatar-xl shadow-sm"
                                             style="background-image: url({{ asset('storage/' . $logo) }}); width: 120px; height: 120px; background-size: contain;"></span>
                                     @else
-                                        <div class="avatar avatar-xl shadow-sm bg-white text-muted" style="width: 120px; height: 120px;">
-                                            <span class="material-symbols-outlined" style="font-size: 48px;">image_not_supported</span>
+                                        <div class="avatar avatar-xl shadow-sm bg-white text-muted"
+                                            style="width: 120px; height: 120px;">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 48px;">image_not_supported</span>
                                         </div>
                                     @endif
                                 </div>
@@ -99,6 +102,30 @@
                 </div>
             </div>
 
+            <!-- Pengaturan Tanda Tangan -->
+            <div class="col-12 mt-3">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h3 class="card-title text-primary">
+                            <span class="material-symbols-outlined me-2" style="vertical-align: middle;">draw</span>
+                            Pengaturan Tanda Tangan Laporan
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3" wire:ignore>
+                            <label class="form-label font-weight-bold">Format Tanda Tangan</label>
+                            <div class="form-hint mb-3">Buat format dinamis untuk bagian bawah laporan (misalnya:
+                                penandatangan kiri untuk Admin, kanan untuk Manager). Gunakan tabel (table) agar lebih
+                                rapi.</div>
+                            <textarea id="signature_laporan" wire:model="signature_laporan" class="form-control"></textarea>
+                        </div>
+                        @error('signature_laporan')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
             <div class="col-12 text-end mt-3">
                 <button type="submit" class="btn btn-primary px-4">
                     <span class="material-symbols-outlined me-2">save</span>
@@ -107,4 +134,41 @@
             </div>
         </div>
     </form>
+
+    <script src="https://cdn.tiny.cloud/1/rhedf7n960hbva1kt51t8gz54xlm2ad7q87fp5p3l9w3nehg/tinymce/6/tinymce.min.js"
+        referrerpolicy="origin"></script>
+    <script>
+        document.addEventListener('livewire:navigated', function() {
+            initTinyMCE();
+        });
+
+        document.addEventListener('livewire:init', function() {
+            initTinyMCE();
+        });
+
+        function initTinyMCE() {
+            if (typeof tinymce !== 'undefined') {
+                tinymce.remove('#signature_laporan');
+                tinymce.init({
+                    selector: '#signature_laporan',
+                    height: 300,
+                    menubar: false,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | table | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | code | help',
+                    setup: function(editor) {
+                        editor.on('blur', function(e) {
+                            @this.set('signature_laporan', editor.getContent());
+                        });
+                    }
+                });
+            }
+        }
+    </script>
 </div>

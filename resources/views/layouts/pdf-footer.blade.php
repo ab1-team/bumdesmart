@@ -12,10 +12,12 @@
         }
         .footer {
             width: 100%;
-            text-align: right;
             border-top: 1px solid #ddd;
             padding-top: 5px;
         }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .system-name { font-weight: bold; color: #777; font-size: 10pt; margin-bottom: 3px; }
     </style>
     <script>
         function subst() {
@@ -36,8 +38,13 @@
     </script>
 </head>
 <body onload="subst()">
-    <div class="footer">
-        Dicetak pada: {{ date('d/m/Y H:i') }} | Hal. <span id="page"></span> dari <span id="topage"></span>
+    <div class="footer {{ ($isCover ?? false) ? 'text-center' : 'text-right' }}">
+        @if ($isCover ?? false)
+            <div class="system-name">SISTEM INFORMASI BUMDES SMART</div>
+            Dicetak pada: {{ date('d/m/Y H:i') }}
+        @else
+            Dicetak pada: {{ date('d/m/Y H:i') }} | Hal. <span id="page"></span> dari <span id="topage"></span>
+        @endif
     </div>
 </body>
 </html>

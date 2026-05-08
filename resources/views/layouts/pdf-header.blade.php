@@ -51,28 +51,40 @@
     </style>
 </head>
 <body>
-    <div class="kop">
-        <table class="kop-table">
-            <tr>
-                @if ($base64Logo)
-                    <td class="kop-logo">
-                        <img src="{{ $base64Logo }}" alt="Logo">
+    @if ($isCover ?? false)
+        <div style="text-align: center; padding-top: 10mm;">
+            @if ($base64Logo)
+                <div style="margin-bottom: 10px;">
+                    <img src="{{ $base64Logo }}" style="max-height: 100px; max-width: 200px;">
+                </div>
+            @endif
+            <div style="font-size: 24pt; font-weight: bold; text-transform: uppercase;">{{ $namaUsaha }}</div>
+            <div style="font-size: 10pt; color: #666; margin-top: 5px;">{{ $alamatUsaha }}</div>
+        </div>
+    @else
+        <div class="kop">
+            <table class="kop-table">
+                <tr>
+                    @if ($base64Logo)
+                        <td class="kop-logo">
+                            <img src="{{ $base64Logo }}" alt="Logo">
+                        </td>
+                    @endif
+                    <td class="kop-text">
+                        <p class="kop-nama">{{ $namaUsaha }}</p>
+                        <p class="kop-alamat">
+                            {{ $alamatUsaha }}
+                            @if ($telpUsaha)
+                                <br>Telp: {{ $telpUsaha }}
+                            @endif
+                            @if ($emailUsaha)
+                                | Email: {{ $emailUsaha }}
+                            @endif
+                        </p>
                     </td>
-                @endif
-                <td class="kop-text">
-                    <p class="kop-nama">{{ $namaUsaha }}</p>
-                    <p class="kop-alamat">
-                        {{ $alamatUsaha }}
-                        @if ($telpUsaha)
-                            <br>Telp: {{ $telpUsaha }}
-                        @endif
-                        @if ($emailUsaha)
-                            | Email: {{ $emailUsaha }}
-                        @endif
-                    </p>
-                </td>
-            </tr>
-        </table>
-    </div>
+                </tr>
+            </table>
+        </div>
+    @endif
 </body>
 </html>

@@ -51,6 +51,7 @@
                         <label class="form-label">Nama Laporan</label>
                         <select x-model="jenis_laporan" class="form-select tom-select" id="jenis_laporan">
                             <option value="">- pilih nama laporan -</option>
+                            <option value="cover">📄 Halaman Sampul (Cover)</option>
                             <optgroup label="📋 Laporan Harian">
                                 <option value="penjualanHarian">Laporan Penjualan Harian</option>
                                 <option value="stokMinimum">Laporan Stok Minimum</option>

@@ -802,7 +802,36 @@ class Cetak extends Controller
         return $this->streamPdf($html, 'laporan-kasir.pdf', 'landscape');
     }
 
-    private function streamPdf($html, $filename, $orientation = 'portrait')
+    public function cover(array $data)
+    {
+        $business = Business::with('owner')->find(auth()->user()?->business_id) ?? Business::with('owner')->first();
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        
+        $periode = $tahun;
+        if ($bulan != '-') {
+            $periode = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM') . ' ' . $tahun;
+        }
+
+        $owner = $business->owner ?? \App\Models\Owner::first();
+        $logoPath = $owner && $owner->logo ? storage_path('app/public/' . $owner->logo) : null;
+        $base64Logo = null;
+        if ($logoPath && file_exists($logoPath)) {
+            $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $imgData = file_get_contents($logoPath);
+            $base64Logo = 'data:image/' . $type . ';base64,' . base64_encode($imgData);
+        }
+
+        $html = view('livewire.keuangan.pelaporan.cover', compact('business', 'periode', 'base64Logo'))->render();
+
+        return $this->streamPdf($html, 'cover-laporan.pdf', 'portrait', [
+            'margin-top' => '60mm',
+            'margin-bottom' => '20mm',
+            'is_cover' => true,
+        ]);
+    }
+
+    private function streamPdf($html, $filename, $orientation = 'portrait', $options = [])
     {
         $business = Business::find(auth()->user()?->business_id) ?? Business::first();
         $owner = $business?->owner ?? \App\Models\Owner::first();
@@ -822,20 +851,29 @@ class Cetak extends Controller
             $headerData['base64Logo'] = 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
 
+        $isCover = $options['is_cover'] ?? false;
+        $headerData['isCover'] = $isCover;
+
         $headerHtml = view('layouts.pdf-header', $headerData)->render();
-        $footerHtml = view('layouts.pdf-footer')->render();
+        $footerHtml = view('layouts.pdf-footer', ['isCover' => $isCover])->render();
 
         $pdf = PDF::loadHTML($html)
             ->setPaper('a4')
             ->setOrientation($orientation)
-            ->setOption('margin-top', '40mm')
-            ->setOption('margin-bottom', '20mm')
-            ->setOption('margin-left', '15mm')
-            ->setOption('margin-right', '15mm')
-            ->setOption('header-html', $headerHtml)
-            ->setOption('footer-html', $footerHtml)
+            ->setOption('margin-top', $options['margin-top'] ?? '40mm')
+            ->setOption('margin-bottom', $options['margin-bottom'] ?? '20mm')
+            ->setOption('margin-left', $options['margin-left'] ?? '15mm')
+            ->setOption('margin-right', $options['margin-right'] ?? '15mm')
             ->setOption('header-spacing', 5)
             ->setOption('enable-local-file-access', true);
+
+        if (! ($options['skip_header'] ?? false)) {
+            $pdf->setOption('header-html', $headerHtml);
+        }
+
+        if (! ($options['skip_footer'] ?? false)) {
+            $pdf->setOption('footer-html', $footerHtml);
+        }
 
         return $pdf->inline($filename);
     }

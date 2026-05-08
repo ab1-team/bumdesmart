@@ -87,6 +87,13 @@
         .badge-danger {
             background-color: #dc3545;
         }
+
+        /* ============ SIGNATURE ============ */
+        .signature-area table, 
+        .signature-area th, 
+        .signature-area td {
+            border: 0 !important;
+        }
     </style>
 </head>
 
@@ -103,6 +110,13 @@
     <div class="content">
         @yield('content')
     </div>
+
+    {{-- SIGNATURE LAPORAN --}}
+    @if(isset($business) && !empty($business->signature_laporan))
+        <div class="signature-area" style="margin-top: 40px; page-break-inside: avoid;">
+            {!! $business->signature_laporan !!}
+        </div>
+    @endif
 </body>
 
 </html>
