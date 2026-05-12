@@ -1,25 +1,35 @@
 @php
     $saldoAwalDebit = $akun->balance->debit_00 ?? 0;
     $saldoAwalKredit = $akun->balance->kredit_00 ?? 0;
-    $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
-
-    $bulanLalu = $bulan - 1;
-    $debitBulanLalu = 'debit_' . str_pad($bulanLalu, 2, '0', STR_PAD_LEFT);
-    $kreditBulanLalu = 'kredit_' . str_pad($bulanLalu, 2, '0', STR_PAD_LEFT);
+    
+    if ($akun->jenis_mutasi == 'debit') {
+        $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
+    } else {
+        $saldoAwal = $saldoAwalKredit - $saldoAwalDebit;
+    }
 
     $saldoBulanLaluDebit = 0;
     $saldoBulanLaluKredit = 0;
-    $saldoBulanLalu = 0;
-    if ($bulanLalu > 0) {
-        $saldoBulanLaluDebit = $akun->balance->$debitBulanLalu ?? 0;
-        $saldoBulanLaluKredit = $akun->balance->$kreditBulanLalu ?? 0;
+    
+    // Loop dari bulan 1 sampai bulan - 1 untuk mendapatkan komulatif transaksi s/d bulan lalu
+    for ($i = 1; $i < $bulan; $i++) {
+        $colDebit = 'debit_' . str_pad($i, 2, '0', STR_PAD_LEFT);
+        $colKredit = 'kredit_' . str_pad($i, 2, '0', STR_PAD_LEFT);
+        $saldoBulanLaluDebit += $akun->balance->$colDebit ?? 0;
+        $saldoBulanLaluKredit += $akun->balance->$colKredit ?? 0;
+    }
+
+    if ($akun->jenis_mutasi == 'debit') {
         $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
+    } else {
+        $saldoBulanLalu = $saldoBulanLaluKredit - $saldoBulanLaluDebit;
     }
 
     $totalDebit = 0;
     $totalKredit = 0;
-    $totalSaldo = $saldoBulanLalu;
+    $totalSaldo = $saldoAwal + $saldoBulanLalu;
 @endphp
+
 
 @extends('layouts.pdf')
 
@@ -59,10 +69,10 @@
             <td style="border: 0;">{{ number_format($saldoBulanLaluDebit, 2) }}</td>
             <td style="border: 0;">{{ number_format($saldoBulanLaluKredit, 2) }}</td>
             <td style="border: 0;">
-                @if ($saldoBulanLalu < 0)
-                    ({{ number_format($saldoBulanLalu * -1, 2) }})
+                @if ($totalSaldo < 0)
+                    ({{ number_format($totalSaldo * -1, 2) }})
                 @else
-                    {{ number_format($saldoBulanLalu, 2) }}
+                    {{ number_format($totalSaldo, 2) }}
                 @endif
             </td>
             <td style="border: 0;"></td>
@@ -120,11 +130,18 @@
             <td style="text-align: right; border: 0; font-weight: bold;">
                 {{ number_format($totalKredit, 2) }}
             </td>
-            <td style="text-align: right; border: 0; font-weight: bold;" rowspan="3">
-                @if ($totalSaldo < 0)
-                    ({{ number_format($totalSaldo * -1, 2) }})
+            <td style="text-align: right; border: 0; font-weight: bold;">
+                @php
+                    if ($akun->jenis_mutasi == 'debit') {
+                        $saldoBulanIni = $totalDebit - $totalKredit;
+                    } else {
+                        $saldoBulanIni = $totalKredit - $totalDebit;
+                    }
+                @endphp
+                @if ($saldoBulanIni < 0)
+                    ({{ number_format($saldoBulanIni * -1, 2) }})
                 @else
-                    {{ number_format($totalSaldo, 2) }}
+                    {{ number_format($saldoBulanIni, 2) }}
                 @endif
             </td>
             <td style="text-align: center; border: 0;"></td>
@@ -139,6 +156,20 @@
             <td style="text-align: right; border: 0; font-weight: bold;">
                 {{ number_format($totalKredit + $saldoBulanLaluKredit, 2) }}
             </td>
+            <td style="text-align: right; border: 0; font-weight: bold;">
+                @php
+                    if ($akun->jenis_mutasi == 'debit') {
+                        $saldoSdIni = ($totalDebit + $saldoBulanLaluDebit) - ($totalKredit + $saldoBulanLaluKredit);
+                    } else {
+                        $saldoSdIni = ($totalKredit + $saldoBulanLaluKredit) - ($totalDebit + $saldoBulanLaluDebit);
+                    }
+                @endphp
+                @if ($saldoSdIni < 0)
+                    ({{ number_format($saldoSdIni * -1, 2) }})
+                @else
+                    {{ number_format($saldoSdIni, 2) }}
+                @endif
+            </td>
             <td style="text-align: center; border: 0;"></td>
         </tr>
         <tr style="background-color: #d0d0d0;">
@@ -150,6 +181,13 @@
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
                 {{ number_format($totalKredit + $saldoBulanLaluKredit + $saldoAwalKredit, 2) }}
+            </td>
+            <td style="text-align: right; border: 0; font-weight: bold;">
+                @if ($totalSaldo < 0)
+                    ({{ number_format($totalSaldo * -1, 2) }})
+                @else
+                    {{ number_format($totalSaldo, 2) }}
+                @endif
             </td>
             <td style="text-align: center; border: 0;"></td>
         </tr>
