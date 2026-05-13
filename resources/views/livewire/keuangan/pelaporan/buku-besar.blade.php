@@ -34,6 +34,9 @@
 @extends('layouts.pdf')
 
 @section('content')
+    <div style="text-align: right; margin-bottom: 5px; font-weight: bold;">
+        Kode Akun : {{ $akun->kode }}
+    </div>
     <table style="width: 100%; border: 0; ">
         <tr style="background-color: #b0b0b0;">
             <td style="font-weight: bold; width: 5%; border: 0;">No</td>

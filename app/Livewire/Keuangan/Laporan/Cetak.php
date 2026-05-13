@@ -210,7 +210,7 @@ class Cetak extends Controller
                 ->orWhere('rekening_kredit', $kodeAkun);
         })->get();
 
-        $title = 'Laporan Buku Besar';
+        $title = 'Buku Besar ' . ($akun->nama ?? '');
         $periodeParts = [];
         if ($bulan != '-') {
             $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
