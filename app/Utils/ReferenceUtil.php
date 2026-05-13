@@ -33,8 +33,9 @@ class ReferenceUtil
         $number = $prefix . '/' . $yearMonth . '/' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
         
         // Robustness: Check if the generated number already exists and increment until unique.
-        // This check MUST be global (no business_id scoping) because the database unique index is global.
-        while ($modelClass::where($column, $number)->exists()) {
+        // This check MUST include soft-deleted records (withTrashed()) because the database unique index is global 
+        // and does not exclude soft-deleted rows.
+        while ($modelClass::withTrashed()->where($column, $number)->exists()) {
             $count++;
             $number = $prefix . '/' . $yearMonth . '/' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
         }
