@@ -334,6 +334,7 @@
                 // Basic Fields
                 nomorPenjualan: '',
                 tanggalPenjualan: new Date().toISOString().slice(0, 10),
+                saleId: @js($saleId),
                 customer: '',
                 catatan: '',
 
@@ -438,6 +439,15 @@
                             this.noRekening = @js($defaultTransferAccount);
                         } else if (value === 'qris' && @js($defaultQrisAccount)) {
                             this.noRekening = @js($defaultQrisAccount);
+                        }
+                    });
+
+                    // Watch for date changes to update Invoice number
+                    this.$watch('tanggalPenjualan', (value) => {
+                        if (!this.saleId) {
+                            this.$wire.updateNomorPenjualan(value).then(num => {
+                                this.nomorPenjualan = num;
+                            });
                         }
                     });
                 },

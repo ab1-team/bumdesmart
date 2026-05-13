@@ -347,6 +347,7 @@
                 // Basic Fields
                 nomorPembelian: '',
                 tanggalPembelian: new Date().toISOString().slice(0, 10),
+                purchaseId: @js($purchaseId),
                 supplier: '',
                 catatan: '',
 
@@ -541,6 +542,15 @@
                             this.noRekening = @js($defaultTransferAccount);
                         } else if (value === 'qris' && @js($defaultQrisAccount)) {
                             this.noRekening = @js($defaultQrisAccount);
+                        }
+                    });
+
+                    // Watch for date changes to update PO number
+                    this.$watch('tanggalPembelian', (value) => {
+                        if (!this.purchaseId) {
+                            this.$wire.updateNomorPembelian(value).then(num => {
+                                this.nomorPembelian = num;
+                            });
                         }
                     });
                 },

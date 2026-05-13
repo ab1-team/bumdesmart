@@ -326,12 +326,15 @@ class TambahPembelian extends Component
                 }
             }
 
-            // 1. Generate/Verify Purchase Number inside transaction
-            if (! $this->purchaseId) {
-                // For new purchases, generate a fresh number
-                $no_pembelian = \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian');
+            // 1. Determine Purchase Number
+            if (!empty($data['nomorPembelian'])) {
+                // Use manual input if provided (allows fixing duplicates)
+                $no_pembelian = $data['nomorPembelian'];
+            } else if (!$this->purchaseId) {
+                // For new purchases without manual input, generate a fresh number
+                $no_pembelian = \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian', $data['tanggalPembelian']);
             } else {
-                // For edits, use the one provided
+                // Fallback for edit without change (shouldn't really happen with empty check above)
                 $no_pembelian = $data['nomorPembelian'];
             }
 
@@ -716,9 +719,14 @@ class TambahPembelian extends Component
         }
     }
 
+    public function updateNomorPembelian($date)
+    {
+        return \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian', $date);
+    }
+
     private function generatePurchaseNumber()
     {
-        return \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian');
+        return \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian', $this->tanggalPembelian);
     }
 
     public function render()

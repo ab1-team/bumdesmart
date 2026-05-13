@@ -245,12 +245,15 @@ class TambahPenjualan extends Component
         DB::beginTransaction();
         try {
             $user = auth()->user();
-            // 1. Generate/Verify Invoice Number inside transaction
-            if (! $this->saleId) {
-                // For new sales, generate a fresh number to avoid collisions from numbers generated at page load
-                $nomorPenjualan = \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi');
+            // 1. Determine Invoice Number
+            if (!empty($data['nomorPenjualan'])) {
+                // Use manual input if provided
+                $nomorPenjualan = $data['nomorPenjualan'];
+            } else if (!$this->saleId) {
+                // For new sales without manual input, generate a fresh number
+                $nomorPenjualan = \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi', $data['tanggalPenjualan']);
             } else {
-                // For edits, use the one provided (which should be the existing one)
+                // Fallback for edit
                 $nomorPenjualan = $data['nomorPenjualan'];
             }
 
@@ -759,9 +762,14 @@ class TambahPenjualan extends Component
         }
     }
 
+    public function updateNomorPenjualan($date)
+    {
+        return \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi', $date);
+    }
+
     private function generateInvoiceNumber()
     {
-        return \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi');
+        return \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi', $this->tanggalPenjualan);
     }
 
     public function render()
