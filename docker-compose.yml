@@ -11,7 +11,7 @@ services:
         working_dir: /var/www/html
         volumes:
             - .:/var/www/html:z
-            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:z
         networks:
             - astamart-network
             - web-network
@@ -25,7 +25,7 @@ services:
             - "8002:80"
         volumes:
             - .:/var/www/html:z
-            - ./docker/nginx/conf.d:/etc/nginx/conf.d
+            - ./docker/nginx/conf.d:/etc/nginx/conf.d:z
         networks:
             - astamart-network
             - web-network
