@@ -12,6 +12,8 @@ services:
         volumes:
             - .:/var/www/html:z
             - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:z
+            - /usr/local/bin/wkhtmltopdf:/usr/local/bin/wkhtmltopdf:ro
+            - /usr/local/bin/wkhtmltoimage:/usr/local/bin/wkhtmltoimage:ro
         networks:
             - astamart-network
             - web-network
