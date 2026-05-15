@@ -10,7 +10,7 @@ services:
         restart: unless-stopped
         working_dir: /var/www/html
         volumes:
-            - .:/var/www/html
+            - .:/var/www/html:z
             - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
         networks:
             - astamart-network
@@ -24,7 +24,7 @@ services:
         ports:
             - "8002:80"
         volumes:
-            - .:/var/www/html
+            - .:/var/www/html:z
             - ./docker/nginx/conf.d:/etc/nginx/conf.d
         networks:
             - astamart-network
