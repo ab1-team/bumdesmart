@@ -1,55 +1,55 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # PHP Service
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bumdesmart-app
-    restart: unless-stopped
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
-      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - bumdesmart-network
+    # PHP Service
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: astamart-app
+        restart: unless-stopped
+        working_dir: /var/www/html
+        volumes:
+            - .:/var/www/html
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - astamart-network
 
-  # Nginx Service
-  web:
-    image: nginx:alpine
-    container_name: bumdesmart-web
-    restart: unless-stopped
-    ports:
-      - "8002:80"
-    volumes:
-      - .:/var/www/html
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-    networks:
-      - bumdesmart-network
-    depends_on:
-      - app
+    # Nginx Service
+    web:
+        image: nginx:alpine
+        container_name: astamart-web
+        restart: unless-stopped
+        ports:
+            - "8002:80"
+        volumes:
+            - .:/var/www/html
+            - ./docker/nginx/conf.d:/etc/nginx/conf.d
+        networks:
+            - astamart-network
+        depends_on:
+            - app
 
-  # Redis Service
-  redis:
-    image: redis:alpine
-    container_name: bumdesmart-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - bumdesmart-network
+    # Redis Service
+    redis:
+        image: redis:alpine
+        container_name: astamart-redis
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        networks:
+            - astamart-network
 
-  # Mailpit Service
-  mailpit:
-    image: 'axllent/mailpit:latest'
-    container_name: bumdesmart-mailpit
-    ports:
-        - '1025:1025'
-        - '8025:8025'
-    networks:
-        - bumdesmart-network
+    # Mailpit Service
+    mailpit:
+        image: "axllent/mailpit:latest"
+        container_name: astamart-mailpit
+        ports:
+            - "1025:1025"
+            - "8025:8025"
+        networks:
+            - astamart-network
 
 networks:
-  bumdesmart-network:
-    driver: bridge
+    astamart-network:
+        driver: bridge
