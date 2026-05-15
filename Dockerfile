@@ -23,8 +23,6 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libfontconfig1 \
     libxrender1 \
-    fonts-75dpi \
-    fonts-100dpi \
     xfonts-75dpi \
     xfonts-100dpi \
     libx11-6 \
