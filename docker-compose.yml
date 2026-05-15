@@ -14,6 +14,7 @@ services:
             - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
         networks:
             - astamart-network
+            - web-network
 
     # Nginx Service
     web:
@@ -27,6 +28,7 @@ services:
             - ./docker/nginx/conf.d:/etc/nginx/conf.d
         networks:
             - astamart-network
+            - web-network
         depends_on:
             - app
 
@@ -39,6 +41,7 @@ services:
             - "6379:6379"
         networks:
             - astamart-network
+            - web-network
 
     # Mailpit Service
     mailpit:
@@ -49,7 +52,10 @@ services:
             - "8025:8025"
         networks:
             - astamart-network
+            - web-network
 
 networks:
     astamart-network:
         driver: bridge
+    web-network:
+        external: true

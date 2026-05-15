@@ -35,11 +35,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Copy composer.json and composer.lock first to leverage Docker cache
+COPY composer.json composer.lock ./
 
-# Copy existing application directory permissions
+# Install dependencies without scripts and autoloader (to save time)
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
+
+# Copy the rest of application code with permissions
 COPY --chown=www:www . /var/www/html
+
+# Generate optimized autoloader
+RUN composer dump-autoload --optimize
+
+# Set permissions for Laravel
+RUN chmod -R 775 storage bootstrap/cache
 
 # Change current user to www
 USER www
