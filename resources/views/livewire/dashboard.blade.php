@@ -227,7 +227,7 @@
     </div>
 
     <div class="modal fade" id="lowStockModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">Produk Stok Rendah</h4>
@@ -252,7 +252,7 @@
                                         <td>{{ $product['nama_produk'] }}</td>
                                         <td class="text-end">
                                             <span
-                                                class="badge {{ $product['stok_aktual'] <= 0 ? 'bg-danger' : 'bg-warning' }}">{{ $product['stok_aktual'] }}</span>
+                                                class="badge {{ $product['stok_aktual'] <= 0 ? 'bg-danger text-light' : 'bg-warning' }}">{{ $product['stok_aktual'] }}</span>
                                         </td>
                                         <td class="text-end">{{ $product['stok_minimal'] }}</td>
                                         <td class="text-end text-danger">
