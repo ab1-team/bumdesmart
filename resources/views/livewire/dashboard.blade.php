@@ -199,7 +199,7 @@
                         <tr>
                             <td>
                                 <span
-                                    class="badge {{ $index === 0 ? 'bg-yellow' : ($index < 3 ? 'bg-secondary-lt' : 'bg-secondary') }}">{{ $index + 1 }}</span>
+                                    class="badge {{ $index === 0 ? 'bg-yellow' : ($index < 3 ? 'bg-secondary-lt' : 'bg-secondary text-light') }}">{{ $index + 1 }}</span>
                             </td>
                             <td><code>{{ $item->product->sku ?? '-' }}</code></td>
                             <td class="fw-medium">{{ $item->product->nama_produk ?? '-' }}</td>
