@@ -178,6 +178,45 @@
         </div>
     </div>
 
+    {{-- Top Products by Revenue --}}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Produk dengan Penjualan Tertinggi</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table table-hover">
+                <thead>
+                    <tr>
+                        <th class="w-1">#</th>
+                        <th>SKU</th>
+                        <th>Nama Produk</th>
+                        <th class="text-end">Qty Terjual</th>
+                        <th class="text-end">Total Penjualan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($topProductsByRevenue as $index => $item)
+                        <tr>
+                            <td>
+                                <span
+                                    class="badge {{ $index === 0 ? 'bg-yellow' : ($index < 3 ? 'bg-secondary-lt' : 'bg-secondary') }}">{{ $index + 1 }}</span>
+                            </td>
+                            <td><code>{{ $item->product->sku ?? '-' }}</code></td>
+                            <td class="fw-medium">{{ $item->product->nama_produk ?? '-' }}</td>
+                            <td class="text-end">{{ number_format($item->total_qty, 0) }}</td>
+                            <td class="text-end fw-bold text-success">Rp
+                                {{ number_format($item->total_revenue, 0, ',', '.') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Belum ada data penjualan</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     {{-- Recent Transactions --}}
     <div class="card">
         <div class="card-header">

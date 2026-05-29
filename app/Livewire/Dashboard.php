@@ -53,6 +53,8 @@ class Dashboard extends Component
     // Top Products & Recent Transactions
     public $topProducts = [];
 
+    public $topProductsByRevenue = [];
+
     public $recentTransactions = [];
 
     public function mount()
@@ -195,6 +197,17 @@ class Dashboard extends Component
             ->groupBy('product_id')
             ->orderByDesc('total_qty')
             ->take(5)
+            ->with(['product:id,nama_produk,sku'])
+            ->get();
+
+        $this->topProductsByRevenue = SaleDetail::whereHas('sale', function ($q) use ($startDate, $endDate) {
+            $q->where('business_id', $this->businessId)
+                ->whereBetween('created_at', [$startDate, $endDate]);
+        })
+            ->select('product_id', DB::raw('sum(jumlah) as total_qty'), DB::raw('sum(subtotal) as total_revenue'))
+            ->groupBy('product_id')
+            ->orderByDesc('total_revenue')
+            ->take(10)
             ->with(['product:id,nama_produk,sku'])
             ->get();
 
