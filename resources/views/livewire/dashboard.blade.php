@@ -112,7 +112,8 @@
                     <div class="subheader mb-2">Alert</div>
                     <div class="d-flex flex-wrap gap-2">
                         @if ($lowStockCount > 0)
-                            <span class="badge bg-danger text-light">{{ $lowStockCount }} Stok Rendah</span>
+                            <span class="badge bg-danger text-light" style="cursor: pointer;"
+                                wire:click="showLowStockModal">{{ $lowStockCount }} Stok Rendah</span>
                         @endif
                         @if ($overdueReceivablesCount > 0)
                             <span class="badge bg-warning">{{ $overdueReceivablesCount }} Piutang</span>
@@ -222,6 +223,56 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="lowStockModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Produk Stok Rendah</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-hover">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Nama Produk</th>
+                                    <th class="text-end">Stok Aktual</th>
+                                    <th class="text-end">Stok Minimal</th>
+                                    <th class="text-end">Selisih</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($lowStockProducts as $product)
+                                    <tr>
+                                        <td><code>{{ $product['sku'] ?? '-' }}</code></td>
+                                        <td>{{ $product['nama_produk'] }}</td>
+                                        <td class="text-end">
+                                            <span
+                                                class="badge {{ $product['stok_aktual'] <= 0 ? 'bg-danger' : 'bg-warning' }}">{{ $product['stok_aktual'] }}</span>
+                                        </td>
+                                        <td class="text-end">{{ $product['stok_minimal'] }}</td>
+                                        <td class="text-end text-danger">
+                                            -{{ $product['stok_minimal'] - $product['stok_aktual'] }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Memuat data...</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url('/master-produk/produk') }}" class="btn btn-primary">Kelola Produk</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

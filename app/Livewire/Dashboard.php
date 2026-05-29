@@ -47,6 +47,9 @@ class Dashboard extends Component
 
     public $nearExpiryCount = 0;
 
+    // Low Stock Products
+    public $lowStockProducts = [];
+
     // Top Products & Recent Transactions
     public $topProducts = [];
 
@@ -62,6 +65,17 @@ class Dashboard extends Component
     {
         $this->period = $period;
         $this->loadData();
+    }
+
+    public function showLowStockModal()
+    {
+        $this->lowStockProducts = Product::where('business_id', $this->businessId)
+            ->where('is_active', true)
+            ->whereColumn('stok_aktual', '<=', 'stok_minimal')
+            ->get(['id', 'nama_produk', 'sku', 'stok_aktual', 'stok_minimal'])
+            ->toArray();
+
+        $this->dispatch('show-modal', modalId: 'lowStockModal');
     }
 
     public function loadData()
