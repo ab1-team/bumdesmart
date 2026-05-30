@@ -343,11 +343,9 @@ class TambahPembelian extends Component
                 // UPDATE: Update existing records and handle stock changes
                 $purchase = Purchase::find($this->purchaseId);
 
-                // 1. Reverse Stock for existing details if previously completed
-                if ($purchase->status === 'completed') {
-                    foreach ($purchase->purchaseDetails as $oldDetail) {
-                        Product::where('id', $oldDetail->product_id)->decrement('stok_aktual', $oldDetail->jumlah);
-                    }
+                // 1. Reverse Stock for existing details
+                foreach ($purchase->purchaseDetails as $oldDetail) {
+                    Product::where('id', $oldDetail->product_id)->decrement('stok_aktual', $oldDetail->jumlah);
                 }
 
                 // 2. Delete related records that are safe to delete (Movements & Payments)
@@ -454,35 +452,33 @@ class TambahPembelian extends Component
                         ]);
                     }
 
-                    if ($status === 'completed') {
-                        // Re-create Stock Movement & Batch Movement (Incoming)
-                        $stockMovement = \App\Models\StockMovement::create([
-                            'business_id' => $this->businessId,
-                            'product_id' => $item['id'],
-                            'tanggal_perubahan_stok' => $data['tanggalPembelian'],
-                            'jenis_perubahan' => 'purchase',
-                            'jumlah_perubahan' => $newQty,
-                            'reference_id' => $purchase->id,
-                            'reference_type' => 'purchase',
-                            'catatan' => 'Pembelian via PO '.($no_pembelian ?? ''),
-                        ]);
+                    // Re-create Stock Movement & Batch Movement (Incoming)
+                    $stockMovement = \App\Models\StockMovement::create([
+                        'business_id' => $this->businessId,
+                        'product_id' => $item['id'],
+                        'tanggal_perubahan_stok' => $data['tanggalPembelian'],
+                        'jenis_perubahan' => 'purchase',
+                        'jumlah_perubahan' => $newQty,
+                        'reference_id' => $purchase->id,
+                        'reference_type' => 'purchase',
+                        'catatan' => 'Pembelian via PO '.($no_pembelian ?? ''),
+                    ]);
 
-                        $batchMovementData[] = [
-                            'business_id' => $this->businessId,
-                            'batch_id' => isset($batch) ? $batch->id : null, // Should exist
-                            'stock_movement_id' => $stockMovement->id,
-                            'tanggal_perubahan' => $data['tanggalPembelian'],
-                            'jenis_transaksi' => 'purchase',
-                            'transaction_detail_id' => $detail->id,
-                            'jumlah' => $newQty,
-                            'harga_satuan' => $newPrice,
-                            'created_at' => $timestamp,
-                            'updated_at' => $timestamp,
-                        ];
+                    $batchMovementData[] = [
+                        'business_id' => $this->businessId,
+                        'batch_id' => isset($batch) ? $batch->id : null,
+                        'stock_movement_id' => $stockMovement->id,
+                        'tanggal_perubahan' => $data['tanggalPembelian'],
+                        'jenis_transaksi' => 'purchase',
+                        'transaction_detail_id' => $detail->id,
+                        'jumlah' => $newQty,
+                        'harga_satuan' => $newPrice,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
 
-                        // Increment Stock (We already decremented OLD stock at start, now we add NEW stock)
-                        Product::where('id', $item['id'])->increment('stok_aktual', $newQty);
-                    }
+                    // Increment Stock (We already decremented OLD stock at start, now we add NEW stock)
+                    Product::where('id', $item['id'])->increment('stok_aktual', $newQty);
                 }
 
                 // 5. Delete details that are no longer in the list
@@ -561,37 +557,34 @@ class TambahPembelian extends Component
                         'status' => 'ACTIVE',
                     ]);
 
-                    if ($status === 'completed') {
-                        // 3. Create Stock Movement
-                        $stockMovement = \App\Models\StockMovement::create([
-                            'business_id' => $this->businessId,
-                            'product_id' => $item['id'],
-                            'tanggal_perubahan_stok' => $data['tanggalPembelian'],
-                            'jenis_perubahan' => 'purchase',
-                            'jumlah_perubahan' => $item['jumlah_beli'],
-                            'reference_id' => $purchase->id,
-                            'reference_type' => 'purchase',
-                            'catatan' => 'Pembelian via PO '.($no_pembelian ?? ''),
-                        ]);
+                    // 3. Create Stock Movement
+                    $stockMovement = \App\Models\StockMovement::create([
+                        'business_id' => $this->businessId,
+                        'product_id' => $item['id'],
+                        'tanggal_perubahan_stok' => $data['tanggalPembelian'],
+                        'jenis_perubahan' => 'purchase',
+                        'jumlah_perubahan' => $item['jumlah_beli'],
+                        'reference_id' => $purchase->id,
+                        'reference_type' => 'purchase',
+                        'catatan' => 'Pembelian via PO '.($no_pembelian ?? ''),
+                    ]);
 
-                        // 4. Create Batch Movement (Linkage)
-                        $batchMovementData[] = [
-                            'business_id' => $this->businessId,
-                            'batch_id' => $batch->id,
-                            'stock_movement_id' => $stockMovement->id,
-                            'tanggal_perubahan' => $data['tanggalPembelian'],
-                            'jenis_transaksi' => 'purchase', // Incoming
-                            'transaction_detail_id' => $detail->id,
-                            'jumlah' => $item['jumlah_beli'], // Positive for incoming in context of batch size? Or just magnitude?
-                            // Usually BatchMovement tracks "change". For initial creation, it's the full amount.
-                            'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
-                            'created_at' => $timestamp,
-                            'updated_at' => $timestamp,
-                        ];
+                    // 4. Create Batch Movement (Linkage)
+                    $batchMovementData[] = [
+                        'business_id' => $this->businessId,
+                        'batch_id' => $batch->id,
+                        'stock_movement_id' => $stockMovement->id,
+                        'tanggal_perubahan' => $data['tanggalPembelian'],
+                        'jenis_transaksi' => 'purchase',
+                        'transaction_detail_id' => $detail->id,
+                        'jumlah' => $item['jumlah_beli'],
+                        'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ];
 
-                        // 5. Update Actual Stock
-                        Product::where('id', $item['id'])->increment('stok_aktual', $item['jumlah_beli']);
-                    }
+                    // 5. Update Actual Stock
+                    Product::where('id', $item['id'])->increment('stok_aktual', $item['jumlah_beli']);
                 }
             } // END ELSE (CREATE)
 
