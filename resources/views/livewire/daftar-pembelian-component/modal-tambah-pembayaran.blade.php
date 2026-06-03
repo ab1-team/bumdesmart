@@ -32,7 +32,7 @@
                         <input type="text" class="form-control" x-model="formattedSudahDibayar" readonly />
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Jumlah Pembayaran</label>
+                        <label class="form-label">Jumlah Pembayaran (Maks. <span x-text="formatRupiah(sisaTagihan)"></span>)</label>
                         <input type="text" class="form-control" x-model="formattedJumlahPembayaran"
                             x-on:input="updateJumlah" placeholder="0" />
                         <div class="d-flex justify-content-between mt-2">
@@ -175,13 +175,17 @@
 
                 updateJumlah(e) {
                     let value = e.target.value.replace(/[^0-9]/g, '');
-                    this.jumlahPembayaran = parseInt(value) || 0;
+                    let rawValue = parseInt(value) || 0;
+
+                    if (rawValue > this.sisaTagihan) {
+                        rawValue = this.sisaTagihan;
+                    }
+
+                    this.jumlahPembayaran = rawValue;
                     this.formattedJumlahPembayaran = this.formatNumber(this.jumlahPembayaran);
 
-                    // Logic Kembalian
-                    this.kembalian = Math.max(0, this.jumlahPembayaran - this.sisaTagihan);
+                    this.kembalian = 0;
 
-                    // Sync to Livewire
                     @this.set('jumlahPembayaran', this.jumlahPembayaran);
                 },
 
