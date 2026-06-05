@@ -121,7 +121,7 @@ class DaftarPembelian extends Component
         // Reset form
         $this->nomorPembayaran = null; // Auto-generate if empty
         $this->tanggalPembayaran = date('Y-m-d');
-        $this->keterangan = '';
+        $this->keterangan = 'Pembayaran Utang Pembelian PO ' . $purchase->no_pembelian;
         $this->jumlahPembayaran = 0;
         $this->kembalian = 0;
         $this->metodePembayaran = 'cash';

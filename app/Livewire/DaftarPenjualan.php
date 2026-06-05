@@ -296,7 +296,7 @@ class DaftarPenjualan extends Component
         // Reset form
         $this->nomorPembayaran = null;
         $this->tanggalPembayaran = date('Y-m-d');
-        $this->keterangan = '';
+        $this->keterangan = 'Pembayaran Utang Penjualan ' . $sale->no_invoice;
         $this->jumlahPembayaran = 0;
         $this->kembalian = 0;
         $this->metodePembayaran = 'cash';

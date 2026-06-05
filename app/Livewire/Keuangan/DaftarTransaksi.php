@@ -71,7 +71,7 @@ class DaftarTransaksi extends Component
         DB::beginTransaction();
         try {
             if ($payment->jenis_transaksi === 'jurnal_umum') {
-                Jurnal::where('id', $payment->transaction_id)->delete();
+                Jurnal::find($payment->transaction_id)?->delete();
             } elseif ($payment->jenis_transaksi === 'inventaris') {
                 Inventory::where('payment_id', $payment->id)->delete();
             }

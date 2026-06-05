@@ -302,8 +302,8 @@ class TambahPenjualan extends Component
                 // 2. CLEANUP OLD RECORDS
                 BatchMovement::whereIn('stock_movement_id', $stockMovementIds)->delete();
                 StockMovement::whereIn('id', $stockMovementIds)->delete();
-                \App\Models\SaleDetail::where('sale_id', $sale->id)->delete();
-                \App\Models\Payment::where('transaction_id', $sale->id)->where('jenis_transaksi', 'sale')->delete();
+                \App\Models\SaleDetail::where('sale_id', $sale->id)->get()->each->delete();
+                \App\Models\Payment::where('transaction_id', $sale->id)->where('jenis_transaksi', 'sale')->get()->each(fn ($p) => $p->delete());
 
                 // 3. UPDATE HEADER
                 $pay = \App\Utils\NumberUtil::parse($data['bayar']);
