@@ -31,6 +31,7 @@ return new class extends Migration
                 DB::table('menus')->where('id', $menuId)->update([
                     'parent_id' => $parent->id,
                     'title' => 'Daftar Transaksi',
+                    'is_active' => 1,
                     'updated_at' => now(),
                 ]);
             }

@@ -104,8 +104,10 @@ class MenuSeeder extends Seeder
                 'icon' => 'analytics',
                 'order' => 7,
                 'child' => [
-                    ['title' => 'Jurnal Umum', 'url' => '/keuangan/jurnal-umum', 'order' => 1],
-                    ['title' => 'Pelaporan', 'url' => '/keuangan/pelaporan', 'order' => 2],
+                    ['title' => 'Chart of Accounts', 'url' => '/keuangan/coa', 'order' => 1],
+                    ['title' => 'Jurnal Umum', 'url' => '/keuangan/jurnal-umum', 'order' => 2],
+                    ['title' => 'Pelaporan', 'url' => '/keuangan/pelaporan', 'order' => 3],
+                    ['title' => 'Daftar Transaksi', 'url' => '/keuangan/daftar-transaksi', 'order' => 99],
                 ],
             ],
             [
