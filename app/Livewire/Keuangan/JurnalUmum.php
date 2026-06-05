@@ -101,7 +101,7 @@ class JurnalUmum extends Component
             $simpan = $data['disimpan_ke'] ?? '';
 
             $noPembayaran = 'PAY-'.date('Ymd').'-'.
-                str_pad(Payment::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
+                str_pad(Payment::withTrashed()->whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
 
             $urutan = Jurnal::whereYear('tanggal', $this->tahun)
                 ->whereMonth('tanggal', $this->bulan)

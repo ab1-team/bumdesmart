@@ -46,8 +46,18 @@
                             {{ $payment->user->nama_lengkap ?? '-' }}
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-danger" 
-                                wire:click="$dispatch('confirm-delete', { id: {{ $payment->id }} })"
+                            <button x-data
+                                x-on:click="Swal.fire({
+                                    title: 'Hapus Transaksi?',
+                                    text: 'Tindakan ini tidak dapat dibatalkan!',
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#d33',
+                                    cancelButtonColor: '#3085d6',
+                                    confirmButtonText: 'Ya, Hapus!',
+                                    cancelButtonText: 'Batal'
+                                }).then((result) => { if (result.isConfirmed) { $wire.delete({{ $payment->id }}) } })"
+                                class="btn btn-sm btn-outline-danger"
                                 title="Hapus Transaksi">
                                 <span class="material-symbols-outlined">delete</span>
                             </button>
@@ -64,24 +74,3 @@
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-    window.addEventListener('confirm-delete', event => {
-        Swal.fire({
-            title: 'Hapus Transaksi?',
-            text: "Tindakan ini tidak dapat dibatalkan!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                @this.call('delete', event.detail.id);
-            }
-        })
-    });
-</script>
-@endpush
