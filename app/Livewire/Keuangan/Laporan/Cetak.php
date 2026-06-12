@@ -831,6 +831,76 @@ class Cetak extends Controller
         ]);
     }
 
+    public function laporanStok(array $data)
+    {
+        $business = view()->shared('business');
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        $hari = $data['periode'] ?? '-';
+
+        $endDate = Carbon::createFromDate($tahun, $bulan == '-' ? 12 : (int) $bulan, 1)->endOfMonth();
+        if ($hari != '-') {
+            $endDate = Carbon::createFromDate($tahun, $bulan == '-' ? 12 : (int) $bulan, (int) $hari);
+        }
+        $startDate = Carbon::createFromDate($tahun, $bulan == '-' ? 1 : (int) $bulan, 1)->startOfMonth();
+
+        $query = Product::with(['category', 'unit', 'shelf'])
+            ->where('business_id', $business->id)
+            ->where('is_active', true);
+
+        if (isset($data['sub_laporan']) && $data['sub_laporan'] != '') {
+            if (str_starts_with($data['sub_laporan'], 'cat:')) {
+                $catId = str_replace('cat:', '', $data['sub_laporan']);
+                $query->where('category_id', $catId);
+            } elseif (str_starts_with($data['sub_laporan'], 'rak:')) {
+                $rakId = str_replace('rak:', '', $data['sub_laporan']);
+                $query->where('shelf_id', $rakId);
+            }
+        }
+
+        $products = $query->orderBy('nama_produk')->get()
+            ->map(function ($p) use ($startDate, $endDate) {
+                $masuk = $p->stockMovements()
+                    ->whereIn('jenis_perubahan', ['masuk', 'pembelian', 'retur_pembelian', 'koreksi_tambah'])
+                    ->whereBetween('tanggal_perubahan_stok', [$startDate, $endDate])
+                    ->sum('jumlah_perubahan');
+
+                $keluar = $p->stockMovements()
+                    ->whereIn('jenis_perubahan', ['keluar', 'penjualan', 'retur_penjualan', 'koreksi_kurang', 'rusak'])
+                    ->whereBetween('tanggal_perubahan_stok', [$startDate, $endDate])
+                    ->sum('jumlah_perubahan');
+
+                $p->stok_awal_periode = $p->stok_aktual - ($masuk - $keluar);
+                $p->stok_masuk = (int) $masuk;
+                $p->stok_keluar = (int) $keluar;
+                $p->stok_akhir = $p->stok_aktual;
+                $p->nilai_stok = $p->stok_aktual * $p->biaya_rata_rata;
+
+                return $p;
+            });
+
+        $summary = [
+            'total_produk' => $products->count(),
+            'total_nilai_stok' => $products->sum('nilai_stok'),
+            'total_stok_akhir' => $products->sum('stok_akhir'),
+        ];
+
+        $title = 'Laporan Stok';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+        $periodeParts[] = $tahun;
+        $subtitle = 'Periode: '.implode(' ', $periodeParts);
+        if ($hari != '-') {
+            $subtitle .= ' | Tanggal: '.$hari;
+        }
+
+        $html = view('livewire.keuangan.pelaporan.laporan-stok', compact('title', 'subtitle', 'products', 'summary', 'startDate', 'endDate'))->render();
+
+        return $this->streamPdf($html, 'laporan-stok.pdf', 'landscape');
+    }
+
     private function streamPdf($html, $filename, $orientation = 'portrait', $options = [])
     {
         $business = Business::find(auth()->user()?->business_id) ?? Business::first();
