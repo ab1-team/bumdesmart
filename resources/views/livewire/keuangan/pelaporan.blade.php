@@ -71,6 +71,7 @@
                                 <option value="retur">Laporan Retur</option>
                             </optgroup>
                             <optgroup label="📦 Laporan Produk & Stok">
+                                <option value="laporanStok">Laporan Stok (Per Periode)</option>
                                 <option value="produkTerlaris">Laporan Produk Terlaris</option>
                                 <option value="marginProduk">Laporan Margin & Profitabilitas</option>
                                 <option value="inventoryTurnover">Laporan Inventory Turnover</option>
@@ -181,6 +182,19 @@
                         Select['jenis_sub_laporan'].addOption({
                             value: `cat:${cat.id}`,
                             text: `Kategori: ${cat.nama}`
+                        });
+                    });
+                } else if (value === 'laporanStok') {
+                    this.daftarKategori.forEach(cat => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: `cat:${cat.id}`,
+                            text: `Kategori: ${cat.nama}`
+                        });
+                    });
+                    this.daftarRak.forEach(rak => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: `rak:${rak.id}`,
+                            text: `Rak: ${rak.nama}`
                         });
                     });
                 }
