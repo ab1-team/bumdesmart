@@ -225,9 +225,15 @@ class DaftarPenjualan extends Component
     {
         $payment = \App\Models\Payment::find($id);
 
-        if ($payment) {
-            $sale = \App\Models\Sale::find($payment->transaction_id);
+        if (! $payment) {
+            $this->dispatch('alert', type: 'error', message: 'Pembayaran tidak ditemukan');
+            return;
+        }
 
+        $sale = \App\Models\Sale::find($payment->transaction_id);
+
+        DB::beginTransaction();
+        try {
             // Check if this is part of a split (HPP/PROFIT)
             $toDeleteIds = [$id];
             $baseNo = $payment->no_pembayaran;
@@ -250,42 +256,116 @@ class DaftarPenjualan extends Component
                 }
             }
 
+            // Snapshot payment metadata before deletion (for potential piutang restoration)
+            $deletedMeta = [
+                'no_pembayaran' => $payment->no_pembayaran,
+                'tanggal_pembayaran' => $payment->tanggal_pembayaran,
+                'metode_pembayaran' => $payment->metode_pembayaran,
+            ];
+
             // Calculate Total Value to deduct
             $totalDeletedValue = \App\Models\Payment::whereIn('id', $toDeleteIds)->sum('total_harga');
 
             \App\Models\Payment::whereIn('id', $toDeleteIds)->delete();
 
-            // Update Sale
-            $newPaid = $sale->dibayar - ($totalDeletedValue + $sale->kembalian);
+            // Refresh sale from DB
+            $sale->refresh();
+
+            // Recompute paid amount: subtract the deleted payment value from current paid
+            $newPaid = max(0, $sale->dibayar - $totalDeletedValue);
+            $newKembalian = max(0, $sale->kembalian - $totalDeletedValue);
+            $newJumlahUtang = max(0, $sale->total - $newPaid);
+
             $status = 'partial';
-            if ($newPaid <= 0) {
+            if ($newJumlahUtang <= 0) {
+                $status = 'completed';
+            } elseif ($newPaid <= 0) {
                 $status = 'pending';
             }
 
+            // Flip jenis_pembayaran back to 'credit' whenever invoice is no longer fully paid
+            $jenisPembayaran = $sale->jenis_pembayaran;
+            if ($newJumlahUtang > 0 && $jenisPembayaran !== 'credit') {
+                $jenisPembayaran = 'credit';
+            } elseif ($newJumlahUtang <= 0 && $jenisPembayaran === 'credit') {
+                $jenisPembayaran = 'cash';
+            }
+
             $sale->update([
-                'dibayar' => max(0, $newPaid),
-                'kembalian' => max(0, $sale->kembalian - $totalDeletedValue), // Simplified change logic
-                'jumlah_utang' => max(0, $sale->total - $newPaid),
+                'dibayar' => $newPaid,
+                'kembalian' => $newKembalian,
+                'jumlah_utang' => $newJumlahUtang,
                 'status' => $status,
+                'jenis_pembayaran' => $jenisPembayaran,
             ]);
+
+            // If the sale now has outstanding piutang, ensure the accounting piutang
+            // entry (no_pembayaran = {invoice}-CR) is present. If missing or insufficient,
+            // create / top-up a piutang row mirroring TambahPenjualan::processPayments (lines 678-697).
+            if ($newJumlahUtang > 0) {
+                $piutangNo = $sale->no_invoice.'-CR';
+                $existingPiutang = \App\Models\Payment::where('transaction_id', $sale->id)
+                    ->where('jenis_transaksi', 'sale')
+                    ->where('metode_pembayaran', 'piutang')
+                    ->where('no_pembayaran', $piutangNo)
+                    ->first();
+
+                // Total piutang currently recorded on the books for this sale
+                $currentPiutangTotal = \App\Models\Payment::where('transaction_id', $sale->id)
+                    ->where('jenis_transaksi', 'sale')
+                    ->where('metode_pembayaran', 'piutang')
+                    ->sum('total_harga');
+
+                $delta = $newJumlahUtang - $currentPiutangTotal;
+
+                if ($delta > 0) {
+                    if ($existingPiutang) {
+                        $existingPiutang->update([
+                            'total_harga' => $existingPiutang->total_harga + $delta,
+                        ]);
+                    } else {
+                        \App\Models\Payment::create([
+                            'business_id' => $this->businessId,
+                            'user_id' => auth()->user()->id,
+                            'no_pembayaran' => $piutangNo,
+                            'tanggal_pembayaran' => $deletedMeta['tanggal_pembayaran'] ?? now()->toDateString(),
+                            'jenis_transaksi' => 'sale',
+                            'transaction_id' => $sale->id,
+                            'total_harga' => $delta,
+                            'metode_pembayaran' => 'piutang',
+                            'no_referensi' => null,
+                            'catatan' => 'Piutang Penjualan '.$sale->no_invoice,
+                            'rekening_debit' => '1.1.04.01', // Piutang
+                            'rekening_kredit' => '4.1.01.01', // Pendapatan
+                        ]);
+                    }
+                } elseif ($delta < 0 && $existingPiutang) {
+                    // Piutang entries exceed outstanding amount (e.g. partial overpay scenario)
+                    $existingPiutang->update([
+                        'total_harga' => max(0, $existingPiutang->total_harga + $delta),
+                    ]);
+                }
+            } else {
+                // Fully paid: collapse any piutang accounting rows for this sale
+                \App\Models\Payment::where('transaction_id', $sale->id)
+                    ->where('jenis_transaksi', 'sale')
+                    ->where('metode_pembayaran', 'piutang')
+                    ->delete();
+            }
+
+            DB::commit();
+            $this->dispatch('alert', type: 'success', message: 'Pembayaran berhasil dihapus dan piutang dikembalikan');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('alert', type: 'error', message: 'Gagal menghapus pembayaran: '.$e->getMessage());
+            \Log::error('Delete payment error: '.$e->getMessage());
+            return;
         }
 
         // Refresh List (Re-run logic)
         $this->lihatPembayaran($sale->id);
 
-        // $this->dispatch('hide-modal', modalId: 'detailPembayaranModal'); // Don't hide, just refresh?
-        // User workflow: Delete one, might want to see it gone.
-        // Re-dispatching show-modal might flicker or be fine.
-        // Existing Purchase logic hides it. Let's stick to existing UX or improve.
-        // Purchase: $this->dispatch('hide-modal', ...);
-        // Sales request: "Lihat pembayaran". Usually user stays in modal.
-        // I will NOT close the modal, but refresh the data.
-        // But the previous implementation closed it. I'll just refresh $this->lihatPembayaran which updates $this->paymentList
-        // and Livewire should update the DOM automatically.
-        // So I remove dispatch('hide-modal').
-
         $this->dispatch('hide-modal', modalId: 'detailPembayaranModal');
-        $this->dispatch('alert', type: 'success', message: 'Pembayaran berhasil dihapus');
     }
 
     public function tambahPembayaran($id)
