@@ -208,7 +208,7 @@ class Cetak extends Controller
         ])->where(function ($query) use ($kodeAkun) {
             $query->where('rekening_debit', $kodeAkun)
                 ->orWhere('rekening_kredit', $kodeAkun);
-        })->orderBy('tanggal_pembayaran', 'asc')->get();
+        })->orderBy('tanggal_pembayaran', 'asc')->orderBy('id', 'asc')->get();
 
         $title = 'Buku Besar ' . ($akun->nama ?? '');
         $periodeParts = [];
