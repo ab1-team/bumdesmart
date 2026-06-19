@@ -73,6 +73,7 @@
                             <optgroup label="📦 Laporan Produk & Stok">
                                 <option value="laporanStok">Laporan Stok (Per Periode)</option>
                                 <option value="produkTerlaris">Laporan Produk Terlaris</option>
+                                <option value="penjualanProduk">Laporan Penjualan per Produk</option>
                                 <option value="marginProduk">Laporan Margin & Profitabilitas</option>
                                 <option value="inventoryTurnover">Laporan Inventory Turnover</option>
                                 <option value="stokOpname">Laporan Stok Opname</option>
@@ -133,6 +134,17 @@
                             value: account.kode,
                             text: `${account.kode}. ${account.nama}`
                         });
+                    });
+                } else if (value === 'penjualanProduk') {
+                    this.daftarPelanggan.forEach(cus => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: `cus:${cus.id}`,
+                            text: `Pelanggan: ${cus.nama}`
+                        });
+                    });
+                    Select['jenis_sub_laporan'].addOption({
+                        value: '',
+                        text: 'Semua Produk'
                     });
                 } else if (value === 'penjualanHarian' || value === 'cashierReport') {
                     if (this.daftarUser.length > 1) {

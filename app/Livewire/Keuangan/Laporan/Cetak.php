@@ -364,6 +364,58 @@ class Cetak extends Controller
         return $this->streamPdf($html, 'laporan-aset-tetap-inventaris.pdf', 'landscape');
     }
 
+    public function penjualanProduk(array $data)
+    {
+        $business = view()->shared('business');
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        $hari = $data['periode'] ?? '-';
+
+        $query = SaleDetail::with(['sale.customer', 'product'])
+            ->whereHas('sale', function ($q) use ($business, $tahun, $bulan, $hari) {
+                $q->where('business_id', $business->id);
+                if ($bulan != '-') {
+                    $q->whereYear('tanggal_transaksi', $tahun)
+                      ->whereMonth('tanggal_transaksi', $bulan);
+                } else {
+                    $q->whereYear('tanggal_transaksi', $tahun);
+                }
+                if ($hari != '-') {
+                    $q->whereDay('tanggal_transaksi', $hari);
+                }
+            });
+
+        if (isset($data['sub_laporan']) && $data['sub_laporan'] != '') {
+            if (str_starts_with($data['sub_laporan'], 'prod:')) {
+                $prodId = str_replace('prod:', '', $data['sub_laporan']);
+                $query->where('product_id', $prodId);
+            } elseif (str_starts_with($data['sub_laporan'], 'cus:')) {
+                $cusId = str_replace('cus:', '', $data['sub_laporan']);
+                $query->whereHas('sale', function ($q) use ($cusId) {
+                    $q->where('customer_id', $cusId);
+                });
+            }
+        }
+
+        $sales = $query->orderBy('id', 'desc')->get();
+        $total = $sales->sum('subtotal');
+
+        $title = 'Laporan Penjualan per Produk';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+        $periodeParts[] = $tahun;
+        $subtitle = 'Periode: '.implode(' ', $periodeParts);
+        if ($hari != '-') {
+            $subtitle .= ' | Tanggal: '.$hari;
+        }
+
+        $html = view('livewire.keuangan.pelaporan.penjualan-produk', compact('title', 'subtitle', 'sales', 'total'))->render();
+
+        return $this->streamPdf($html, 'laporan-penjualan-produk.pdf', 'landscape');
+    }
+
     public function produkTerlaris(array $data)
     {
         $tahun = $data['tahun'] ?? date('Y');
