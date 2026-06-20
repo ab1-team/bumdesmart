@@ -401,7 +401,7 @@ class Cetak extends Controller
         $sales = $query->orderBy('id', 'desc')->get();
         $total = $sales->sum('subtotal');
 
-        $title = 'Laporan Penjualan per Produk';
+        $title = 'Laporan Penjualan Produk';
         $periodeParts = [];
         if ($bulan != '-') {
             $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
