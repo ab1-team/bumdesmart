@@ -13,7 +13,7 @@
         "laravel/sanctum": "^3.2",
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.7",
-        "phpoffice/phpspreadsheet": "1.29",
+        "phpoffice/phpspreadsheet": "*",
         "stancl/tenancy": "3.8",
         "yajra/laravel-datatables-oracle": "10.3.1"
     },
