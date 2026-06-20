@@ -32,7 +32,7 @@
                 <td style="border: 0;">
                     {{ $payment->accountDebit->nama }}
                 </td>
-                <td style="text-align: right; border: 0;">{{ number_format($payment->total_harga, 2, ',','.') }}</td>
+                <td style="text-align: right; border: 0;">{{ number_format($payment->total_harga, 2, '.', ',') }}</td>
                 <td style="text-align: right; border: 0;">0</td>
                 <td rowspan="2" style="text-align: center; border: 0;">{{ $payment->user->initial }}</td>
             </tr>
@@ -43,7 +43,7 @@
                     {{ $payment->accountKredit->nama }}
                 </td>
                 <td style="text-align: right; border: 0;">0</td>
-                <td style="text-align: right; border: 0;">{{ number_format($payment->total_harga, 2, ',','.') }}</td>
+                <td style="text-align: right; border: 0;">{{ number_format($payment->total_harga, 2, '.', ',') }}</td>
             </tr>
         @empty
             <tr style="background-color: {{ $index % 2 == 0 ? '#f0f0f0' : '#fefefe' }};">
@@ -53,8 +53,8 @@
 
         <tr style="background-color: #d0d0d0; font-weight: bold;">
             <td colspan="5" style="text-align: right; border: 0;">Total</td>
-            <td style="text-align: right; border: 0;">{{ number_format($totalDebit, 2, ',','.') }}</td>
-            <td style="text-align: right; border: 0;">{{ number_format($totalKredit, 2, ',','.') }}</td>
+            <td style="text-align: right; border: 0;">{{ number_format($totalDebit, 2, '.', ',') }}</td>
+            <td style="text-align: right; border: 0;">{{ number_format($totalKredit, 2, '.', ',') }}</td>
             <td style="border: 0;"></td>
         </tr>
     </table>

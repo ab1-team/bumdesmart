@@ -2,7 +2,7 @@
 
 @section('content')
     <div style="margin-bottom: 15px; padding: 10px; background: #fff3cd;">
-        <strong>Total Piutang: Rp {{ number_format($totalPiutang, 2, ',','.') }}</strong>
+        <strong>Total Piutang: Rp {{ number_format($totalPiutang, 2, '.', ',') }}</strong>
     </div>
 
     @foreach ($grouped as $group)
@@ -29,10 +29,10 @@
                     <tr>
                         <td>{{ $sale->no_invoice }}</td>
                         <td>{{ \Carbon\Carbon::parse($sale->tanggal_transaksi)->format('d/m/Y') }}</td>
-                        <td class="text-right">Rp {{ number_format($sale->total, 2, ',','.') }}</td>
-                        <td class="text-right">Rp {{ number_format($sale->dibayar, 2, ',','.') }}</td>
+                        <td class="text-right">Rp {{ number_format($sale->total, 2, '.', ',') }}</td>
+                        <td class="text-right">Rp {{ number_format($sale->dibayar, 2, '.', ',') }}</td>
                         <td class="text-right" style="color: red; font-weight: bold;">Rp
-                            {{ number_format($sale->jumlah_utang, 2, ',','.') }}</td>
+                            {{ number_format($sale->jumlah_utang, 2, '.', ',') }}</td>
                         <td class="text-center">
                             <span
                                 class="badge {{ $umur > 60 ? 'badge-danger' : ($umur > 30 ? 'badge-warning' : 'badge-success') }}">
@@ -45,7 +45,7 @@
             <tfoot>
                 <tr>
                     <th colspan="4" class="text-right">Subtotal</th>
-                    <th class="text-right" style="color: red;">Rp {{ number_format($group['total_piutang'], 2, ',','.') }}
+                    <th class="text-right" style="color: red;">Rp {{ number_format($group['total_piutang'], 2, '.', ',') }}
                     </th>
                     <th></th>
                 </tr>

@@ -33,13 +33,13 @@
                         {{ $kode['nama'] }}
                     </td>
                     <td style="padding: 4px; text-align: right; {{ $isHeader ? 'font-weight: bold;' : '' }} border: 0;">
-                        {{ number_format($kode['saldo_sd_lalu'], 2, ',','.') }}
+                        {{ number_format($kode['saldo_sd_lalu'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 4px; text-align: right; {{ $isHeader ? 'font-weight: bold;' : '' }} border: 0;">
-                        {{ number_format($kode['saldo_bulan_ini'], 2, ',','.') }}
+                        {{ number_format($kode['saldo_bulan_ini'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 4px; text-align: right; {{ $isHeader ? 'font-weight: bold;' : '' }} border: 0;">
-                        {{ number_format($kode['saldo_sd_ini'], 2, ',','.') }}
+                        {{ number_format($kode['saldo_sd_ini'], 2, '.', ',') }}
                     </td>
                 </tr>
             @endforeach
@@ -49,13 +49,13 @@
                     <td colspan="2" style="padding: 5px; font-weight: bold; text-align: left; border: 0;">Total
                         {{ $lr['nama'] }}</td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah_sd_lalu'], 2, ',','.') }}
+                        {{ number_format($lr['jumlah_sd_lalu'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah_bulan_ini'], 2, ',','.') }}
+                        {{ number_format($lr['jumlah_bulan_ini'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah_sd_ini'], 2, ',','.') }}
+                        {{ number_format($lr['jumlah_sd_ini'], 2, '.', ',') }}
                     </td>
                 </tr>
             @endif
@@ -82,13 +82,13 @@
                         {{ $footerLabel }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['total_sd_lalu'], 2, ',','.') }}
+                        {{ number_format($lr['total_sd_lalu'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['total_bulan_ini'], 2, ',','.') }}
+                        {{ number_format($lr['total_bulan_ini'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['total_sd_ini'], 2, ',','.') }}
+                        {{ number_format($lr['total_sd_ini'], 2, '.', ',') }}
                     </td>
                 </tr>
             @endif
@@ -99,13 +99,13 @@
                         {{ $secondaryFooter }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['total_sd_lalu'], 2, ',','.') }}
+                        {{ number_format($lr['total_sd_lalu'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['total_bulan_ini'], 2, ',','.') }}
+                        {{ number_format($lr['total_bulan_ini'], 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['total_sd_ini'], 2, ',','.') }}
+                        {{ number_format($lr['total_sd_ini'], 2, '.', ',') }}
                     </td>
                 </tr>
             @endif
