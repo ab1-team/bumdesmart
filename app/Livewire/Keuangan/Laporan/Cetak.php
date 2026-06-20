@@ -311,10 +311,7 @@ class Cetak extends Controller
         $bulan = $data['bulan'] ?? date('m');
         $bulanLalu = $bulan - 1;
 
-        $tanggalMulai = $tahun.'-'.$bulan.'-01';
-        $tanggalAkhir = date('Y-m-t', strtotime($tanggalMulai));
-
-        $arusKas = KeuanganUtil::arusKas($tanggalMulai, $tanggalAkhir);
+        $arusKas = KeuanganUtil::arusKas($tahun, $bulan);
         $saldoKas = KeuanganUtil::saldoKas($tahun, $bulanLalu);
 
         $title = 'Laporan Arus Kas';
@@ -372,7 +369,7 @@ class Cetak extends Controller
         $bulan = $data['bulan'] ?? '-';
         $hari = $data['periode'] ?? '-';
 
-        $query = SaleDetail::with(['sale.customer', 'product'])
+        $query = SaleDetail::with(['sale.customer', 'product.unit'])
             ->whereHas('sale', function ($q) use ($business, $tahun, $bulan, $hari) {
                 $q->where('business_id', $business->id);
                 if ($bulan != '-') {
@@ -424,7 +421,7 @@ class Cetak extends Controller
         $bulan = $data['bulan'] ?? '-';
         $hari = $data['periode'] ?? '-';
 
-        $query = PurchaseDetail::with(['purchase.supplier', 'product'])
+        $query = PurchaseDetail::with(['purchase.supplier', 'product.unit'])
             ->whereHas('purchase', function ($q) use ($business, $tahun, $bulan, $hari) {
                 $q->where('business_id', $business->id);
                 if ($bulan != '-') {

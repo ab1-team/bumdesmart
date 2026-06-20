@@ -96,7 +96,10 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-end gap-2">
+                <button @click="openReportExcel" class="btn btn-success">
+                    Download Excel
+                </button>
                 <button @click="openReport" class="btn btn-primary">
                     Preview (New Window)
                 </button>
@@ -231,6 +234,26 @@
                 });
 
                 window.open('/keuangan/pelaporan/cetak?' + params.toString(), '_blank');
+            },
+            openReportExcel() {
+                if (!this.jenis_laporan) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Silakan pilih nama laporan terlebih dahulu.'
+                    });
+
+                    return;
+                }
+
+                let params = new URLSearchParams({
+                    tahun: this.tahun,
+                    bulan: this.bulan,
+                    periode: this.periode,
+                    laporan: this.jenis_laporan,
+                    sub_laporan: this.jenis_sub_laporan
+                });
+
+                window.location.href = '/keuangan/pelaporan/export?' + params.toString();
             }
         }
     }
