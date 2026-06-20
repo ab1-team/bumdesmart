@@ -131,26 +131,26 @@
         <table>
             <tr>
                 <td class="text-left">Saldo Awal</td>
-                <td class="text-right">{{ number_format($cashDrawer->saldo_awal, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($cashDrawer->saldo_awal, 2, ',','.') }}</td>
             </tr>
             <tr>
                 <td class="text-left">Total Penjualan</td>
-                <td class="text-right">{{ number_format($salesTotal, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($salesTotal, 2, ',','.') }}</td>
             </tr>
             <tr class="fw-bold">
                 <td class="text-left">Saldo Seharusnya</td>
-                <td class="text-right">{{ number_format($cashDrawer->saldo_akhir_aplikasi, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($cashDrawer->saldo_akhir_aplikasi, 2, ',','.') }}</td>
             </tr>
             <tr>
                 <td colspan="2" class="divider"></td>
             </tr>
             <tr>
                 <td class="text-left">Saldo Fisik</td>
-                <td class="text-right">{{ number_format($cashDrawer->saldo_akhir, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($cashDrawer->saldo_akhir, 2, ',','.') }}</td>
             </tr>
             <tr class="fw-bold">
                 <td class="text-left">Selisih</td>
-                <td class="text-right">{{ number_format($cashDrawer->selisih, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($cashDrawer->selisih, 2, ',','.') }}</td>
             </tr>
         </table>
 

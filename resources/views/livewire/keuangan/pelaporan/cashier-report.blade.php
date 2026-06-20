@@ -142,7 +142,7 @@
                             <tr>
                                 <td>{{ $item->product->nama_produk }}</td>
                                 <td class="text-center">{{ $item->total_qty }}</td>
-                                <td class="text-right">Rp {{ number_format($item->total_amount, 0, ',', '.') }}</td>
+                                <td class="text-right">Rp {{ number_format($item->total_amount, 2, ',','.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -156,22 +156,22 @@
                     <tr>
                         <td style="width: 25%;">
                             <span class="summary-label">Saldo Awal:</span><br>
-                            <span class="summary-value">Rp {{ number_format($session->saldo_awal, 0, ',', '.') }}</span>
+                            <span class="summary-value">Rp {{ number_format($session->saldo_awal, 2, ',','.') }}</span>
                         </td>
                         <td style="width: 25%;">
                             <span class="summary-label">Saldo Akhir (App):</span><br>
                             <span class="summary-value">Rp
-                                {{ number_format($session->saldo_akhir_aplikasi, 0, ',', '.') }}</span>
+                                {{ number_format($session->saldo_akhir_aplikasi, 2, ',','.') }}</span>
                         </td>
                         <td style="width: 25%;">
                             <span class="summary-label">Saldo Akhir (Manual):</span><br>
-                            <span class="summary-value">Rp {{ number_format($session->saldo_akhir, 0, ',', '.') }}</span>
+                            <span class="summary-value">Rp {{ number_format($session->saldo_akhir, 2, ',','.') }}</span>
                         </td>
                         <td style="width: 25%; text-align: right;">
                             <span class="summary-label">Selisih:</span><br>
                             <span
                                 class="summary-value {{ $session->selisih < 0 ? 'selisih-negatif' : ($session->selisih > 0 ? 'selisih-positif' : '') }}">
-                                Rp {{ number_format($session->selisih, 0, ',', '.') }}
+                                Rp {{ number_format($session->selisih, 2, ',','.') }}
                             </span>
                         </td>
                     </tr>

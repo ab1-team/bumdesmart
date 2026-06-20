@@ -2,7 +2,7 @@
 
 @section('content')
     <div style="margin-bottom: 15px; padding: 10px; background: #f8d7da;">
-        <strong>Total Hutang: Rp {{ number_format($totalHutang, 0, ',', '.') }}</strong>
+        <strong>Total Hutang: Rp {{ number_format($totalHutang, 2, ',','.') }}</strong>
     </div>
 
     @foreach ($grouped as $group)
@@ -29,10 +29,10 @@
                     <tr>
                         <td>{{ $purchase->no_pembelian }}</td>
                         <td>{{ \Carbon\Carbon::parse($purchase->tanggal_pembelian)->format('d/m/Y') }}</td>
-                        <td class="text-right">Rp {{ number_format($purchase->total, 0, ',', '.') }}</td>
-                        <td class="text-right">Rp {{ number_format($purchase->dibayar, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($purchase->total, 2, ',','.') }}</td>
+                        <td class="text-right">Rp {{ number_format($purchase->dibayar, 2, ',','.') }}</td>
                         <td class="text-right" style="color: red; font-weight: bold;">Rp
-                            {{ number_format($purchase->jumlah_utang, 0, ',', '.') }}</td>
+                            {{ number_format($purchase->jumlah_utang, 2, ',','.') }}</td>
                         <td class="text-center">
                             <span
                                 class="badge {{ $umur > 60 ? 'badge-danger' : ($umur > 30 ? 'badge-warning' : 'badge-success') }}">
@@ -45,7 +45,7 @@
             <tfoot>
                 <tr>
                     <th colspan="4" class="text-right">Subtotal</th>
-                    <th class="text-right" style="color: red;">Rp {{ number_format($group['total_hutang'], 0, ',', '.') }}
+                    <th class="text-right" style="color: red;">Rp {{ number_format($group['total_hutang'], 2, ',','.') }}
                     </th>
                     <th></th>
                 </tr>

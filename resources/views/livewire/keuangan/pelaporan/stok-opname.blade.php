@@ -35,7 +35,7 @@
                             {{ $detail->selisih > 0 ? '+' : '' }}{{ $detail->selisih }}
                         </td>
                         <td>{{ $detail->jenis_selisih }}</td>
-                        <td class="text-right">Rp {{ number_format($detail->total_harga, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($detail->total_harga, 2, ',','.') }}</td>
                         <td>{{ $detail->alasan ?? '-' }}</td>
                     </tr>
                 @endforeach

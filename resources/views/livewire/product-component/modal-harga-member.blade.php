@@ -21,7 +21,7 @@
                                 <td>Harga Default</td>
                                 <td>
                                     <input type="text" class="form-control" readonly
-                                        value="{{ number_format($detailProduk->harga_jual, 0, ',', '.') }}">
+                                        value="{{ number_format($detailProduk->harga_jual, 2, ',','.') }}">
                                 </td>
                                 <td></td>
                                 <td></td>
@@ -31,7 +31,7 @@
                                     $hargaJualPerMember = '';
                                     foreach ($detailProduk->productPrices as $productPrice) {
                                         if ($productPrice->customer_group_id == $customerGroup->id) {
-                                            $hargaJualPerMember = number_format($productPrice->harga_spesial, 0, ',', '.');
+                                            $hargaJualPerMember = number_format($productPrice->harga_spesial, 2, ',','.');
                                         }
                                     }
                                 @endphp

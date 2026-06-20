@@ -53,13 +53,13 @@
             <td style="text-align: center; border: 0;">{{ $tahun . '-01-01' }}</td>
             <td style="border: 0;"></td>
             <td style="border: 0;">Komulatif Transaksi Awal Tahun {{ $tahun }}</td>
-            <td style="border: 0;">{{ number_format($saldoAwalDebit, 2) }}</td>
-            <td style="border: 0;">{{ number_format($saldoAwalKredit, 2) }}</td>
+            <td style="border: 0;">{{ number_format($saldoAwalDebit, 2, ',','.') }}</td>
+            <td style="border: 0;">{{ number_format($saldoAwalKredit, 2, ',','.') }}</td>
             <td style="border: 0;">
                 @if ($saldoAwal < 0)
-                    ({{ number_format($saldoAwal * -1, 2) }})
+                    ({{ number_format($saldoAwal * -1, 2, ',','.') }})
                 @else
-                    {{ number_format($saldoAwal, 2) }}
+                    {{ number_format($saldoAwal, 2, ',','.') }}
                 @endif
             </td>
             <td style="border: 0;"></td>
@@ -69,13 +69,13 @@
             <td style="text-align: center; border: 0;">{{ $tahun . '-' . $bulan . '-01' }}</td>
             <td style="border: 0;"></td>
             <td style="border: 0;">Komulatif Transaksi s/d Bulan Lalu</td>
-            <td style="border: 0;">{{ number_format($saldoBulanLaluDebit, 2) }}</td>
-            <td style="border: 0;">{{ number_format($saldoBulanLaluKredit, 2) }}</td>
+            <td style="border: 0;">{{ number_format($saldoBulanLaluDebit, 2, ',','.') }}</td>
+            <td style="border: 0;">{{ number_format($saldoBulanLaluKredit, 2, ',','.') }}</td>
             <td style="border: 0;">
                 @if ($totalSaldo < 0)
-                    ({{ number_format($totalSaldo * -1, 2) }})
+                    ({{ number_format($totalSaldo * -1, 2, ',','.') }})
                 @else
-                    {{ number_format($totalSaldo, 2) }}
+                    {{ number_format($totalSaldo, 2, ',','.') }}
                 @endif
             </td>
             <td style="border: 0;"></td>
@@ -110,13 +110,13 @@
                 </td>
                 <td style="text-align: center; border: 0;">{{ $payment->id }}</td>
                 <td style="border: 0;">{{ $payment->catatan }}</td>
-                <td style="text-align: right; border: 0;">{{ number_format($debit, 2) }}</td>
-                <td style="text-align: right; border: 0;">{{ number_format($kredit, 2) }}</td>
+                <td style="text-align: right; border: 0;">{{ number_format($debit, 2, ',','.') }}</td>
+                <td style="text-align: right; border: 0;">{{ number_format($kredit, 2, ',','.') }}</td>
                 <td style="text-align: right; border: 0;">
                     @if ($totalSaldo < 0)
-                        ({{ number_format($totalSaldo * -1, 2) }})
+                        ({{ number_format($totalSaldo * -1, 2, ',','.') }})
                     @else
-                        {{ number_format($totalSaldo, 2) }}
+                        {{ number_format($totalSaldo, 2, ',','.') }}
                     @endif
                 </td>
                 <td style="text-align: center; border: 0;">{{ $payment->p }}</td>
@@ -128,16 +128,16 @@
                 Total Transaksi Bulan {{ $namaBulan }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalDebit, 2) }}
+                {{ number_format($totalDebit, 2, ',','.') }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalKredit, 2) }}
+                {{ number_format($totalKredit, 2, ',','.') }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;" rowspan="3">
                 @if ($totalSaldo < 0)
-                    ({{ number_format($totalSaldo * -1, 2) }})
+                    ({{ number_format($totalSaldo * -1, 2, ',','.') }})
                 @else
-                    {{ number_format($totalSaldo, 2) }}
+                    {{ number_format($totalSaldo, 2, ',','.') }}
                 @endif
             </td>
             <td style="text-align: center; border: 0;"></td>
@@ -147,10 +147,10 @@
                 Total Transaksi Sampai Dengan Bulan {{ $namaBulan }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalDebit + $saldoBulanLaluDebit, 2) }}
+                {{ number_format($totalDebit + $saldoBulanLaluDebit, 2, ',','.') }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalKredit + $saldoBulanLaluKredit, 2) }}
+                {{ number_format($totalKredit + $saldoBulanLaluKredit, 2, ',','.') }}
             </td>
             <td style="text-align: center; border: 0;"></td>
         </tr>
@@ -159,10 +159,10 @@
                 Total Transaksi Komulatif Sampai Dengan {{ $tahun }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalDebit + $saldoBulanLaluDebit + $saldoAwalDebit, 2) }}
+                {{ number_format($totalDebit + $saldoBulanLaluDebit + $saldoAwalDebit, 2, ',','.') }}
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalKredit + $saldoBulanLaluKredit + $saldoAwalKredit, 2) }}
+                {{ number_format($totalKredit + $saldoBulanLaluKredit + $saldoAwalKredit, 2, ',','.') }}
             </td>
             <td style="text-align: center; border: 0;"></td>
         </tr>

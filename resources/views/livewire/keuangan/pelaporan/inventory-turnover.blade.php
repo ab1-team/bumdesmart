@@ -21,7 +21,7 @@
                     <td>{{ $product->nama_produk }}</td>
                     <td>{{ $product->category->nama_kategori ?? '-' }}</td>
                     <td class="text-center">{{ $product->stok_aktual }}</td>
-                    <td class="text-right">Rp {{ number_format($product->nilai_stok, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($product->nilai_stok, 2, ',','.') }}</td>
                     <td class="text-center">{{ $product->terjual_30hari }}</td>
                     <td class="text-center"
                         style="color: {{ $product->turnover_ratio >= 2 ? 'green' : ($product->turnover_ratio >= 1 ? 'orange' : 'red') }}; font-weight: bold;">

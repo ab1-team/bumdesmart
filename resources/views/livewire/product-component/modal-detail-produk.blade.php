@@ -50,7 +50,7 @@
                                         <tr>
                                             <td class="fw-bold">Harga Pembelian</td>
                                             <td>:</td>
-                                            <td>Rp. {{ number_format($detailProduk->harga_beli, 0, ',', '.') }}</td>
+                                            <td>Rp. {{ number_format($detailProduk->harga_beli, 2, ',','.') }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Stok</td>
@@ -67,7 +67,7 @@
                                         <tr>
                                             <td class="fw-bold" width="35%">Harga Jual Default</td>
                                             <td width="1%">:</td>
-                                            <td>Rp. {{ number_format($detailProduk->harga_jual, 0, ',', '.') }}</td>
+                                            <td>Rp. {{ number_format($detailProduk->harga_jual, 2, ',','.') }}</td>
                                         </tr>
                                         @foreach ($this->customerGroups as $customerGroup)
                                             @php
@@ -90,7 +90,7 @@
                                                     </div>
                                                 </td>
                                                 <td>:</td>
-                                                <td>Rp. {{ number_format($harga_jual, 0, ',', '.') }}</td>
+                                                <td>Rp. {{ number_format($harga_jual, 2, ',','.') }}</td>
                                             </tr>
                                         @endforeach
                                     </table>

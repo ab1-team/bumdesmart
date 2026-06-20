@@ -21,10 +21,10 @@
                     <td>{{ $product->sku }}</td>
                     <td>{{ $product->nama_produk }}</td>
                     <td>{{ $product->category->nama_kategori ?? '-' }}</td>
-                    <td class="text-right">Rp {{ number_format($product->biaya_rata_rata, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($product->biaya_rata_rata, 2, ',','.') }}</td>
+                    <td class="text-right">Rp {{ number_format($product->harga_jual, 2, ',','.') }}</td>
                     <td class="text-right" style="color: {{ $product->margin_rp >= 0 ? 'green' : 'red' }};">
-                        Rp {{ number_format($product->margin_rp, 0, ',', '.') }}
+                        Rp {{ number_format($product->margin_rp, 2, ',','.') }}
                     </td>
                     <td class="text-right"
                         style="color: {{ $product->margin_pct >= 20 ? 'green' : ($product->margin_pct >= 10 ? 'orange' : 'red') }};">

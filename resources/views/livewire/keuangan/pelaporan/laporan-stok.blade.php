@@ -36,8 +36,8 @@
                     <td style="text-align: center; color: green;">{{ $p->stok_masuk }}</td>
                     <td style="text-align: center; color: red;">{{ $p->stok_keluar }}</td>
                     <td style="text-align: center; font-weight: bold;">{{ $p->stok_akhir }}</td>
-                    <td style="text-align: right;">{{ number_format($p->biaya_rata_rata, 0, ',', '.') }}</td>
-                    <td style="text-align: right;">{{ number_format($p->nilai_stok, 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($p->biaya_rata_rata, 2, ',','.') }}</td>
+                    <td style="text-align: right;">{{ number_format($p->nilai_stok, 2, ',','.') }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -46,7 +46,7 @@
                 <th colspan="9" style="text-align: right;">Total</th>
                 <th style="text-align: center;">{{ $summary['total_stok_akhir'] }}</th>
                 <th></th>
-                <th style="text-align: right;">{{ number_format($summary['total_nilai_stok'], 0, ',', '.') }}</th>
+                <th style="text-align: right;">{{ number_format($summary['total_nilai_stok'], 2, ',','.') }}</th>
             </tr>
         </tfoot>
     </table>
@@ -54,6 +54,6 @@
     <div style="margin-top: 20px; font-size: 11px;">
         <strong>Ringkasan:</strong><br>
         Total Produk: {{ $summary['total_produk'] }} item<br>
-        Total Nilai Stok: Rp {{ number_format($summary['total_nilai_stok'], 0, ',', '.') }}
+        Total Nilai Stok: Rp {{ number_format($summary['total_nilai_stok'], 2, ',','.') }}
     </div>
 @endsection
