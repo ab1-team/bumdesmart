@@ -11,6 +11,7 @@ use App\Models\Business;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\PurchaseDetail;
 use App\Models\PurchasesReturn;
 use App\Models\Sale;
 use App\Models\SaleDetail;
@@ -414,6 +415,58 @@ class Cetak extends Controller
         $html = view('livewire.keuangan.pelaporan.penjualan-produk', compact('title', 'subtitle', 'sales', 'total'))->render();
 
         return $this->streamPdf($html, 'laporan-penjualan-produk.pdf', 'landscape');
+    }
+
+    public function pembelianProduk(array $data)
+    {
+        $business = view()->shared('business');
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        $hari = $data['periode'] ?? '-';
+
+        $query = PurchaseDetail::with(['purchase.supplier', 'product'])
+            ->whereHas('purchase', function ($q) use ($business, $tahun, $bulan, $hari) {
+                $q->where('business_id', $business->id);
+                if ($bulan != '-') {
+                    $q->whereYear('tanggal_pembelian', $tahun)
+                      ->whereMonth('tanggal_pembelian', $bulan);
+                } else {
+                    $q->whereYear('tanggal_pembelian', $tahun);
+                }
+                if ($hari != '-') {
+                    $q->whereDay('tanggal_pembelian', $hari);
+                }
+            });
+
+        if (isset($data['sub_laporan']) && $data['sub_laporan'] != '') {
+            if (str_starts_with($data['sub_laporan'], 'prod:')) {
+                $prodId = str_replace('prod:', '', $data['sub_laporan']);
+                $query->where('product_id', $prodId);
+            } elseif (str_starts_with($data['sub_laporan'], 'sup:')) {
+                $supId = str_replace('sup:', '', $data['sub_laporan']);
+                $query->whereHas('purchase', function ($q) use ($supId) {
+                    $q->where('supplier_id', $supId);
+                });
+            }
+        }
+
+        $purchases = $query->orderBy('id', 'desc')->get();
+        $total = $purchases->sum('subtotal');
+
+        $title = 'Laporan Pembelian Produk';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+        $periodeParts[] = $tahun;
+        $subtitle = 'Periode: '.implode(' ', $periodeParts);
+        if ($hari != '-') {
+            $subtitle .= ' | Tanggal: '.$hari;
+        }
+
+        $html = view('livewire.keuangan.pelaporan.pembelian-produk', compact('title', 'subtitle', 'purchases', 'total'))->render();
+
+        return $this->streamPdf($html, 'laporan-pembelian-produk.pdf', 'landscape');
     }
 
     public function produkTerlaris(array $data)

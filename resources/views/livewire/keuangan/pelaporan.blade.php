@@ -73,7 +73,8 @@
                             <optgroup label="📦 Laporan Produk & Stok">
                                 <option value="laporanStok">Laporan Stok (Per Periode)</option>
                                 <option value="produkTerlaris">Laporan Produk Terlaris</option>
-                                <option value="penjualanProduk">Laporan Penjualan per Produk</option>
+                                <option value="penjualanProduk">Laporan Penjualan Produk</option>
+                                <option value="pembelianProduk">Laporan Pembelian Produk</option>
                                 <option value="marginProduk">Laporan Margin & Profitabilitas</option>
                                 <option value="inventoryTurnover">Laporan Inventory Turnover</option>
                                 <option value="stokOpname">Laporan Stok Opname</option>
