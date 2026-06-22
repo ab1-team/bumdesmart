@@ -253,7 +253,7 @@
                     sub_laporan: this.jenis_sub_laporan
                 });
 
-                window.location.href = '/keuangan/pelaporan/export?' + params.toString();
+                window.open('/keuangan/pelaporan/export?' + params.toString(), '_blank');
             }
         }
     }

@@ -22,13 +22,6 @@ use App\Utils\KeuanganUtil;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Color;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Export extends Controller
 {
@@ -71,239 +64,142 @@ class Export extends Controller
         return $sub;
     }
 
+    private function xml(string $xml): string
+    {
+        return htmlspecialchars((string) $xml, ENT_XML1, 'UTF-8');
+    }
+
+    private function excelResponse(string $xml, string $filename): \Illuminate\Http\Response
+    {
+        return response($xml, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
+    }
+
+    private function cell(string $val, string $style = 's62', int $mergeAcross = 0): string
+    {
+        $merge = $mergeAcross > 0 ? " ss:MergeAcross=\"{$mergeAcross}\"" : '';
+        $type = 'String';
+        $v = $this->xml($val);
+        return "<Cell{$merge} ss:StyleID=\"{$style}\"><Data ss:Type=\"{$type}\">{$v}</Data></Cell>";
+    }
+
+    private function numCell($val, string $style = 's64'): string
+    {
+        if ($val === '' || $val === null) {
+            return "<Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"String\"></Data></Cell>";
+        }
+        $v = is_numeric($val) ? (float) $val : $val;
+        $type = is_numeric($v) ? 'Number' : 'String';
+        return "<Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"{$type}\">{$v}</Data></Cell>";
+    }
+
     private function buildExcel(string $title, string $subtitle, array $headers, array $rows, array $totalsRow, string $filename, array $numberCols = [], array $columnWidths = [])
     {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle(substr($title, 0, 31));
-
         $colCount = count($headers);
         if ($colCount < 1) $colCount = 1;
-        $lastCol = Coordinate::stringFromColumnIndex($colCount);
-
-        $sheet->mergeCells("A1:{$lastCol}1");
-        $sheet->setCellValue('A1', $title);
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $sheet->mergeCells("A2:{$lastCol}2");
-        $sheet->setCellValue('A2', $subtitle);
-        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $headerRow = 4;
-        foreach ($headers as $i => $h) {
-            $col = Coordinate::stringFromColumnIndex($i + 1);
-            $sheet->setCellValue("{$col}{$headerRow}", $h);
-        }
-
-        $headerStyle = [
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
-        ];
-        $sheet->getStyle("A{$headerRow}:{$lastCol}{$headerRow}")->applyFromArray($headerStyle);
-
-        $rowIndex = $headerRow + 1;
-        foreach ($rows as $r) {
-            for ($i = 0; $i < $colCount; $i++) {
-                $col = Coordinate::stringFromColumnIndex($i + 1);
-                $val = $r[$i] ?? '';
-                $sheet->setCellValue("{$col}{$rowIndex}", $val);
-            }
-            $rowIndex++;
-        }
-
-        if (! empty($rows)) {
-            $dataEndRow = $rowIndex - 1;
-            $dataRange = "A{$headerRow}:{$lastCol}{$dataEndRow}";
-            $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle($dataRange)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-        }
-
-        if (! empty($totalsRow)) {
-            for ($i = 0; $i < $colCount; $i++) {
-                $col = Coordinate::stringFromColumnIndex($i + 1);
-                $val = $totalsRow[$i] ?? '';
-                $sheet->setCellValue("{$col}{$rowIndex}", $val);
-            }
-            $totalStyle = [
-                'font' => ['bold' => true],
-                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E6E6']],
-                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
-            ];
-            $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->applyFromArray($totalStyle);
-            $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-            $rowIndex++;
-        }
-
-        foreach ($numberCols as $nc) {
-            if ($nc < 1 || $nc > $colCount) continue;
-            $col = Coordinate::stringFromColumnIndex($nc);
-            $sheet->getStyle("{$col}".($headerRow + 1).":{$col}{$rowIndex}")
-                ->getNumberFormat()->setFormatCode('#,##0.00');
-            $sheet->getStyle($col.($headerRow + 1).":{$col}{$rowIndex}")
-                ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        }
-
-        $defaultWidths = [5, 12, 28, 22, 20, 18, 14, 18, 18, 16, 16, 16];
-        foreach ($defaultWidths as $idx => $w) {
-            $col = Coordinate::stringFromColumnIndex($idx + 1);
-            $sheet->getColumnDimension($col)->setWidth($w);
-        }
-        foreach ($columnWidths as $idx => $w) {
-            $col = Coordinate::stringFromColumnIndex((int) $idx + 1);
-            $sheet->getColumnDimension($col)->setWidth($w);
-        }
-
-        $sheet->getRowDimension(1)->setRowHeight(22);
-        $sheet->getRowDimension($headerRow)->setRowHeight(20);
-
-        $writer = new Xlsx($spreadsheet);
-        $tmpPath = storage_path('app/tmp_'.uniqid().'.xlsx');
-        $writer->save($tmpPath);
-
-        return response()->download($tmpPath, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
+        $xml = $this->buildGroupedExcelXml($title, $subtitle, [], [
+            ['title' => null, 'headers' => $headers, 'rows' => $rows, 'subtotals' => !empty($totalsRow) ? [$totalsRow] : []],
+        ], $numberCols, $columnWidths);
+        return $this->excelResponse($xml, $filename);
     }
 
     private function buildGroupedExcel(string $title, string $subtitle, array $summaryRow, array $groups, string $filename, array $numberCols = [], array $columnWidths = [])
     {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle(substr($title, 0, 31));
+        $xml = $this->buildGroupedExcelXml($title, $subtitle, $summaryRow, $groups, $numberCols, $columnWidths);
+        return $this->excelResponse($xml, $filename);
+    }
 
+    private function buildGroupedExcelXml(string $title, string $subtitle, array $summaryRow, array $groups, array $numberCols = [], array $columnWidths = []): string
+    {
         $maxCols = 1;
         foreach ($groups as $g) {
             $maxCols = max($maxCols, count($g['headers']));
         }
-        $lastCol = Coordinate::stringFromColumnIndex($maxCols);
 
-        $sheet->mergeCells("A1:{$lastCol}1");
-        $sheet->setCellValue('A1', $title);
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $sheet->mergeCells("A2:{$lastCol}2");
-        $sheet->setCellValue('A2', $subtitle);
-        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $rowIndex = 3;
-
-        if (! empty($summaryRow)) {
-            foreach ($summaryRow as $sRow) {
-                for ($i = 0; $i < $maxCols; $i++) {
-                    $col = Coordinate::stringFromColumnIndex($i + 1);
-                    $val = $sRow[$i] ?? '';
-                    $sheet->setCellValue("{$col}{$rowIndex}", $val);
-                }
-                $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-                $rowIndex++;
-            }
-            $rowIndex++;
+        $colWidths = [];
+        for ($i = 0; $i < $maxCols; $i++) {
+            $w = $columnWidths[$i] ?? 12;
+            $colWidths[] = $w * 7 + 5;
         }
 
-        $sectionHeaderStyle = [
-            'font' => ['bold' => true, 'size' => 11],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E1F2']],
-        ];
-        $headerStyle = [
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
-        ];
-        $subtotalStyle = [
-            'font' => ['bold' => true],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E6E6']],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
-        ];
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
+        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
+        $xml .= ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
+        $xml .= '<Styles>';
+        $xml .= '<Style ss:ID="s60"><Font ss:Bold="1" ss:Size="14"/><Alignment ss:Horizontal="Center"/></Style>';
+        $xml .= '<Style ss:ID="s61"><Alignment ss:Horizontal="Center"/></Style>';
+        $xml .= '<Style ss:ID="s62"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
+        $xml .= '<Style ss:ID="s63"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#4472C4" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
+        $xml .= '<Style ss:ID="s64"><Alignment ss:Horizontal="Right"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
+        $xml .= '<Style ss:ID="s65"><Font ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
+        $xml .= '<Style ss:ID="s66"><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#D9E1F2" ss:Pattern="Solid"/></Style>';
+        $xml .= '</Styles>' . "\n";
+
+        $xml .= '<Worksheet ss:Name="' . $this->xml(substr($title, 0, 31)) . '">' . "\n";
+        $xml .= '<Table>' . "\n";
+        foreach ($colWidths as $w) {
+            $xml .= "<Column ss:Width=\"{$w}\"/>\n";
+        }
+
+        $xml .= '<Row ss:Height="22">' . $this->cell($title, 's60', $maxCols - 1) . '</Row>' . "\n";
+        $xml .= '<Row>' . $this->cell($subtitle, 's61', $maxCols - 1) . '</Row>' . "\n";
+
+        if (!empty($summaryRow)) {
+            foreach ($summaryRow as $sRow) {
+                $xml .= '<Row>';
+                for ($i = 0; $i < $maxCols; $i++) {
+                    $val = $sRow[$i] ?? '';
+                    $xml .= is_numeric($val) && $val !== '' ? $this->numCell($val, 's62') : $this->cell((string) $val, 's62');
+                }
+                $xml .= '</Row>' . "\n";
+            }
+        }
 
         foreach ($groups as $group) {
             $headers = $group['headers'];
-            $rows = $group['rows'];
+            $groupRows = $group['rows'];
             $groupTitle = $group['title'] ?? null;
             $subtotals = $group['subtotals'] ?? [];
-            $colCount = count($headers);
-            $grpLastCol = Coordinate::stringFromColumnIndex($colCount);
+            $gc = count($headers);
 
-            if ($groupTitle) {
-                $sheet->mergeCells("A{$rowIndex}:{$grpLastCol}{$rowIndex}");
-                $sheet->setCellValue("A{$rowIndex}", $groupTitle);
-                $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($sectionHeaderStyle);
-                $rowIndex++;
+            if ($groupTitle !== null && $groupTitle !== '') {
+                $xml .= '<Row>' . $this->cell($groupTitle, 's66', $gc - 1) . '</Row>' . "\n";
             }
 
-            $headerRowIdx = $rowIndex;
-            foreach ($headers as $i => $h) {
-                $col = Coordinate::stringFromColumnIndex($i + 1);
-                $sheet->setCellValue("{$col}{$headerRowIdx}", $h);
+            $xml .= '<Row ss:Height="20">';
+            foreach ($headers as $h) {
+                $xml .= $this->cell($h, 's63');
             }
-            $sheet->getStyle("A{$headerRowIdx}:{$grpLastCol}{$headerRowIdx}")->applyFromArray($headerStyle);
-            $rowIndex++;
+            $xml .= '</Row>' . "\n";
 
-            $dataStartRow = $rowIndex;
-            foreach ($rows as $r) {
-                for ($i = 0; $i < $colCount; $i++) {
-                    $col = Coordinate::stringFromColumnIndex($i + 1);
+            foreach ($groupRows as $r) {
+                $xml .= '<Row>';
+                for ($i = 0; $i < $gc; $i++) {
                     $val = $r[$i] ?? '';
-                    $sheet->setCellValue("{$col}{$rowIndex}", $val);
+                    $isNum = in_array($i + 1, $numberCols) && is_numeric($val);
+                    $xml .= $isNum ? $this->numCell($val, 's64') : (is_numeric($val) && $val !== '' ? $this->numCell($val, 's62') : $this->cell((string) $val, 's62'));
                 }
-                $rowIndex++;
-            }
-            $dataEndRow = $rowIndex - 1;
-
-            if (! empty($rows)) {
-                $dataRange = "A{$headerRowIdx}:{$grpLastCol}{$dataEndRow}";
-                $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-                $sheet->getStyle($dataRange)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                $xml .= '</Row>' . "\n";
             }
 
-            if (! empty($subtotals)) {
-                foreach ($subtotals as $st) {
-                    for ($i = 0; $i < $colCount; $i++) {
-                        $col = Coordinate::stringFromColumnIndex($i + 1);
-                        $val = $st[$i] ?? '';
-                        $sheet->setCellValue("{$col}{$rowIndex}", $val);
-                    }
-                    $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($subtotalStyle);
-                    $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-                    $rowIndex++;
+            foreach ($subtotals as $st) {
+                $xml .= '<Row>';
+                for ($i = 0; $i < $gc; $i++) {
+                    $val = $st[$i] ?? '';
+                    $isNum = is_numeric($val) && $val !== '';
+                    $xml .= $isNum ? $this->numCell($val, 's65') : $this->cell((string) $val, 's65');
                 }
+                $xml .= '</Row>' . "\n";
             }
-
-            $rowIndex++;
         }
 
-        foreach ($numberCols as $nc) {
-            $col = Coordinate::stringFromColumnIndex($nc);
-            $sheet->getStyle("{$col}3:{$col}{$rowIndex}")
-                ->getNumberFormat()->setFormatCode('#,##0.00');
-            $sheet->getStyle($col."3:{$col}{$rowIndex}")
-                ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        }
-
-        $defaultWidths = [5, 12, 28, 22, 20, 18, 14, 18, 18, 16, 16, 16];
-        foreach ($defaultWidths as $idx => $w) {
-            $col = Coordinate::stringFromColumnIndex($idx + 1);
-            $sheet->getColumnDimension($col)->setWidth($w);
-        }
-        foreach ($columnWidths as $idx => $w) {
-            $col = Coordinate::stringFromColumnIndex((int) $idx + 1);
-            $sheet->getColumnDimension($col)->setWidth($w);
-        }
-
-        $sheet->getRowDimension(1)->setRowHeight(22);
-
-        $writer = new Xlsx($spreadsheet);
-        $tmpPath = storage_path('app/tmp_'.uniqid().'.xlsx');
-        $writer->save($tmpPath);
-
-        return response()->download($tmpPath, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
+        $xml .= '</Table>' . "\n";
+        $xml .= '</Worksheet>' . "\n";
+        $xml .= '</Workbook>';
+        return $xml;
     }
 
     public function penjualanHarian(array $data)
