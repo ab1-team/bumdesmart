@@ -308,7 +308,7 @@ class ExportCsv extends Controller
                 $i + 1,
                 date('Y-m-d', strtotime($p->tanggal_pembayaran)),
                 $p->transaction_id ?? $p->id,
-                ($p->rekening_debit ?? '-') . "\n" . ($p->accountDebit->nama ?? ''),
+                ($p->rekening_debit ?? '-') . ' - ' . ($p->accountDebit->nama ?? ''),
                 $p->catatan ?? '-',
                 $this->fmt((float) $p->total_harga),
                 '0',
@@ -318,7 +318,7 @@ class ExportCsv extends Controller
                 '',
                 '',
                 '',
-                ($p->rekening_kredit ?? '-') . "\n" . ($p->accountKredit->nama ?? ''),
+                ($p->rekening_kredit ?? '-') . ' - ' . ($p->accountKredit->nama ?? ''),
                 '',
                 '0',
                 $this->fmt((float) $p->total_harga),
@@ -1064,11 +1064,13 @@ class ExportCsv extends Controller
 
         $headers = ['No', 'Produk', 'Stok Sistem', 'Stok Fisik', 'Selisih', 'Jenis', 'Nilai Selisih', 'Alasan'];
         $sections = [];
+        $no = 0;
         foreach ($opnames as $op) {
             $rows = [];
             foreach ($op->details as $d) {
+                $no++;
                 $rows[] = [
-                    $loop->iteration ?? (count($rows) + 1),
+                    $no,
                     ($d->product->nama_produk ?? '-') . ' (' . ($d->product->kode_produk ?? '-') . ')',
                     $d->stok_sistem,
                     $d->stok_fisik,

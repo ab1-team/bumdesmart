@@ -98,7 +98,7 @@
 
             <div class="d-flex justify-content-end gap-2">
                 <button @click="openReportExcel" class="btn btn-success">
-                    Import Excel
+                    Download Excel
                 </button>
                 <button @click="openReport" class="btn btn-secondary">
                     Preview (New Window)
@@ -253,7 +253,7 @@
                     sub_laporan: this.jenis_sub_laporan
                 });
 
-                window.location.href = '/keuangan/pelaporan/export-csv?' + params.toString();
+                window.location.href = '/keuangan/pelaporan/export?' + params.toString();
             }
         }
     }
