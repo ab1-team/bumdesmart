@@ -22,11 +22,7 @@ use App\Utils\KeuanganUtil;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 
 class Export extends Controller
 {
@@ -83,55 +79,37 @@ class Export extends Controller
 
     private function buildGroupedExcel(string $title, string $subtitle, array $summaryRow, array $groups, string $filename, array $numberCols = [], array $columnWidths = [])
     {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle(substr($title, 0, 31));
-
         $maxCols = 1;
         foreach ($groups as $g) {
             $maxCols = max($maxCols, count($g['headers']));
         }
-        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($maxCols);
 
-        $sheet->mergeCells("A1:{$lastCol}1");
-        $sheet->setCellValue('A1', $title);
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+        $html .= '<head><meta charset="UTF-8">';
+        $html .= '<style>';
+        $html .= 'table { border-collapse: collapse; }';
+        $html .= 'td, th { border: 1px solid #CCCCCC; padding: 4px 8px; }';
+        $html .= '.header { background-color: #F0F0F0; font-weight: bold; }';
+        $html .= '.section { background-color: #F0F0F0; font-weight: bold; }';
+        $html .= '.subtotal { background-color: #F0F0F0; font-weight: bold; }';
+        $html .= '.title { font-size: 16pt; font-weight: bold; text-align: center; }';
+        $html .= '.subtitle { text-align: center; }';
+        $html .= '</style></head><body>';
 
-        $sheet->mergeCells("A2:{$lastCol}2");
-        $sheet->setCellValue('A2', $subtitle);
-        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $html .= '<table>';
 
-        $rowIndex = 3;
-
-        // Styling sesuai PDF: #f0f0f0, bold, border #ccc
-        $headerStyle = [
-            'font' => ['bold' => true],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F0F0F0']],
-            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
-        ];
-        $sectionStyle = [
-            'font' => ['bold' => true],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F0F0F0']],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
-        ];
-        $subtotalStyle = [
-            'font' => ['bold' => true],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F0F0F0']],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCCCCC']]],
-        ];
+        $html .= '<tr><td colspan="'.$maxCols.'" class="title">'.e($title).'</td></tr>';
+        $html .= '<tr><td colspan="'.$maxCols.'" class="subtitle">'.e($subtitle).'</td></tr>';
 
         if (!empty($summaryRow)) {
             foreach ($summaryRow as $sRow) {
+                $html .= '<tr>';
                 for ($i = 0; $i < $maxCols; $i++) {
-                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
-                    $sheet->setCellValue("{$col}{$rowIndex}", $sRow[$i] ?? '');
+                    $val = $sRow[$i] ?? '';
+                    $html .= '<td'.(is_numeric($val) ? ' style="mso-number-format:\'\#\#\#\.\#\#0\'"' : '').'>'.e($val).'</td>';
                 }
-                    $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
-                $rowIndex++;
+                $html .= '</tr>';
             }
-            $rowIndex++;
         }
 
         foreach ($groups as $group) {
@@ -140,64 +118,45 @@ class Export extends Controller
             $groupTitle = $group['title'] ?? null;
             $subtotals = $group['subtotals'] ?? [];
             $gc = count($headers);
-            $grpLastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($gc);
 
             if ($groupTitle !== null && $groupTitle !== '') {
-                $sheet->mergeCells("A{$rowIndex}:{$grpLastCol}{$rowIndex}");
-                $sheet->setCellValue("A{$rowIndex}", $groupTitle);
-                $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($sectionStyle);
-                $rowIndex++;
+                $html .= '<tr><td colspan="'.$gc.'" class="section">'.e($groupTitle).'</td></tr>';
             }
 
-            $headerRowIdx = $rowIndex;
-            foreach ($headers as $i => $h) {
-                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
-                $sheet->setCellValue("{$col}{$headerRowIdx}", $h);
+            $html .= '<tr>';
+            foreach ($headers as $h) {
+                $html .= '<th class="header">'.e($h).'</th>';
             }
-            $sheet->getStyle("A{$headerRowIdx}:{$grpLastCol}{$headerRowIdx}")->applyFromArray($headerStyle);
-            $rowIndex++;
+            $html .= '</tr>';
 
             foreach ($groupRows as $r) {
+                $html .= '<tr>';
                 for ($i = 0; $i < $gc; $i++) {
-                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
-                    $sheet->setCellValue("{$col}{$rowIndex}", $r[$i] ?? '');
+                    $val = $r[$i] ?? '';
+                    $html .= '<td'.(is_numeric($val) ? ' style="mso-number-format:\'\#\#\#\.\#\#0\'"' : '').'>'.e($val).'</td>';
                 }
-                $rowIndex++;
-            }
-
-            if (!empty($groupRows)) {
-                $sheet->getStyle("A{$headerRowIdx}:{$grpLastCol}".($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('CCCCCC'));
+                $html .= '</tr>';
             }
 
             foreach ($subtotals as $st) {
+                $html .= '<tr>';
                 for ($i = 0; $i < $gc; $i++) {
-                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
-                    $sheet->setCellValue("{$col}{$rowIndex}", $st[$i] ?? '');
+                    $val = $st[$i] ?? '';
+                    $html .= '<td class="subtotal">'.e($val).'</td>';
                 }
-                $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($subtotalStyle);
-                $rowIndex++;
+                $html .= '</tr>';
             }
-            $rowIndex++;
         }
 
-        $defaultWidths = [5, 12, 28, 22, 20, 18, 14, 18, 18, 16, 16, 16];
-        foreach ($defaultWidths as $idx => $w) {
-            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($idx + 1);
-            $sheet->getColumnDimension($col)->setWidth($w);
-        }
-        foreach ($columnWidths as $idx => $w) {
-            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex((int) $idx + 1);
-            $sheet->getColumnDimension($col)->setWidth($w);
-        }
+        $html .= '</table></body></html>';
 
-        $writer = new Xlsx($spreadsheet);
-        $tmpPath = storage_path('app/tmp_'.uniqid().'.xlsx');
-        $writer->save($tmpPath);
+        $filename = str_replace('.xlsx', '.xls', $filename);
 
-        return response()->download($tmpPath, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        return response($html, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
-        ])->deleteFileAfterSend(true);
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     public function penjualanHarian(array $data)
