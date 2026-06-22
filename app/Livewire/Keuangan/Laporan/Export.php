@@ -77,7 +77,8 @@ class Export extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(substr($title, 0, 31));
 
-        $colCount = max(count($headers), 1);
+        $colCount = count($headers);
+        if ($colCount < 1) $colCount = 1;
         $lastCol = Coordinate::stringFromColumnIndex($colCount);
 
         $sheet->mergeCells("A1:{$lastCol}1");
@@ -105,8 +106,9 @@ class Export extends Controller
 
         $rowIndex = $headerRow + 1;
         foreach ($rows as $r) {
-            foreach ($r as $i => $val) {
+            for ($i = 0; $i < $colCount; $i++) {
                 $col = Coordinate::stringFromColumnIndex($i + 1);
+                $val = $r[$i] ?? '';
                 $sheet->setCellValue("{$col}{$rowIndex}", $val);
             }
             $rowIndex++;
@@ -120,24 +122,23 @@ class Export extends Controller
         }
 
         if (! empty($totalsRow)) {
-            $totalLabelCol = Coordinate::stringFromColumnIndex($colCount - 1);
-            $totalValueCol = Coordinate::stringFromColumnIndex($colCount);
-            $sheet->mergeCells("A{$rowIndex}:".Coordinate::stringFromColumnIndex(max($colCount - 2, 1)).$rowIndex);
-            $sheet->setCellValue("A{$rowIndex}", '');
-            $sheet->setCellValue($totalLabelCol.$rowIndex, 'Total:');
-            $sheet->setCellValue($totalValueCol.$rowIndex, $totalsRow[$colCount - 1] ?? '');
+            for ($i = 0; $i < $colCount; $i++) {
+                $col = Coordinate::stringFromColumnIndex($i + 1);
+                $val = $totalsRow[$i] ?? '';
+                $sheet->setCellValue("{$col}{$rowIndex}", $val);
+            }
             $totalStyle = [
                 'font' => ['bold' => true],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E6E6']],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
             ];
             $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->applyFromArray($totalStyle);
-            $sheet->getStyle($totalLabelCol.$rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-            $sheet->getStyle($totalValueCol.$rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
             $rowIndex++;
         }
 
         foreach ($numberCols as $nc) {
+            if ($nc < 1 || $nc > $colCount) continue;
             $col = Coordinate::stringFromColumnIndex($nc);
             $sheet->getStyle("{$col}".($headerRow + 1).":{$col}{$rowIndex}")
                 ->getNumberFormat()->setFormatCode('#,##0.00');
@@ -192,11 +193,10 @@ class Export extends Controller
 
         if (! empty($summaryRow)) {
             foreach ($summaryRow as $sRow) {
-                $col = 1;
-                foreach ($sRow as $cell) {
-                    $c = Coordinate::stringFromColumnIndex($col);
-                    $sheet->setCellValue("{$c}{$rowIndex}", $cell);
-                    $col++;
+                for ($i = 0; $i < $maxCols; $i++) {
+                    $col = Coordinate::stringFromColumnIndex($i + 1);
+                    $val = $sRow[$i] ?? '';
+                    $sheet->setCellValue("{$col}{$rowIndex}", $val);
                 }
                 $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
@@ -246,8 +246,9 @@ class Export extends Controller
 
             $dataStartRow = $rowIndex;
             foreach ($rows as $r) {
-                foreach ($r as $i => $val) {
+                for ($i = 0; $i < $colCount; $i++) {
                     $col = Coordinate::stringFromColumnIndex($i + 1);
+                    $val = $r[$i] ?? '';
                     $sheet->setCellValue("{$col}{$rowIndex}", $val);
                 }
                 $rowIndex++;
@@ -262,14 +263,13 @@ class Export extends Controller
 
             if (! empty($subtotals)) {
                 foreach ($subtotals as $st) {
-                    $stCol = 1;
-                    foreach ($st as $cell) {
-                        $c = Coordinate::stringFromColumnIndex($stCol);
-                        $sheet->setCellValue("{$c}{$rowIndex}", $cell);
-                        $stCol++;
+                    for ($i = 0; $i < $colCount; $i++) {
+                        $col = Coordinate::stringFromColumnIndex($i + 1);
+                        $val = $st[$i] ?? '';
+                        $sheet->setCellValue("{$col}{$rowIndex}", $val);
                     }
                     $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($subtotalStyle);
-                    $sheet->getStyle($grpLastCol.$rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
                     $rowIndex++;
                 }
             }
@@ -402,7 +402,7 @@ class Export extends Controller
                 'headers' => $tableHeaders,
                 'rows' => $rows,
                 'subtotals' => [
-                    array_merge(array_fill(0, 6, ''), ['Total '.$groupName, '']),
+                    array_merge(array_fill(0, 5, ''), ['', 'Total '.$groupName, '']),
                 ],
             ];
         }
@@ -434,13 +434,13 @@ class Export extends Controller
                 return $p;
             })->sortByDesc('kekurangan');
 
-        $headers = ['No', 'Produk', 'Kategori', 'Stok Aktual', 'Stok Minimal', 'Kekurangan', 'Saran Order'];
+        $headers = ['No', 'Kode Produk', 'Nama Produk', 'Stok Saat Ini', 'Stok Minimum', 'Defisit', 'Saran Order'];
         $rows = [];
         foreach ($products as $i => $p) {
             $rows[] = [
                 $i + 1,
+                $p->sku ?? ($p->product_code ?? '-'),
                 $p->nama_produk ?? $p->product_name,
-                $p->category->nama_kategori ?? '-',
                 (int) $p->stok_aktual,
                 (int) $p->stok_minimal,
                 (int) $p->kekurangan,
@@ -456,7 +456,7 @@ class Export extends Controller
             [],
             'laporan-stok-minimum.xlsx',
             [],
-            [5, 32, 22, 14, 14, 14, 14]
+            [5, 14, 32, 14, 14, 14, 14]
         );
     }
 
@@ -470,32 +470,49 @@ class Export extends Controller
             ->where('tanggal_pembayaran', 'LIKE', $tahun.'-'.$bulan.'-%')
             ->with(['accountDebit', 'accountKredit', 'user'])->get();
 
-        $headers = ['No', 'Tanggal', 'No Jurnal', 'Rekening Debit', 'Rekening Kredit', 'Keterangan', 'User', 'Nominal'];
+        $title = 'Jurnal Transaksi';
+        $subtitle = $this->periodeSubtitle($tahun, $bulan);
+
+        $headers = ['No', 'Tanggal', 'Ref ID.', 'Kode Akun', 'Keterangan', 'Debit', 'Kredit', 'Ins'];
         $rows = [];
-        $total = 0;
-        foreach ($payments as $i => $p) {
+        $totalDebit = 0;
+        $totalKredit = 0;
+        foreach ($payments as $index => $payment) {
+            $totalDebit += (float) $payment->total_harga;
+            $totalKredit += (float) $payment->total_harga;
+
             $rows[] = [
-                $i + 1,
-                Carbon::parse($p->tanggal_pembayaran)->format('d/m/Y'),
-                $p->no_jurnal ?? '-',
-                ($p->rekening_debit ?? '-').' '.($p->accountDebit->nama ?? ''),
-                ($p->rekening_kredit ?? '-').' '.($p->accountKredit->nama ?? ''),
-                $p->keterangan ?? '-',
-                $p->user->nama_lengkap ?? '-',
-                (float) $p->nominal,
+                $index + 1,
+                Carbon::parse($payment->tanggal_pembayaran)->format('Y-m-d'),
+                $payment->transaction_id ?? '',
+                $payment->rekening_debit ?? '',
+                $payment->accountDebit->nama ?? '',
+                (float) $payment->total_harga,
+                0,
+                $payment->user->initial ?? '',
             ];
-            $total += (float) $p->nominal;
+            $rows[] = [
+                '',
+                '',
+                '',
+                $payment->rekening_kredit ?? '',
+                $payment->accountKredit->nama ?? '',
+                0,
+                (float) $payment->total_harga,
+                '',
+            ];
         }
-        $totalsRow = ['', '', '', '', '', '', '', $total];
+        $totalsRow = ['', '', '', '', 'Total', $totalDebit, $totalKredit, ''];
 
         return $this->buildExcel(
-            'Jurnal Transaksi',
-            $this->periodeSubtitle($tahun, $bulan),
+            $title,
+            $subtitle,
             $headers,
             $rows,
             $totalsRow,
             'laporan-jurnal-transaksi.xlsx',
-            [8]
+            [6, 7],
+            [5, 14, 12, 14, 36, 16, 16, 5]
         );
     }
 
@@ -749,34 +766,67 @@ class Export extends Controller
             },
         ])->where('id', '<=', '3')->get();
 
-        $headers = ['Kelompok', 'Kode Akun', 'Nama Akun', 'Keterangan / Catatan', 'Saldo'];
-        $rows = [];
-        foreach ($akunLevel1s as $a1) {
-            foreach ($a1->akunLevel2 as $a2) {
-                foreach ($a2->akunLevel3 as $a3) {
-                    foreach ($a3->accounts as $acc) {
-                        $saldo = (float) KeuanganUtil::sumSaldo($acc, (int) $bulan);
-                        $rows[] = [
-                            $a1->nama,
-                            $acc->kode,
-                            $acc->nama,
-                            $acc->keterangan ?? '-',
-                            $saldo,
+        $title = 'Catatan Atas Laporan Keuangan (CALK)';
+        $subtitle = $this->periodeSubtitle($tahun, $bulan);
+
+        $headers = ['Kode', 'Nama Akun', 'Saldo'];
+        $excelGroups = [];
+        $totalLiabilitasEkuitas = 0;
+
+        foreach ($akunLevel1s as $akunLevel1) {
+            $groupRows = [];
+            $saldoLevel1 = 0;
+
+            foreach ($akunLevel1->akunLevel2 as $akunLevel2) {
+                foreach ($akunLevel2->akunLevel3 as $akunLevel3) {
+                    $saldoLevel3 = 0;
+                    foreach ($akunLevel3->accounts as $account) {
+                        $saldo = KeuanganUtil::sumSaldo($account, (int) $bulan);
+                        if ($account->kode == '3.2.02.01') {
+                            $saldo = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
+                        }
+                        $saldoLevel3 += $saldo;
+                        $groupRows[] = [
+                            $account->kode,
+                            $account->nama,
+                            (float) $saldo,
                         ];
                     }
+                    $saldoLevel1 += $saldoLevel3;
                 }
             }
+
+            if ($akunLevel1->id == 2 || $akunLevel1->id == 3) {
+                $totalLiabilitasEkuitas += $saldoLevel1;
+            }
+
+            $excelGroups[] = [
+                'title' => $akunLevel1->kode.'. '.$akunLevel1->nama,
+                'headers' => $headers,
+                'rows' => $groupRows,
+                'subtotals' => [
+                    ['', 'Jumlah '.$akunLevel1->nama, (float) $saldoLevel1],
+                ],
+            ];
         }
 
-        return $this->buildExcel(
-            'Catatan Atas Laporan Keuangan (CALK)',
-            $this->periodeSubtitle($tahun, $bulan),
-            $headers,
-            $rows,
+        $excelGroups[] = [
+            'title' => '',
+            'headers' => $headers,
+            'rows' => [],
+            'subtotals' => [
+                ['', 'Jumlah Liabilitas + Ekuitas', (float) $totalLiabilitasEkuitas],
+            ],
+        ];
+
+        return $this->buildGroupedExcel(
+            $title,
+            $subtitle,
             [],
+            $excelGroups,
             'laporan-calk.xlsx',
-            [5],
-            [22, 16, 32, 44, 18]
+            [3],
+            [16, 50, 18]
         );
     }
 
@@ -997,45 +1047,171 @@ class Export extends Controller
 
         $kategoriNaman = [
             1 => 'Tanah',
-            2 => 'Bangunan',
-            3 => 'Kendaraan',
-            4 => 'Peralatan',
+            2 => 'Gedung',
+            3 => 'Kendaraan dan Mesin produksi',
+            4 => 'Peralatan umum/ Inventaris',
         ];
 
-        $headers = ['Kategori', 'Nama Barang', 'Tanggal Beli', 'Tanggal Validasi', 'Status', 'Jumlah', 'Harga Satuan', 'Nilai Perolehan', 'Nilai Buku'];
-        $rows = [];
+        $title = 'Aset Tetap dan Inventaris';
+        $subtitle = $this->periodeSubtitle($tahun, $bulan);
+
+        $excelGroups = [];
         foreach ($inventarisGroups as $kategori => $items) {
             $namaKategori = $kategoriNaman[$kategori] ?? 'Kategori '.$kategori;
+            $isTanah = ($kategori == 1);
+
+            $headers = ['No', 'Tgl Beli', 'Nama Barang', 'Id', 'Kondisi', 'Unit', 'Harga Satuan', 'Harga Perolehan'];
+            if (! $isTanah) {
+                $headers = array_merge($headers, ['Umur Eko.', 'Satuan Susut', 'Umur', 'Biaya', 'Umur', 'Biaya']);
+            }
+            $headers[] = 'Nilai Buku';
+
+            $rows = [];
+            $t_unit = 0; $t_harga = 0; $t_penyusutan = 0; $t_akum_susut = 0; $t_nilai_buku = 0;
+            $j_unit = 0; $j_harga = 0; $j_penyusutan = 0; $j_akum_susut = 0; $j_nilai_buku = 0;
+            $no = 1;
+
             foreach ($items as $inv) {
-                $nilaiBuku = 0;
-                try {
-                    $nilaiBuku = (float) InventarisUtil::nilaiBuku($tgl_kondisi, $inv);
-                } catch (\Throwable $e) {
-                    $nilaiBuku = (float) $inv->harga_satuan;
+                $nama_barang = $inv->nama_barang;
+                $is_valid = true;
+                if (strtolower($inv->status) != 'baik' && $tgl_kondisi >= $inv->tanggal_validasi) {
+                    $tglValStr = Carbon::parse($inv->tanggal_validasi)->format('d/m/Y');
+                    $nama_barang .= ' ('.$inv->status.' '.$tglValStr.')';
+                    $is_valid = false;
                 }
-                $rows[] = [
-                    $namaKategori,
-                    $inv->nama_barang ?? '-',
-                    $inv->tanggal_beli ? Carbon::parse($inv->tanggal_beli)->format('d/m/Y') : '-',
-                    $inv->tanggal_validasi ? Carbon::parse($inv->tanggal_validasi)->format('d/m/Y') : '-',
-                    ucfirst($inv->status ?? '-'),
-                    (int) ($inv->jumlah ?? 1),
-                    (float) $inv->harga_satuan,
-                    (float) $inv->harga_satuan * (int) ($inv->jumlah ?? 1),
-                    $nilaiBuku,
+
+                $statusListInvalid = ['dijual', 'jual', 'hilang', 'dihapus', 'hapus'];
+                $is_status_invalid = in_array(strtolower($inv->status), $statusListInvalid);
+
+                if ($isTanah) {
+                    $t_unit += $inv->jumlah;
+                    $t_harga += $inv->harga_satuan * $inv->jumlah;
+                    $nilai_buku = $inv->harga_satuan * $inv->jumlah;
+                    if ($is_status_invalid) $nilai_buku = 0;
+                    if ($is_status_invalid && $tgl_kondisi >= $inv->tanggal_validasi) {
+                        $j_unit += $inv->jumlah;
+                        $j_harga += $inv->harga_satuan * $inv->jumlah;
+                        $j_nilai_buku += $nilai_buku;
+                    } else {
+                        $t_nilai_buku += $nilai_buku;
+                    }
+                    $rows[] = [
+                        $no++, Carbon::parse($inv->tanggal_beli)->format('d/m/Y'), $nama_barang,
+                        $inv->id, ucfirst($inv->status), (int) $inv->jumlah,
+                        (float) $inv->harga_satuan, (float) ($inv->harga_satuan * $inv->jumlah),
+                        (float) $nilai_buku,
+                    ];
+                } else {
+                    $satuan_susut = $inv->harga_satuan <= 0 ? 0 : round(($inv->harga_satuan * $inv->jumlah) / $inv->umur_ekonomis, 2);
+                    $pakai_lalu = InventarisUtil::bulan($inv->tanggal_beli, ($tahun - 1).'-12-31');
+                    $nilai_buku = InventarisUtil::nilaiBuku($tgl_kondisi, $inv);
+
+                    if (strtolower($inv->status) != 'baik' && $tgl_kondisi >= $inv->tanggal_validasi) {
+                        $umur = InventarisUtil::bulan($inv->tanggal_beli, $inv->tanggal_validasi);
+                    } else {
+                        $umur = InventarisUtil::bulan($inv->tanggal_beli, $tgl_kondisi);
+                    }
+
+                    $_satuan_susut = $satuan_susut;
+                    if ($umur >= $inv->umur_ekonomis) {
+                        $harga = $inv->harga_satuan * $inv->jumlah;
+                        $_susut = $satuan_susut * ($inv->umur_ekonomis - 1);
+                        $satuan_susut = $harga - $_susut - 1;
+                    }
+
+                    $susut = $satuan_susut * $umur;
+                    if ($umur >= $inv->umur_ekonomis && $inv->harga_satuan * $inv->jumlah > 0) {
+                        $akum_umur = $inv->umur_ekonomis;
+                        $akum_susut = $inv->harga_satuan * $inv->jumlah - 1;
+                        $nilai_buku = 1;
+                    } else {
+                        $akum_umur = $umur;
+                        $akum_susut = $susut;
+                        if ($nilai_buku < 0) $nilai_buku = 1;
+                    }
+
+                    $umur_pakai = $akum_umur - $pakai_lalu;
+                    $penyusutan = $satuan_susut * $umur_pakai;
+
+                    if ($is_status_invalid && $tgl_kondisi >= $inv->tanggal_validasi) {
+                        $akum_susut = $inv->harga_satuan * $inv->jumlah;
+                        $nilai_buku = 0;
+                        $penyusutan = 0;
+                        $umur_pakai = 0;
+                    }
+                    if (strtolower($inv->status) == 'rusak' && $tgl_kondisi >= $inv->tanggal_validasi) {
+                        $akum_susut = $inv->harga_satuan * $inv->jumlah - 1;
+                        $nilai_buku = 1;
+                        $penyusutan = 0;
+                        $umur_pakai = 0;
+                    }
+                    if (! ($umur_pakai >= 0 && $inv->harga_satuan * $inv->jumlah > 0)) {
+                        $umur_pakai = 0;
+                        $penyusutan = 0;
+                    }
+                    if ($akum_umur == $inv->umur_ekonomis && $umur_pakai > 0) {
+                        $penyusutan = $_satuan_susut * ($umur_pakai - 1) + $satuan_susut;
+                    }
+
+                    $t_unit += $inv->jumlah;
+                    $t_harga += $inv->harga_satuan * $inv->jumlah;
+                    $t_penyusutan += $penyusutan;
+                    $t_akum_susut += $akum_susut;
+                    $t_nilai_buku += $nilai_buku;
+
+                    $tahun_validasi = $inv->tanggal_validasi ? (int) substr($inv->tanggal_validasi, 0, 4) : 0;
+
+                    if ($nilai_buku == 0 && $tahun_validasi < $tahun && $tahun_validasi > 0) {
+                        $j_unit += $inv->jumlah;
+                        $j_harga += $inv->harga_satuan * $inv->jumlah;
+                        $j_penyusutan += $penyusutan;
+                        $j_akum_susut += $akum_susut;
+                        $j_nilai_buku += $nilai_buku;
+                    } else {
+                        $rows[] = [
+                            $no++, Carbon::parse($inv->tanggal_beli)->format('d/m/Y'), $nama_barang,
+                            $inv->id, ucfirst($inv->status), (int) $inv->jumlah,
+                            (float) $inv->harga_satuan, (float) ($inv->harga_satuan * $inv->jumlah),
+                            (int) $inv->umur_ekonomis, (float) $_satuan_susut,
+                            (int) $umur_pakai, (float) $penyusutan,
+                            (int) $akum_umur, (float) $akum_susut,
+                            (float) $nilai_buku,
+                        ];
+                    }
+                }
+            }
+
+            $subtotals = [];
+            if (! $isTanah) {
+                $subtotals[] = [
+                    '', '', 'Jumlah Daftar '.$namaKategori.' (Hapus, Hilang, Jual) s.d. Tahun '.($tahun - 1),
+                    '', '', (int) $j_unit, '', (float) $j_harga,
+                    '', '', '', (float) $j_penyusutan, '', (float) $j_akum_susut, (float) $j_nilai_buku,
                 ];
             }
+            $jumRow = ['', '', 'Jumlah', '', '', (int) $t_unit, '', (float) $t_harga];
+            if (! $isTanah) {
+                $jumRow = array_merge($jumRow, ['', '', '', (float) $t_penyusutan, '', (float) $t_akum_susut]);
+            }
+            $jumRow[] = (float) $t_nilai_buku;
+            $subtotals[] = $jumRow;
+
+            $excelGroups[] = [
+                'title' => 'Daftar '.$namaKategori,
+                'headers' => $headers,
+                'rows' => $rows,
+                'subtotals' => $subtotals,
+            ];
         }
 
-        return $this->buildExcel(
-            'Aset Tetap dan Inventaris',
-            $this->periodeSubtitle($tahun, $bulan),
-            $headers,
-            $rows,
+        return $this->buildGroupedExcel(
+            $title,
+            $subtitle,
             [],
+            $excelGroups,
             'laporan-aset-tetap-inventaris.xlsx',
-            [7, 8, 9],
-            [14, 36, 14, 14, 12, 10, 16, 18, 18]
+            [7, 8, 10, 12, 14, 15],
+            [5, 12, 28, 6, 10, 6, 14, 16, 10, 14, 8, 14, 8, 14, 14]
         );
     }
 
@@ -1069,13 +1245,14 @@ class Export extends Controller
         $sales = $query->orderBy('id', 'desc')->get();
         $total = $sales->sum('subtotal');
 
-        $headers = ['No', 'Product ID', 'Produk', 'Pelanggan', 'No Faktur', 'Tanggal', 'Qty', 'Harga Satuan', 'Subtotal'];
+        $headers = ['No', 'Product ID', 'Produk', 'Satuan', 'Nama Pelanggan', 'Nomor Faktur', 'Tanggal', 'Kuantitas', 'Harga Jual Satuan', 'Sub Total'];
         $rows = [];
         foreach ($sales as $i => $row) {
             $rows[] = [
                 $i + 1,
                 $row->product_id,
                 $row->product->nama_produk ?? '-',
+                $row->product->unit->inisial_satuan ?? ($row->product->unit->nama_satuan ?? '-'),
                 $row->sale->customer->nama_pelanggan ?? 'Guest',
                 $row->sale->no_invoice ?? '-',
                 Carbon::parse($row->sale->tanggal_transaksi)->format('d/m/Y H:i'),
@@ -1084,7 +1261,7 @@ class Export extends Controller
                 (float) $row->subtotal,
             ];
         }
-        $totalsRow = ['', '', '', '', '', '', '', 'Total:', (float) $total];
+        $totalsRow = ['', '', '', '', '', '', '', '', 'Total:', (float) $total];
 
         return $this->buildExcel(
             'Laporan Penjualan Produk',
@@ -1093,7 +1270,7 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-penjualan-produk.xlsx',
-            [7, 8, 9]
+            [8, 9, 10]
         );
     }
 
@@ -1127,13 +1304,14 @@ class Export extends Controller
         $purchases = $query->orderBy('id', 'desc')->get();
         $total = $purchases->sum('subtotal');
 
-        $headers = ['No', 'Product ID', 'Produk', 'Supplier', 'No Pembelian', 'Tanggal', 'Qty', 'Harga Satuan', 'Subtotal'];
+        $headers = ['No', 'Product ID', 'Produk', 'Satuan', 'Nama Supplier', 'Nomor Pembelian', 'Tanggal', 'Kuantitas', 'Harga Beli Satuan', 'Sub Total'];
         $rows = [];
         foreach ($purchases as $i => $row) {
             $rows[] = [
                 $i + 1,
                 $row->product_id,
                 $row->product->nama_produk ?? '-',
+                $row->product->unit->inisial_satuan ?? ($row->product->unit->nama_satuan ?? '-'),
                 $row->purchase->supplier->nama_supplier ?? '-',
                 $row->purchase->no_pembelian ?? '-',
                 Carbon::parse($row->purchase->tanggal_pembelian)->format('d/m/Y H:i'),
@@ -1142,7 +1320,7 @@ class Export extends Controller
                 (float) $row->subtotal,
             ];
         }
-        $totalsRow = ['', '', '', '', '', '', '', 'Total:', (float) $total];
+        $totalsRow = ['', '', '', '', '', '', '', '', 'Total:', (float) $total];
 
         return $this->buildExcel(
             'Laporan Pembelian Produk',
@@ -1151,7 +1329,7 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-pembelian-produk.xlsx',
-            [7, 8, 9]
+            [8, 9, 10]
         );
     }
 
@@ -1177,7 +1355,7 @@ class Export extends Controller
             ->groupBy('product_id')->orderByDesc('total_terjual')->limit(20)
             ->with('product.category')->get();
 
-        $headers = ['No', 'Produk', 'Kategori', 'Qty Terjual', 'Pendapatan', 'Profit'];
+        $headers = ['No', 'Nama Produk', 'Kategori', 'Qty Terjual', 'Total Revenue', 'Total Profit'];
         $rows = [];
         $sumQty = 0; $sumRev = 0; $sumProf = 0;
         foreach ($query as $i => $item) {
@@ -1407,28 +1585,47 @@ class Export extends Controller
             $q->where('selisih', '!=', 0)->with('product');
         }, 'user', 'approvedBy'])->where('business_id', $business->id)->findOrFail($id);
 
-        $headers = ['No', 'Produk', 'Stok Sistem', 'Stok Aktual', 'Selisih', 'Catatan'];
+        $title = 'Bukti Stock Opname';
+        $subtitle = 'No: '.$opname->no_opname.' | Tanggal: '.Carbon::parse($opname->tanggal_opname)->format('d F Y')
+            .' | Status: '.strtoupper($opname->status ?? '-');
+
+        $summaryRow = [
+            ['Petugas', ': '.($opname->user->nama_lengkap ?? '-'), 'Disetujui Oleh', ': '.($opname->approvedBy->nama_lengkap ?? '-')],
+            ['Catatan', ': '.($opname->catatan ?? '-'), '', ''],
+        ];
+
+        $headers = ['No', 'Produk', 'Stok Sistem', 'Stok Fisik', 'Selisih', 'Alasan'];
         $rows = [];
-        foreach ($opname->details as $i => $d) {
+        foreach ($opname->details as $detail) {
+            $nama_produk = $detail->product->nama_produk ?? '-';
+            $kode_produk = $detail->product->kode_produk ?? '';
             $rows[] = [
-                $i + 1,
-                $d->product->nama_produk ?? '-',
-                (float) ($d->stok_sistem ?? 0),
-                (float) ($d->stok_aktual ?? 0),
-                (float) ($d->selisih ?? 0),
-                $d->catatan ?? '-',
+                $detail->iteration ?? (count($rows) + 1),
+                $kode_produk ? $nama_produk.' ('.$kode_produk.')' : $nama_produk,
+                (float) ($detail->stok_sistem ?? 0),
+                (float) ($detail->stok_fisik ?? 0),
+                (float) ($detail->selisih ?? 0),
+                $detail->alasan ?? '-',
             ];
         }
 
-        return $this->buildExcel(
-            'Bukti Stock Opname '.$opname->no_opname,
-            'Tanggal: '.Carbon::parse($opname->tanggal_opname)->format('d/m/Y').' | Status: '.strtoupper($opname->status ?? '-'),
-            $headers,
-            $rows,
-            [],
+        $excelGroups = [
+            [
+                'title' => null,
+                'headers' => $headers,
+                'rows' => $rows,
+                'subtotals' => [],
+            ],
+        ];
+
+        return $this->buildGroupedExcel(
+            $title,
+            $subtitle,
+            $summaryRow,
+            $excelGroups,
             'bukti-so-'.$opname->no_opname.'.xlsx',
             [3, 4, 5],
-            [5, 36, 14, 14, 12, 32]
+            [5, 40, 14, 14, 12, 36]
         );
     }
 
@@ -1471,32 +1668,45 @@ class Export extends Controller
         }
 
         $products = $query->orderBy('nama_produk')->get();
-        $subtitleParts = ['Per Tanggal: '.Carbon::now()->isoFormat('D MMMM Y')];
-        if ($categoryName !== '-') $subtitleParts[] = 'Kategori: '.$categoryName;
-        if ($shelfName !== '-') $subtitleParts[] = 'Rak: '.$shelfName;
 
-        $headers = ['No', 'Produk', 'Stok Sistem', 'Stok Aktual', 'Selisih', 'Catatan'];
+        $title = 'Form Stock Opname (Lembar Kerja)';
+        $subtitle = 'Per Tanggal: '.Carbon::now()->isoFormat('D MMMM Y');
+
+        $summaryRow = [
+            ['Lokasi/Rak', ': '.$shelfName, 'Kategori', ': '.$categoryName],
+            ['Catatan', ': '.$catatan, '', ''],
+        ];
+
+        $headers = ['No', 'Kode Produk', 'Nama Produk', 'Sistem', 'Fisik', 'Ket.'];
         $rows = [];
         foreach ($products as $i => $p) {
             $rows[] = [
                 $i + 1,
+                $p->sku ?? ($p->kode_produk ?? '-'),
                 $p->nama_produk,
                 (int) $p->stok_aktual,
-                '',
                 '',
                 '',
             ];
         }
 
-        return $this->buildExcel(
-            'Form Stock Opname (Lembar Kerja)',
-            implode(' | ', $subtitleParts),
-            $headers,
-            $rows,
-            [],
+        $excelGroups = [
+            [
+                'title' => null,
+                'headers' => $headers,
+                'rows' => $rows,
+                'subtotals' => [],
+            ],
+        ];
+
+        return $this->buildGroupedExcel(
+            $title,
+            $subtitle,
+            $summaryRow,
+            $excelGroups,
             'form-stock-opname.xlsx',
             [],
-            [5, 36, 16, 16, 12, 32]
+            [5, 16, 40, 12, 12, 16]
         );
     }
 
@@ -1583,15 +1793,16 @@ class Export extends Controller
                 return $p;
             })->sortByDesc('margin_pct');
 
-        $headers = ['No', 'Produk', 'Kategori', 'Harga Jual', 'Biaya Rata-rata', 'Margin (Rp)', 'Margin (%)'];
+        $headers = ['No', 'SKU', 'Nama Produk', 'Kategori', 'HPP', 'Harga Jual', 'Margin (Rp)', 'Margin (%)'];
         $rows = [];
         foreach ($products as $i => $p) {
             $rows[] = [
                 $i + 1,
+                $p->sku ?? '-',
                 $p->nama_produk,
                 $p->category->nama_kategori ?? '-',
-                (float) $p->harga_jual,
                 (float) $p->biaya_rata_rata,
+                (float) $p->harga_jual,
                 (float) $p->margin_rp,
                 (float) $p->margin_pct,
             ];
@@ -1604,8 +1815,8 @@ class Export extends Controller
             $rows,
             [],
             'laporan-margin-produk.xlsx',
-            [4, 5, 6, 7],
-            [5, 36, 22, 16, 18, 16, 14]
+            [5, 6, 7, 8],
+            [5, 14, 36, 22, 16, 16, 16, 14]
         );
     }
 
@@ -1628,7 +1839,7 @@ class Export extends Controller
         $customers = $query->groupBy('customer_id')->orderByDesc('total_belanja')->limit(20)
             ->with('customer')->get();
 
-        $headers = ['No', 'Pelanggan', 'Jumlah Transaksi', 'Total Belanja', 'Rata-rata'];
+        $headers = ['No', 'Nama Customer', 'Jumlah Transaksi', 'Total Belanja', 'Rata-rata'];
         $rows = [];
         foreach ($customers as $i => $c) {
             $rows[] = [
@@ -1639,13 +1850,14 @@ class Export extends Controller
                 (float) $c->rata_rata,
             ];
         }
+        $totalsRow = ['', 'Total', (int) $customers->sum('jumlah_transaksi'), (float) $customers->sum('total_belanja'), ''];
 
         return $this->buildExcel(
             'Laporan Customer Terbaik',
             $this->periodeSubtitle($tahun, $bulan).' (Top 20)',
             $headers,
             $rows,
-            [],
+            $totalsRow,
             'laporan-customer-terbaik.xlsx',
             [4, 5],
             [5, 32, 18, 18, 18]
@@ -1671,7 +1883,7 @@ class Export extends Controller
                 return $p;
             })->sortByDesc('turnover_ratio');
 
-        $headers = ['No', 'Produk', 'Kategori', 'Stok', 'Terjual 30hr', 'Turnover Ratio', 'Days in Inv', 'Nilai Stok'];
+        $headers = ['No', 'Produk', 'Kategori', 'Stok', 'Nilai Stok', 'Terjual (30hr)', 'Turnover', 'Days in Inv.'];
         $rows = [];
         foreach ($products as $i => $p) {
             $rows[] = [
@@ -1679,10 +1891,10 @@ class Export extends Controller
                 $p->nama_produk,
                 $p->category->nama_kategori ?? '-',
                 (int) $p->stok_aktual,
+                (float) $p->nilai_stok,
                 (int) $p->terjual_30hari,
                 (float) $p->turnover_ratio,
                 $p->days_in_inventory !== null ? (int) $p->days_in_inventory : '-',
-                (float) $p->nilai_stok,
             ];
         }
 
@@ -1693,8 +1905,8 @@ class Export extends Controller
             $rows,
             [],
             'laporan-inventory-turnover.xlsx',
-            [6, 8],
-            [5, 32, 22, 12, 14, 16, 14, 18]
+            [5],
+            [5, 32, 22, 12, 18, 14, 12, 14]
         );
     }
 
