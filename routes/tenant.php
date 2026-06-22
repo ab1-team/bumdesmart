@@ -12,6 +12,7 @@ use App\Livewire\Kategori;
 use App\Livewire\Keuangan\JurnalUmum;
 use App\Livewire\Keuangan\Laporan\Cetak;
 use App\Livewire\Keuangan\Laporan\Export;
+use App\Livewire\Keuangan\Laporan\ExportCsv;
 use App\Livewire\Keuangan\Pelaporan;
 use App\Livewire\Member;
 use App\Livewire\Merek;
@@ -114,6 +115,7 @@ Route::middleware([
             Route::get('/keuangan/pelaporan', Pelaporan::class);
             Route::get('/keuangan/pelaporan/cetak', Cetak::class);
             Route::get('/keuangan/pelaporan/export', Export::class);
+            Route::get('/keuangan/pelaporan/export-csv', ExportCsv::class);
             Route::get('/keuangan/coa', \App\Livewire\Keuangan\ChartOfAccount::class);
 
             Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
