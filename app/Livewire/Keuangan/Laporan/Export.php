@@ -28,7 +28,7 @@ class Export extends Controller
 {
     private function rupiah($amount): string
     {
-        return 'Rp ' . number_format((float) $amount, 2, ',', '.');
+        return number_format((float) $amount, 2, '.', ',');
     }
 
     public function __invoke(Request $request)
