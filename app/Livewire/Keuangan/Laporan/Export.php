@@ -22,9 +22,19 @@ use App\Utils\KeuanganUtil;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Export extends Controller
 {
+    private function rupiah($amount): string
+    {
+        return 'Rp ' . number_format((float) $amount, 2, ',', '.');
+    }
+
     public function __invoke(Request $request)
     {
         $data = $request->all();
@@ -64,98 +74,62 @@ class Export extends Controller
         return $sub;
     }
 
-    private function xml(string $xml): string
-    {
-        return htmlspecialchars((string) $xml, ENT_XML1, 'UTF-8');
-    }
-
-    private function excelResponse(string $xml, string $filename): \Illuminate\Http\Response
-    {
-        return response($xml, 200, [
-            'Content-Type' => 'application/vnd.ms-excel',
-            'Content-Disposition' => 'inline; filename="'.$filename.'"',
-        ]);
-    }
-
-    private function cell(string $val, string $style = 's62', int $mergeAcross = 0): string
-    {
-        $merge = $mergeAcross > 0 ? " ss:MergeAcross=\"{$mergeAcross}\"" : '';
-        $type = 'String';
-        $v = $this->xml($val);
-        return "<Cell{$merge} ss:StyleID=\"{$style}\"><Data ss:Type=\"{$type}\">{$v}</Data></Cell>";
-    }
-
-    private function numCell($val, string $style = 's64'): string
-    {
-        if ($val === '' || $val === null) {
-            return "<Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"String\"></Data></Cell>";
-        }
-        $v = is_numeric($val) ? (float) $val : $val;
-        $type = is_numeric($v) ? 'Number' : 'String';
-        return "<Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"{$type}\">{$v}</Data></Cell>";
-    }
-
     private function buildExcel(string $title, string $subtitle, array $headers, array $rows, array $totalsRow, string $filename, array $numberCols = [], array $columnWidths = [])
     {
-        $colCount = count($headers);
-        if ($colCount < 1) $colCount = 1;
-        $xml = $this->buildGroupedExcelXml($title, $subtitle, [], [
+        return $this->buildGroupedExcel($title, $subtitle, [], [
             ['title' => null, 'headers' => $headers, 'rows' => $rows, 'subtotals' => !empty($totalsRow) ? [$totalsRow] : []],
-        ], $numberCols, $columnWidths);
-        return $this->excelResponse($xml, $filename);
+        ], $filename, $numberCols, $columnWidths);
     }
 
     private function buildGroupedExcel(string $title, string $subtitle, array $summaryRow, array $groups, string $filename, array $numberCols = [], array $columnWidths = [])
     {
-        $xml = $this->buildGroupedExcelXml($title, $subtitle, $summaryRow, $groups, $numberCols, $columnWidths);
-        return $this->excelResponse($xml, $filename);
-    }
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(substr($title, 0, 31));
 
-    private function buildGroupedExcelXml(string $title, string $subtitle, array $summaryRow, array $groups, array $numberCols = [], array $columnWidths = []): string
-    {
         $maxCols = 1;
         foreach ($groups as $g) {
             $maxCols = max($maxCols, count($g['headers']));
         }
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($maxCols);
 
-        $colWidths = [];
-        for ($i = 0; $i < $maxCols; $i++) {
-            $w = $columnWidths[$i] ?? 12;
-            $colWidths[] = $w * 7 + 5;
-        }
+        $sheet->mergeCells("A1:{$lastCol}1");
+        $sheet->setCellValue('A1', $title);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
-        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
-        $xml .= ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
-        $xml .= '<Styles>';
-        $xml .= '<Style ss:ID="s60"><Font ss:Bold="1" ss:Size="14"/><Alignment ss:Horizontal="Center"/></Style>';
-        $xml .= '<Style ss:ID="s61"><Alignment ss:Horizontal="Center"/></Style>';
-        $xml .= '<Style ss:ID="s62"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
-        $xml .= '<Style ss:ID="s63"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#4472C4" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
-        $xml .= '<Style ss:ID="s64"><Alignment ss:Horizontal="Right"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
-        $xml .= '<Style ss:ID="s65"><Font ss:Bold="1"/><Interior ss:Color="#E7E6E6" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>';
-        $xml .= '<Style ss:ID="s66"><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#D9E1F2" ss:Pattern="Solid"/></Style>';
-        $xml .= '</Styles>' . "\n";
+        $sheet->mergeCells("A2:{$lastCol}2");
+        $sheet->setCellValue('A2', $subtitle);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        $xml .= '<Worksheet ss:Name="' . $this->xml(substr($title, 0, 31)) . '">' . "\n";
-        $xml .= '<Table>' . "\n";
-        foreach ($colWidths as $w) {
-            $xml .= "<Column ss:Width=\"{$w}\"/>\n";
-        }
+        $rowIndex = 3;
 
-        $xml .= '<Row ss:Height="22">' . $this->cell($title, 's60', $maxCols - 1) . '</Row>' . "\n";
-        $xml .= '<Row>' . $this->cell($subtitle, 's61', $maxCols - 1) . '</Row>' . "\n";
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
+        ];
+        $sectionStyle = [
+            'font' => ['bold' => true, 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E1F2']],
+        ];
+        $subtotalStyle = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7E6E6']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
+        ];
 
         if (!empty($summaryRow)) {
             foreach ($summaryRow as $sRow) {
-                $xml .= '<Row>';
                 for ($i = 0; $i < $maxCols; $i++) {
-                    $val = $sRow[$i] ?? '';
-                    $xml .= is_numeric($val) && $val !== '' ? $this->numCell($val, 's62') : $this->cell((string) $val, 's62');
+                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                    $sheet->setCellValue("{$col}{$rowIndex}", $sRow[$i] ?? '');
                 }
-                $xml .= '</Row>' . "\n";
+                $sheet->getStyle("A{$rowIndex}:{$lastCol}{$rowIndex}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $rowIndex++;
             }
+            $rowIndex++;
         }
 
         foreach ($groups as $group) {
@@ -164,42 +138,64 @@ class Export extends Controller
             $groupTitle = $group['title'] ?? null;
             $subtotals = $group['subtotals'] ?? [];
             $gc = count($headers);
+            $grpLastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($gc);
 
             if ($groupTitle !== null && $groupTitle !== '') {
-                $xml .= '<Row>' . $this->cell($groupTitle, 's66', $gc - 1) . '</Row>' . "\n";
+                $sheet->mergeCells("A{$rowIndex}:{$grpLastCol}{$rowIndex}");
+                $sheet->setCellValue("A{$rowIndex}", $groupTitle);
+                $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($sectionStyle);
+                $rowIndex++;
             }
 
-            $xml .= '<Row ss:Height="20">';
-            foreach ($headers as $h) {
-                $xml .= $this->cell($h, 's63');
+            $headerRowIdx = $rowIndex;
+            foreach ($headers as $i => $h) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                $sheet->setCellValue("{$col}{$headerRowIdx}", $h);
             }
-            $xml .= '</Row>' . "\n";
+            $sheet->getStyle("A{$headerRowIdx}:{$grpLastCol}{$headerRowIdx}")->applyFromArray($headerStyle);
+            $rowIndex++;
 
             foreach ($groupRows as $r) {
-                $xml .= '<Row>';
                 for ($i = 0; $i < $gc; $i++) {
-                    $val = $r[$i] ?? '';
-                    $isNum = in_array($i + 1, $numberCols) && is_numeric($val);
-                    $xml .= $isNum ? $this->numCell($val, 's64') : (is_numeric($val) && $val !== '' ? $this->numCell($val, 's62') : $this->cell((string) $val, 's62'));
+                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                    $sheet->setCellValue("{$col}{$rowIndex}", $r[$i] ?? '');
                 }
-                $xml .= '</Row>' . "\n";
+                $rowIndex++;
+            }
+
+            if (!empty($groupRows)) {
+                $sheet->getStyle("A{$headerRowIdx}:{$grpLastCol}".($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
             }
 
             foreach ($subtotals as $st) {
-                $xml .= '<Row>';
                 for ($i = 0; $i < $gc; $i++) {
-                    $val = $st[$i] ?? '';
-                    $isNum = is_numeric($val) && $val !== '';
-                    $xml .= $isNum ? $this->numCell($val, 's65') : $this->cell((string) $val, 's65');
+                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                    $sheet->setCellValue("{$col}{$rowIndex}", $st[$i] ?? '');
                 }
-                $xml .= '</Row>' . "\n";
+                $sheet->getStyle("A{$rowIndex}:{$grpLastCol}{$rowIndex}")->applyFromArray($subtotalStyle);
+                $rowIndex++;
             }
+            $rowIndex++;
         }
 
-        $xml .= '</Table>' . "\n";
-        $xml .= '</Worksheet>' . "\n";
-        $xml .= '</Workbook>';
-        return $xml;
+        $defaultWidths = [5, 12, 28, 22, 20, 18, 14, 18, 18, 16, 16, 16];
+        foreach ($defaultWidths as $idx => $w) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($idx + 1);
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+        foreach ($columnWidths as $idx => $w) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex((int) $idx + 1);
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $tmpPath = storage_path('app/tmp_'.uniqid().'.xlsx');
+        $writer->save($tmpPath);
+
+        return response()->download($tmpPath, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ])->deleteFileAfterSend(true);
     }
 
     public function penjualanHarian(array $data)
@@ -273,7 +269,7 @@ class Export extends Controller
         $summaryRow = [
             ['Rangkuman', '', ''],
             ['Total Penjualan', 'Jumlah Transaksi', 'Rata-rata'],
-            ['Rp '.number_format($summary['total_sales'], 2, '.', ','), $summary['total_transactions'], 'Rp '.number_format($summary['avg_transaction'], 2, '.', ',')],
+            [$this->rupiah($summary['total_sales']), $summary['total_transactions'], $this->rupiah($summary['avg_transaction'])],
         ];
 
         $tableHeaders = ['No', 'No. Invoice', 'Waktu', 'Pelanggan', 'Pembayaran', 'Inisial', 'Nominal', 'Status'];
@@ -289,7 +285,7 @@ class Export extends Controller
                     $item['sale']->customer->nama_pelanggan ?? 'Guest',
                     ucfirst($item['metode']),
                     $item['sale']->user->initial ?? '-',
-                    (float) $item['amount'],
+                    $this->rupiah($item['amount']),
                     ucfirst($item['sale']->status ?? 'paid'),
                 ];
             }
@@ -298,7 +294,7 @@ class Export extends Controller
                 'headers' => $tableHeaders,
                 'rows' => $rows,
                 'subtotals' => [
-                    array_merge(array_fill(0, 5, ''), ['', 'Total '.$groupName, '']),
+                    array_merge(array_fill(0, 5, ''), ['', 'Total '.$groupName, $this->rupiah($groupData['total'])]),
                 ],
             ];
         }
@@ -383,8 +379,8 @@ class Export extends Controller
                 $payment->transaction_id ?? '',
                 $payment->rekening_debit ?? '',
                 $payment->accountDebit->nama ?? '',
-                (float) $payment->total_harga,
-                0,
+                $this->rupiah($payment->total_harga),
+                '0',
                 $payment->user->initial ?? '',
             ];
             $rows[] = [
@@ -393,12 +389,12 @@ class Export extends Controller
                 '',
                 $payment->rekening_kredit ?? '',
                 $payment->accountKredit->nama ?? '',
-                0,
-                (float) $payment->total_harga,
+                '0',
+                $this->rupiah($payment->total_harga),
                 '',
             ];
         }
-        $totalsRow = ['', '', '', '', 'Total', $totalDebit, $totalKredit, ''];
+        $totalsRow = ['', '', '', '', 'Total', $this->rupiah($totalDebit), $this->rupiah($totalKredit), ''];
 
         return $this->buildExcel(
             $title,
@@ -407,7 +403,7 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-jurnal-transaksi.xlsx',
-            [6, 7],
+            [],
             [5, 14, 12, 14, 36, 16, 16, 5]
         );
     }
@@ -475,9 +471,9 @@ class Export extends Controller
             $tahun.'-01-01',
             '',
             'Komulatif Transaksi Awal Tahun '.$tahun,
-            (float) $saldoAwalDebit,
-            (float) $saldoAwalKredit,
-            (float) $saldoAwal,
+            $this->rupiah($saldoAwalDebit),
+            $this->rupiah($saldoAwalKredit),
+            $this->rupiah($saldoAwal),
             '',
         ];
         $rows[] = [
@@ -485,9 +481,9 @@ class Export extends Controller
             $tahun.'-'.$bulan.'-01',
             '',
             'Komulatif Transaksi s/d Bulan Lalu',
-            (float) $saldoBulanLaluDebit,
-            (float) $saldoBulanLaluKredit,
-            (float) $totalSaldo,
+            $this->rupiah($saldoBulanLaluDebit),
+            $this->rupiah($saldoBulanLaluKredit),
+            $this->rupiah($totalSaldo),
             '',
         ];
 
@@ -517,9 +513,9 @@ class Export extends Controller
                 Carbon::parse($payment->tanggal_pembayaran)->format('Y-m-d'),
                 $payment->id ?? '',
                 $payment->catatan ?? '-',
-                $debit,
-                $kredit,
-                $totalSaldo,
+                $debit > 0 ? $this->rupiah($debit) : '',
+                $kredit > 0 ? $this->rupiah($kredit) : '',
+                $this->rupiah($totalSaldo),
                 $payment->p ?? '',
             ];
         }
@@ -534,15 +530,15 @@ class Export extends Controller
         $subtotals = [
             [
                 '', '', '', 'Total Transaksi Bulan '.$namaBulan,
-                $totalDebit, $totalKredit, $totalSaldo, '',
+                $this->rupiah($totalDebit), $this->rupiah($totalKredit), $this->rupiah($totalSaldo), '',
             ],
             [
                 '', '', '', 'Total Transaksi Sampai Dengan Bulan '.$namaBulan,
-                $totalDebit + $saldoBulanLaluDebit, $totalKredit + $saldoBulanLaluKredit, '', '',
+                $this->rupiah($totalDebit + $saldoBulanLaluDebit), $this->rupiah($totalKredit + $saldoBulanLaluKredit), '', '',
             ],
             [
                 '', '', '', 'Total Transaksi Komulatif Sampai Dengan '.$tahun,
-                $totalDebit + $saldoBulanLaluDebit + $saldoAwalDebit, $totalKredit + $saldoBulanLaluKredit + $saldoAwalKredit, '', '',
+                $this->rupiah($totalDebit + $saldoBulanLaluDebit + $saldoAwalDebit), $this->rupiah($totalKredit + $saldoBulanLaluKredit + $saldoAwalKredit), '', '',
             ],
         ];
 
@@ -585,7 +581,6 @@ class Export extends Controller
         $subtitle = $this->periodeSubtitle($tahun, $bulan);
 
         $headers = ['Kode', 'Nama Akun', 'Saldo'];
-        $rows = [];
         $saldoAkunLevel1 = [];
         $totalLiabilitasEkuitas = 0;
 
@@ -595,6 +590,13 @@ class Export extends Controller
             $saldoAkunLevel1[$akunLevel1->id] = 0;
 
             foreach ($akunLevel1->akunLevel2 as $akunLevel2) {
+                // Add akunLevel2 header row
+                $groupRows[] = [
+                    $akunLevel2->kode.'.',
+                    $akunLevel2->nama,
+                    '',
+                ];
+
                 foreach ($akunLevel2->akunLevel3 as $akunLevel3) {
                     $saldoAkun = 0;
                     foreach ($akunLevel3->accounts as $account) {
@@ -608,7 +610,7 @@ class Export extends Controller
                     $groupRows[] = [
                         $akunLevel3->kode.'.',
                         $akunLevel3->nama,
-                        (float) $saldoAkun,
+                        $this->rupiah($saldoAkun),
                     ];
                 }
             }
@@ -622,7 +624,7 @@ class Export extends Controller
                 'headers' => $headers,
                 'rows' => $groupRows,
                 'subtotals' => [
-                    ['', 'Jumlah '.$akunLevel1->nama, (float) $saldoAkunLevel1[$akunLevel1->id]],
+                    ['', 'Jumlah '.$akunLevel1->nama, $this->rupiah($saldoAkunLevel1[$akunLevel1->id])],
                 ],
             ];
         }
@@ -632,7 +634,7 @@ class Export extends Controller
             'headers' => $headers,
             'rows' => [],
             'subtotals' => [
-                ['', 'Jumlah Liabilitas + Ekuitas', (float) $totalLiabilitasEkuitas],
+                ['', 'Jumlah Liabilitas + Ekuitas', $this->rupiah($totalLiabilitasEkuitas)],
             ],
         ];
 
@@ -642,7 +644,7 @@ class Export extends Controller
             [],
             $excelGroups,
             'laporan-neraca.xlsx',
-            [3],
+            [],
             [14, 48, 18]
         );
     }
@@ -685,7 +687,7 @@ class Export extends Controller
                         $groupRows[] = [
                             $account->kode,
                             $account->nama,
-                            (float) $saldo,
+                            $this->rupiah($saldo),
                         ];
                     }
                     $saldoLevel1 += $saldoLevel3;
@@ -701,7 +703,7 @@ class Export extends Controller
                 'headers' => $headers,
                 'rows' => $groupRows,
                 'subtotals' => [
-                    ['', 'Jumlah '.$akunLevel1->nama, (float) $saldoLevel1],
+                    ['', 'Jumlah '.$akunLevel1->nama, $this->rupiah($saldoLevel1)],
                 ],
             ];
         }
@@ -711,7 +713,7 @@ class Export extends Controller
             'headers' => $headers,
             'rows' => [],
             'subtotals' => [
-                ['', 'Jumlah Liabilitas + Ekuitas', (float) $totalLiabilitasEkuitas],
+                ['', 'Jumlah Liabilitas + Ekuitas', $this->rupiah($totalLiabilitasEkuitas)],
             ],
         ];
 
@@ -721,7 +723,7 @@ class Export extends Controller
             [],
             $excelGroups,
             'laporan-calk.xlsx',
-            [3],
+            [],
             [16, 50, 18]
         );
     }
@@ -749,9 +751,9 @@ class Export extends Controller
                     $rows[] = [
                         $kode['kode'] ?? '',
                         $kode['nama'] ?? '',
-                        (float) ($kode['saldo_sd_lalu'] ?? 0),
-                        (float) ($kode['saldo_bulan_ini'] ?? 0),
-                        (float) ($kode['saldo_sd_ini'] ?? 0),
+                        $this->rupiah($kode['saldo_sd_lalu'] ?? 0),
+                        $this->rupiah($kode['saldo_bulan_ini'] ?? 0),
+                        $this->rupiah($kode['saldo_sd_ini'] ?? 0),
                     ];
                 }
             }
@@ -771,18 +773,18 @@ class Export extends Controller
             if ($footerLabel) {
                 $subtotals[] = [
                     '', $footerLabel,
-                    (float) ($lr['total_sd_lalu'] ?? 0),
-                    (float) ($lr['total_bulan_ini'] ?? 0),
-                    (float) ($lr['total_sd_ini'] ?? 0),
+                    $this->rupiah($lr['total_sd_lalu'] ?? 0),
+                    $this->rupiah($lr['total_bulan_ini'] ?? 0),
+                    $this->rupiah($lr['total_sd_ini'] ?? 0),
                 ];
             }
 
             if ($index == 2) {
                 $subtotals[] = [
                     '', 'Laba Sebelum Pajak',
-                    (float) ($lr['total_sd_lalu'] ?? 0),
-                    (float) ($lr['total_bulan_ini'] ?? 0),
-                    (float) ($lr['total_sd_ini'] ?? 0),
+                    $this->rupiah($lr['total_sd_lalu'] ?? 0),
+                    $this->rupiah($lr['total_bulan_ini'] ?? 0),
+                    $this->rupiah($lr['total_sd_ini'] ?? 0),
                 ];
             }
 
@@ -798,8 +800,8 @@ class Export extends Controller
             'title' => 'METRICS',
             'headers' => ['Kode', 'Nama Akun', '', '', 'Nilai'],
             'rows' => [
-                ['', 'Margin Kotor (%)', '', '', (float) ($metrics['margin_kotor'] ?? 0)],
-                ['', 'Margin Bersih (%)', '', '', (float) ($metrics['margin_bersih'] ?? 0)],
+                ['', 'Margin Kotor (%)', '', '', number_format((float) ($metrics['margin_kotor'] ?? 0), 2, ',', '.').'%'],
+                ['', 'Margin Bersih (%)', '', '', number_format((float) ($metrics['margin_bersih'] ?? 0), 2, ',', '.').'%'],
             ],
             'subtotals' => [],
         ];
@@ -810,7 +812,7 @@ class Export extends Controller
             [],
             $excelGroups,
             'laporan-laba-rugi.xlsx',
-            [3, 4, 5],
+            [],
             [16, 40, 18, 18, 18]
         );
     }
@@ -838,7 +840,7 @@ class Export extends Controller
                 $rows[] = [
                     $index + 1,
                     $ak['header']->nama_akun ?? '-',
-                    $index == 0 ? (float) $saldoKas : '',
+                    $index == 0 ? $this->rupiah($saldoKas) : '',
                 ];
             }
 
@@ -850,7 +852,7 @@ class Export extends Controller
 
                 $total = 0;
                 foreach ($group['items'] as $item) {
-                    $rows[] = ['', $item->nama_akun ?? '-', (float) $item->total];
+                    $rows[] = ['', $item->nama_akun ?? '-', $this->rupiah($item->total)];
                     $total += (float) $item->total;
                 }
 
@@ -861,7 +863,7 @@ class Export extends Controller
 
                 if (strtolower($titleJumlah) != 'pengeluaran') {
                     $grandTotal[$indexGroup] = $total;
-                    $rows[] = ['', 'Jumlah '.$titleJumlah, (float) $total];
+                    $rows[] = ['', 'Jumlah '.$titleJumlah, $this->rupiah($total)];
                 }
             }
 
@@ -883,7 +885,7 @@ class Export extends Controller
                 } elseif ($index == 3) {
                     $label = 'Kas Bersih yang diperoleh dari aktivitas Pendanaan (A-B)';
                 }
-                $subtotals[] = ['', $label, (float) $totalBawah];
+                $subtotals[] = ['', $label, $this->rupiah($totalBawah)];
             }
 
             $excelGroups[] = [
@@ -908,8 +910,8 @@ class Export extends Controller
             'headers' => $headers,
             'rows' => [],
             'subtotals' => [
-                ['', 'Kenaikan (Penurunan) Kas', (float) $totalArusKas],
-                ['', 'SALDO AKHIR KAS SETARA KAS', (float) $totalArusKas + $saldoKas],
+                ['', 'Kenaikan (Penurunan) Kas', $this->rupiah($totalArusKas)],
+                ['', 'SALDO AKHIR KAS SETARA KAS', $this->rupiah($totalArusKas + $saldoKas)],
             ],
         ];
         $excelGroups[] = $finalGroup;
@@ -920,7 +922,7 @@ class Export extends Controller
             [],
             $excelGroups,
             'laporan-arus-kas.xlsx',
-            [3],
+            [],
             [8, 50, 22]
         );
     }
@@ -994,8 +996,8 @@ class Export extends Controller
                     $rows[] = [
                         $no++, Carbon::parse($inv->tanggal_beli)->format('d/m/Y'), $nama_barang,
                         $inv->id, ucfirst($inv->status), (int) $inv->jumlah,
-                        (float) $inv->harga_satuan, (float) ($inv->harga_satuan * $inv->jumlah),
-                        (float) $nilai_buku,
+                        $this->rupiah($inv->harga_satuan), $this->rupiah($inv->harga_satuan * $inv->jumlah),
+                        $this->rupiah($nilai_buku),
                     ];
                 } else {
                     $satuan_susut = $inv->harga_satuan <= 0 ? 0 : round(($inv->harga_satuan * $inv->jumlah) / $inv->umur_ekonomis, 2);
@@ -1067,11 +1069,11 @@ class Export extends Controller
                         $rows[] = [
                             $no++, Carbon::parse($inv->tanggal_beli)->format('d/m/Y'), $nama_barang,
                             $inv->id, ucfirst($inv->status), (int) $inv->jumlah,
-                            (float) $inv->harga_satuan, (float) ($inv->harga_satuan * $inv->jumlah),
-                            (int) $inv->umur_ekonomis, (float) $_satuan_susut,
-                            (int) $umur_pakai, (float) $penyusutan,
-                            (int) $akum_umur, (float) $akum_susut,
-                            (float) $nilai_buku,
+                            $this->rupiah($inv->harga_satuan), $this->rupiah($inv->harga_satuan * $inv->jumlah),
+                            (int) $inv->umur_ekonomis, $this->rupiah($_satuan_susut),
+                            (int) $umur_pakai, $this->rupiah($penyusutan),
+                            (int) $akum_umur, $this->rupiah($akum_susut),
+                            $this->rupiah($nilai_buku),
                         ];
                     }
                 }
@@ -1081,15 +1083,15 @@ class Export extends Controller
             if (! $isTanah) {
                 $subtotals[] = [
                     '', '', 'Jumlah Daftar '.$namaKategori.' (Hapus, Hilang, Jual) s.d. Tahun '.($tahun - 1),
-                    '', '', (int) $j_unit, '', (float) $j_harga,
-                    '', '', '', (float) $j_penyusutan, '', (float) $j_akum_susut, (float) $j_nilai_buku,
+                    '', '', (int) $j_unit, '', $this->rupiah($j_harga),
+                    '', '', '', $this->rupiah($j_penyusutan), '', $this->rupiah($j_akum_susut), $this->rupiah($j_nilai_buku),
                 ];
             }
-            $jumRow = ['', '', 'Jumlah', '', '', (int) $t_unit, '', (float) $t_harga];
+            $jumRow = ['', '', 'Jumlah', '', '', (int) $t_unit, '', $this->rupiah($t_harga)];
             if (! $isTanah) {
-                $jumRow = array_merge($jumRow, ['', '', '', (float) $t_penyusutan, '', (float) $t_akum_susut]);
+                $jumRow = array_merge($jumRow, ['', '', '', $this->rupiah($t_penyusutan), '', $this->rupiah($t_akum_susut)]);
             }
-            $jumRow[] = (float) $t_nilai_buku;
+            $jumRow[] = $this->rupiah($t_nilai_buku);
             $subtotals[] = $jumRow;
 
             $excelGroups[] = [
@@ -1106,7 +1108,7 @@ class Export extends Controller
             [],
             $excelGroups,
             'laporan-aset-tetap-inventaris.xlsx',
-            [7, 8, 10, 12, 14, 15],
+            [],
             [5, 12, 28, 6, 10, 6, 14, 16, 10, 14, 8, 14, 8, 14, 14]
         );
     }
@@ -1153,11 +1155,11 @@ class Export extends Controller
                 $row->sale->no_invoice ?? '-',
                 Carbon::parse($row->sale->tanggal_transaksi)->format('d/m/Y H:i'),
                 (float) $row->jumlah,
-                (float) $row->harga_satuan,
-                (float) $row->subtotal,
+                $this->rupiah($row->harga_satuan),
+                $this->rupiah($row->subtotal),
             ];
         }
-        $totalsRow = ['', '', '', '', '', '', '', '', 'Total:', (float) $total];
+        $totalsRow = ['', '', '', '', '', '', '', '', 'Total:', $this->rupiah($total)];
 
         return $this->buildExcel(
             'Laporan Penjualan Produk',
@@ -1166,7 +1168,8 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-penjualan-produk.xlsx',
-            [8, 9, 10]
+            [],
+            [5, 14, 32, 12, 22, 18, 18, 12, 18, 18]
         );
     }
 
@@ -1212,11 +1215,11 @@ class Export extends Controller
                 $row->purchase->no_pembelian ?? '-',
                 Carbon::parse($row->purchase->tanggal_pembelian)->format('d/m/Y H:i'),
                 (float) $row->jumlah,
-                (float) $row->harga_satuan,
-                (float) $row->subtotal,
+                $this->rupiah($row->harga_satuan),
+                $this->rupiah($row->subtotal),
             ];
         }
-        $totalsRow = ['', '', '', '', '', '', '', '', 'Total:', (float) $total];
+        $totalsRow = ['', '', '', '', '', '', '', '', 'Total:', $this->rupiah($total)];
 
         return $this->buildExcel(
             'Laporan Pembelian Produk',
@@ -1225,7 +1228,8 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-pembelian-produk.xlsx',
-            [8, 9, 10]
+            [],
+            [5, 14, 32, 12, 22, 18, 18, 12, 18, 18]
         );
     }
 
@@ -1260,14 +1264,14 @@ class Export extends Controller
                 $item->product->nama_produk ?? '-',
                 $item->product->category->nama_kategori ?? '-',
                 (float) $item->total_terjual,
-                (float) $item->total_revenue,
-                (float) $item->total_profit,
+                $this->rupiah($item->total_revenue),
+                $this->rupiah($item->total_profit),
             ];
             $sumQty += (float) $item->total_terjual;
             $sumRev += (float) $item->total_revenue;
             $sumProf += (float) $item->total_profit;
         }
-        $totalsRow = ['', '', 'Total', $sumQty, $sumRev, $sumProf];
+        $totalsRow = ['', '', 'Total', $sumQty, $this->rupiah($sumRev), $this->rupiah($sumProf)];
 
         return $this->buildExcel(
             'Laporan Produk Terlaris',
@@ -1276,7 +1280,7 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-produk-terlaris.xlsx',
-            [4, 5, 6],
+            [],
             [5, 36, 22, 14, 18, 18]
         );
     }
@@ -1302,7 +1306,7 @@ class Export extends Controller
         $subtitle = 'Per Tanggal: '.Carbon::now()->isoFormat('D MMMM Y');
 
         $summaryRow = [
-            ['Total Piutang: Rp '.number_format($totalPiutang, 2, '.', ','), '', '', '', '', ''],
+            ['Total Piutang: '.$this->rupiah($totalPiutang), '', '', '', '', ''],
         ];
 
         $tableHeaders = ['No. Invoice', 'Tanggal', 'Total', 'Dibayar', 'Sisa Piutang', 'Umur (Hari)'];
@@ -1314,9 +1318,9 @@ class Export extends Controller
                 $rows[] = [
                     $sale->no_invoice ?? '-',
                     Carbon::parse($sale->tanggal_transaksi)->format('d/m/Y'),
-                    (float) $sale->total,
-                    (float) $sale->dibayar,
-                    (float) $sale->jumlah_utang,
+                    $this->rupiah($sale->total),
+                    $this->rupiah($sale->dibayar),
+                    $this->rupiah($sale->jumlah_utang),
                     $umur.' hari',
                 ];
             }
@@ -1325,7 +1329,7 @@ class Export extends Controller
                 'headers' => $tableHeaders,
                 'rows' => $rows,
                 'subtotals' => [
-                    ['', '', '', 'Subtotal', (float) $group['total_piutang'], ''],
+                    ['', '', '', 'Subtotal', $this->rupiah($group['total_piutang']), ''],
                 ],
             ];
         }
@@ -1336,7 +1340,7 @@ class Export extends Controller
             $summaryRow,
             $excelGroups,
             'laporan-piutang.xlsx',
-            [3, 4, 5],
+            [],
             [22, 14, 16, 16, 16, 14]
         );
     }
@@ -1362,7 +1366,7 @@ class Export extends Controller
         $subtitle = 'Per Tanggal: '.Carbon::now()->isoFormat('D MMMM Y');
 
         $summaryRow = [
-            ['Total Hutang: Rp '.number_format($totalHutang, 2, '.', ','), '', '', '', '', ''],
+            ['Total Hutang: '.$this->rupiah($totalHutang), '', '', '', '', ''],
         ];
 
         $tableHeaders = ['No. Pembelian', 'Tanggal', 'Total', 'Dibayar', 'Sisa Hutang', 'Umur (Hari)'];
@@ -1374,9 +1378,9 @@ class Export extends Controller
                 $rows[] = [
                     $purchase->no_pembelian ?? '-',
                     Carbon::parse($purchase->tanggal_pembelian)->format('d/m/Y'),
-                    (float) $purchase->total,
-                    (float) $purchase->dibayar,
-                    (float) $purchase->jumlah_utang,
+                    $this->rupiah($purchase->total),
+                    $this->rupiah($purchase->dibayar),
+                    $this->rupiah($purchase->jumlah_utang),
                     $umur.' hari',
                 ];
             }
@@ -1385,7 +1389,7 @@ class Export extends Controller
                 'headers' => $tableHeaders,
                 'rows' => $rows,
                 'subtotals' => [
-                    ['', '', '', 'Subtotal', (float) $group['total_hutang'], ''],
+                    ['', '', '', 'Subtotal', $this->rupiah($group['total_hutang']), ''],
                 ],
             ];
         }
@@ -1396,7 +1400,7 @@ class Export extends Controller
             $summaryRow,
             $excelGroups,
             'laporan-hutang.xlsx',
-            [3, 4, 5],
+            [],
             [22, 14, 16, 16, 16, 14]
         );
     }
@@ -1445,7 +1449,7 @@ class Export extends Controller
                     (float) ($detail->stok_fisik ?? 0),
                     (float) ($detail->selisih ?? 0),
                     $detail->jenis_selisih ?? '-',
-                    (float) ($detail->total_harga ?? 0),
+                    $this->rupiah($detail->total_harga ?? 0),
                     $detail->alasan ?? '-',
                 ];
             }
@@ -1464,7 +1468,7 @@ class Export extends Controller
             $summaryRow,
             $excelGroups,
             'laporan-stok-opname.xlsx',
-            [3, 4, 5, 7],
+            [],
             [5, 32, 14, 14, 12, 14, 16, 32]
         );
     }
@@ -1520,7 +1524,7 @@ class Export extends Controller
             $summaryRow,
             $excelGroups,
             'bukti-so-'.$opname->no_opname.'.xlsx',
-            [3, 4, 5],
+            [],
             [5, 40, 14, 14, 12, 36]
         );
     }
@@ -1635,9 +1639,9 @@ class Export extends Controller
             ['Jumlah PO', 'Total Pembelian', 'Total Dibayar', 'Total Hutang'],
             [
                 $summary['total_po'],
-                'Rp '.number_format($summary['total_pembelian'], 2, '.', ','),
-                'Rp '.number_format($summary['total_dibayar'], 2, '.', ','),
-                'Rp '.number_format($summary['total_hutang'], 2, '.', ','),
+                $this->rupiah($summary['total_pembelian']),
+                $this->rupiah($summary['total_dibayar']),
+                $this->rupiah($summary['total_hutang']),
             ],
         ];
 
@@ -1650,12 +1654,12 @@ class Export extends Controller
                 Carbon::parse($purchase->tanggal_pembelian)->format('d/m/Y'),
                 $purchase->supplier->nama_supplier ?? '-',
                 ucfirst($purchase->jenis_pembayaran ?? '-'),
-                (float) $purchase->total,
-                (float) $purchase->jumlah_utang,
+                $this->rupiah($purchase->total),
+                $this->rupiah($purchase->jumlah_utang),
                 $purchase->status ?? '-',
             ];
         }
-        $totalsRow = ['', '', '', '', 'Total', (float) $purchases->sum('total'), (float) $purchases->sum('jumlah_utang'), ''];
+        $totalsRow = ['', '', '', '', 'Total', $this->rupiah($purchases->sum('total')), $this->rupiah($purchases->sum('jumlah_utang')), ''];
 
         $excelGroups = [
             [
@@ -1672,7 +1676,7 @@ class Export extends Controller
             $summaryRow,
             $excelGroups,
             'laporan-pembelian.xlsx',
-            [6, 7],
+            [],
             [5, 22, 14, 28, 14, 16, 16, 14]
         );
     }
@@ -1697,10 +1701,10 @@ class Export extends Controller
                 $p->sku ?? '-',
                 $p->nama_produk,
                 $p->category->nama_kategori ?? '-',
-                (float) $p->biaya_rata_rata,
-                (float) $p->harga_jual,
-                (float) $p->margin_rp,
-                (float) $p->margin_pct,
+                $this->rupiah($p->biaya_rata_rata),
+                $this->rupiah($p->harga_jual),
+                $this->rupiah($p->margin_rp),
+                number_format($p->margin_pct, 2, ',', '.').'%',
             ];
         }
 
@@ -1711,7 +1715,7 @@ class Export extends Controller
             $rows,
             [],
             'laporan-margin-produk.xlsx',
-            [5, 6, 7, 8],
+            [],
             [5, 14, 36, 22, 16, 16, 16, 14]
         );
     }
@@ -1742,11 +1746,11 @@ class Export extends Controller
                 $i + 1,
                 $c->customer->nama_pelanggan ?? 'Guest',
                 (int) $c->jumlah_transaksi,
-                (float) $c->total_belanja,
-                (float) $c->rata_rata,
+                $this->rupiah($c->total_belanja),
+                $this->rupiah($c->rata_rata),
             ];
         }
-        $totalsRow = ['', 'Total', (int) $customers->sum('jumlah_transaksi'), (float) $customers->sum('total_belanja'), ''];
+        $totalsRow = ['', 'Total', (int) $customers->sum('jumlah_transaksi'), $this->rupiah($customers->sum('total_belanja')), ''];
 
         return $this->buildExcel(
             'Laporan Customer Terbaik',
@@ -1755,7 +1759,7 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-customer-terbaik.xlsx',
-            [4, 5],
+            [],
             [5, 32, 18, 18, 18]
         );
     }
@@ -1787,9 +1791,9 @@ class Export extends Controller
                 $p->nama_produk,
                 $p->category->nama_kategori ?? '-',
                 (int) $p->stok_aktual,
-                (float) $p->nilai_stok,
+                $this->rupiah($p->nilai_stok),
                 (int) $p->terjual_30hari,
-                (float) $p->turnover_ratio,
+                number_format($p->turnover_ratio, 2, ',', '.'),
                 $p->days_in_inventory !== null ? (int) $p->days_in_inventory : '-',
             ];
         }
@@ -1801,7 +1805,7 @@ class Export extends Controller
             $rows,
             [],
             'laporan-inventory-turnover.xlsx',
-            [5],
+            [],
             [5, 32, 22, 12, 18, 14, 12, 14]
         );
     }
@@ -1834,7 +1838,7 @@ class Export extends Controller
                 Carbon::parse($sr->tanggal_return)->format('d/m/Y'),
                 $sr->sale->no_invoice ?? '-',
                 $sr->sale->customer->nama_pelanggan ?? 'Guest',
-                (float) $sr->total_return,
+                $this->rupiah($sr->total_return),
                 $sr->alasan_return ?? '-',
                 $sr->status ?? '-',
             ];
@@ -1849,7 +1853,7 @@ class Export extends Controller
                 Carbon::parse($pr->tanggal_return)->format('d/m/Y'),
                 $pr->purchase->no_pembelian ?? '-',
                 $pr->purchase->supplier->nama_supplier ?? '-',
-                (float) $pr->total_return,
+                $this->rupiah($pr->total_return),
                 $pr->alasan_return ?? '-',
                 $pr->status ?? '-',
             ];
@@ -1860,13 +1864,13 @@ class Export extends Controller
             'title' => 'A. Retur Penjualan (dari Customer)',
             'headers' => $salesHeaders,
             'rows' => $salesRows,
-            'subtotals' => !empty($salesRows) ? [['', '', '', '', 'Total Retur Penjualan', (float) $salesReturns->sum('total_return'), '', '']] : [],
+            'subtotals' => !empty($salesRows) ? [['', '', '', '', 'Total Retur Penjualan', $this->rupiah($salesReturns->sum('total_return')), '', '']] : [],
         ];
         $excelGroups[] = [
             'title' => 'B. Retur Pembelian (ke Supplier)',
             'headers' => $purchaseHeaders,
             'rows' => $purchaseRows,
-            'subtotals' => !empty($purchaseRows) ? [['', '', '', '', 'Total Retur Pembelian', (float) $purchaseReturns->sum('total_return'), '', '']] : [],
+            'subtotals' => !empty($purchaseRows) ? [['', '', '', '', 'Total Retur Pembelian', $this->rupiah($purchaseReturns->sum('total_return')), '', '']] : [],
         ];
 
         return $this->buildGroupedExcel(
@@ -1875,7 +1879,7 @@ class Export extends Controller
             $summaryRow,
             $excelGroups,
             'laporan-retur.xlsx',
-            [6],
+            [],
             [5, 18, 14, 22, 24, 18, 32, 14]
         );
     }
@@ -1929,7 +1933,7 @@ class Export extends Controller
                 $itemRows[] = [
                     $item->product->nama_produk ?? '-',
                     (int) $item->total_qty,
-                    (float) $item->total_amount,
+                    $this->rupiah($item->total_amount),
                 ];
             }
 
@@ -1941,14 +1945,14 @@ class Export extends Controller
                 'rows' => $itemRows,
                 'subtotals' => [
                     [
-                        'Saldo Awal: Rp '.number_format($session->saldo_awal ?? 0, 2, '.', ','),
-                        'Saldo Akhir (App): Rp '.number_format($session->saldo_akhir_aplikasi ?? 0, 2, '.', ','),
-                        'Saldo Akhir (Manual): Rp '.number_format($session->saldo_akhir ?? 0, 2, '.', ','),
+                        'Saldo Awal: '.$this->rupiah($session->saldo_awal ?? 0),
+                        'Saldo Akhir (App): '.$this->rupiah($session->saldo_akhir_aplikasi ?? 0),
+                        'Saldo Akhir (Manual): '.$this->rupiah($session->saldo_akhir ?? 0),
                     ],
                     [
                         '',
                         'Selisih:',
-                        'Rp '.number_format($selisih, 2, '.', ','),
+                        $this->rupiah($selisih),
                     ],
                 ],
             ];
@@ -2058,11 +2062,11 @@ class Export extends Controller
                 (int) $p->stok_masuk,
                 (int) $p->stok_keluar,
                 (int) $p->stok_akhir,
-                (float) $p->biaya_rata_rata,
-                (float) $p->nilai_stok,
+                $this->rupiah($p->biaya_rata_rata),
+                $this->rupiah($p->nilai_stok),
             ];
         }
-        $totalsRow = ['', '', '', '', '', 'Total', '', '', '', (int) $products->sum('stok_akhir'), '', (float) $products->sum('nilai_stok')];
+        $totalsRow = ['', '', '', '', '', 'Total', '', '', '', (int) $products->sum('stok_akhir'), '', $this->rupiah($products->sum('nilai_stok'))];
 
         return $this->buildExcel(
             'Laporan Stok',
@@ -2071,7 +2075,7 @@ class Export extends Controller
             $rows,
             $totalsRow,
             'laporan-stok.xlsx',
-            [11, 12],
+            [],
             [5, 14, 32, 22, 12, 14, 14, 12, 12, 14, 16, 18]
         );
     }
