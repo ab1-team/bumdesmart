@@ -149,13 +149,11 @@ class KeuanganUtil
         $vDiskonPemb = $getV('5.1.01.02');
         $vReturPemb = $getV('5.1.01.03');
         $vCashbackPemb = $getV('5.1.01.06');
-        $vBebanProd = $getV('5.1.01.04');
-        $vBebanTrans = $getV('5.1.01.05');
 
         $pembelianBersih = [
-            'lalu' => $vPembelian['lalu'] - ($vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu']) + $vBebanProd['lalu'] + $vBebanTrans['lalu'],
-            'ini' => $vPembelian['ini'] - ($vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini']) + $vBebanProd['ini'] + $vBebanTrans['ini'],
-            'sd' => $vPembelian['sd'] - ($vDiskonPemb['sd'] + $vReturPemb['sd'] + $vCashbackPemb['sd']) + $vBebanProd['sd'] + $vBebanTrans['sd'],
+            'lalu' => $vPembelian['lalu'] - ($vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu']),
+            'ini' => $vPembelian['ini'] - ($vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini']),
+            'sd' => $vPembelian['sd'] - ($vDiskonPemb['sd'] + $vReturPemb['sd'] + $vCashbackPemb['sd']),
         ];
 
         $totalPersediaan = [
@@ -183,8 +181,6 @@ class KeuanganUtil
             ['kode' => '1.1.03.01', 'nama' => 'Pembelian', 'saldo_sd_lalu' => $vPembelian['lalu'], 'saldo_bulan_ini' => $vPembelian['ini'], 'saldo_sd_ini' => $vPembelian['sd']],
             ['kode' => '5.1.01.02', 'nama' => 'Diskon Pembelian', 'saldo_sd_lalu' => $vDiskonPemb['lalu'], 'saldo_bulan_ini' => $vDiskonPemb['ini'], 'saldo_sd_ini' => $vDiskonPemb['sd']],
             ['kode' => '5.1.01.03', 'nama' => 'Retur Pembelian', 'saldo_sd_lalu' => $vReturPemb['lalu'], 'saldo_bulan_ini' => $vReturPemb['ini'], 'saldo_sd_ini' => $vReturPemb['sd']],
-            ['kode' => '5.1.01.04', 'nama' => 'Beban Produksi', 'saldo_sd_lalu' => $vBebanProd['lalu'], 'saldo_bulan_ini' => $vBebanProd['ini'], 'saldo_sd_ini' => $vBebanProd['sd']],
-            ['kode' => '5.1.01.05', 'nama' => 'Beban Transport Produk', 'saldo_sd_lalu' => $vBebanTrans['lalu'], 'saldo_bulan_ini' => $vBebanTrans['ini'], 'saldo_sd_ini' => $vBebanTrans['sd']],
             ['kode' => '5.1.01.06', 'nama' => 'Cashback Pembelian', 'saldo_sd_lalu' => $vCashbackPemb['lalu'], 'saldo_bulan_ini' => $vCashbackPemb['ini'], 'saldo_sd_ini' => $vCashbackPemb['sd']],
             ['kode' => '', 'nama' => 'Total Pembelian', 'saldo_sd_lalu' => $pembelianBersih['lalu'], 'saldo_bulan_ini' => $pembelianBersih['ini'], 'saldo_sd_ini' => $pembelianBersih['sd'], 'is_bold' => true],
             ['kode' => '', 'nama' => 'Total Persediaan', 'saldo_sd_lalu' => $totalPersediaan['lalu'], 'saldo_bulan_ini' => $totalPersediaan['ini'], 'saldo_sd_ini' => $totalPersediaan['sd'], 'is_bold' => true],
