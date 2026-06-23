@@ -106,45 +106,44 @@ class KeuanganUtil
             'sd' => $vPenjualan['sd'] - $vDiskonPenj['sd'] - $vReturPenj['sd'] - $vCashbackPenj['sd'],
         ];
 
-        // HPP untuk satu periode (s/d bulanEnd):
-        //   Persediaan Awal   = saldo 1.1.03.01 s/d akhir bulan (bulanEnd - 1)
-        //   Pembelian         = pertambahan 1.1.03.01 selama bulanEnd
-        //   Persediaan Akhir  = saldo 1.1.03.01 s/d akhir bulan bulanEnd
-        //   HPP               = Persediaan Awal + Pembelian - Persediaan Akhir
-        $hitungHPP = function ($bulanEnd) use ($getS) {
-            $saldoSdBulanIni  = $getS('1.1.03.01', $bulanEnd);
-            $saldoSdBulanLalu = $getS('1.1.03.01', $bulanEnd - 1);
-            $persediaanAwal   = $saldoSdBulanLalu;
-            $pembelian        = $saldoSdBulanIni - $saldoSdBulanLalu;
-            $persediaanAkhir  = $saldoSdBulanIni;
-            return [
-                'persediaan_awal'  => $persediaanAwal,
-                'pembelian'        => $pembelian,
-                'persediaan_akhir' => $persediaanAkhir,
-            ];
+        // Hitung pembelian dari tabel payments (rekening_debit = '1.1.03.01')
+        $debitPersediaan = function ($bulanEnd) use ($business_id, $tahun) {
+            if ($bulanEnd <= 0) return 0;
+            return (float) Payment::where('business_id', $business_id)
+                ->where('rekening_debit', '1.1.03.01')
+                ->whereYear('tanggal_pembayaran', $tahun)
+                ->whereMonth('tanggal_pembayaran', '<=', $bulanEnd)
+                ->sum('nominal');
         };
 
-        $hppLalu = $hitungHPP($bulanInt - 1);
-        $hppIni  = $hitungHPP($bulanInt);
+        // s.d bulan lalu = debit Jan..bulanLalu
+        // bulan ini     = debit bulan X saja
+        // s.d bulan ini = debit Jan..bulanX
+        $pembelianSdLalu = $debitPersediaan($bulanInt - 1);
+        $pembelianSdIni  = $debitPersediaan($bulanInt);
+        $pembelianIni    = $pembelianSdIni - $pembelianSdLalu;
 
-        // Untuk "bulan lalu" dan "s.d bulan ini", HPP dihitung langsung dari helper.
-        // Untuk "bulan ini" = selisih.
+        // Persediaan Awal & Akhir dari saldo 1.1.03.01 di tabel balances.
+        // Kolom "bulan ini" dan "s.d bulan ini" nilainya sama.
+        $saldoSdBulanLalu = $getS('1.1.03.01', $bulanInt - 1);
+        $saldoSdBulanIni  = $getS('1.1.03.01', $bulanInt);
+
         $vPersediaanAwal = [
-            'lalu' => $hppLalu['persediaan_awal'],
-            'ini'  => $hppIni['persediaan_awal'] - $hppLalu['persediaan_awal'],
-            'sd'   => $hppIni['persediaan_awal'],
+            'lalu' => $getS('1.1.03.01', $bulanInt - 2),
+            'ini'  => $saldoSdBulanLalu,
+            'sd'   => $saldoSdBulanLalu,
         ];
 
         $vPersediaanAkhir = [
-            'lalu' => $hppLalu['persediaan_akhir'],
-            'ini'  => $hppIni['persediaan_akhir'] - $hppLalu['persediaan_akhir'],
-            'sd'   => $hppIni['persediaan_akhir'],
+            'lalu' => $saldoSdBulanLalu,
+            'ini'  => $saldoSdBulanIni,
+            'sd'   => $saldoSdBulanIni,
         ];
 
         $vPembelian = [
-            'lalu' => $hppLalu['pembelian'],
-            'ini'  => $hppIni['pembelian'] - $hppLalu['pembelian'],
-            'sd'   => $hppIni['pembelian'],
+            'lalu' => $pembelianSdLalu,
+            'ini'  => $pembelianIni,
+            'sd'   => $pembelianSdIni,
         ];
 
         $vDiskonPemb = $getV('5.1.01.02');
