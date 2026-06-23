@@ -150,10 +150,12 @@ class KeuanganUtil
         $vReturPemb = $getV('5.1.01.03');
         $vCashbackPemb = $getV('5.1.01.06');
 
+        // Diskon/Retur/Cashback Pembelian disimpan sebagai beban (nilai negatif di balances).
+        // Penjumlahan dengan nilai negatif = mengurangi Total Pembelian.
         $pembelianBersih = [
-            'lalu' => $vPembelian['lalu'] - ($vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu']),
-            'ini' => $vPembelian['ini'] - ($vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini']),
-            'sd' => $vPembelian['sd'] - ($vDiskonPemb['sd'] + $vReturPemb['sd'] + $vCashbackPemb['sd']),
+            'lalu' => $vPembelian['lalu'] + $vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu'],
+            'ini' => $vPembelian['ini'] + $vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini'],
+            'sd' => $vPembelian['sd'] + $vDiskonPemb['sd'] + $vReturPemb['sd'] + $vCashbackPemb['sd'],
         ];
 
         $totalPersediaan = [
