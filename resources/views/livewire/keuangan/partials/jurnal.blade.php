@@ -54,9 +54,9 @@
             <td align="center"></td>
             <td>Komulatif Transaksi Awal Tahun {{ $tahun }}</td>
             <td>&nbsp;</td>
-            <td align="right">{{ number_format($saldo['debit'], 2) }}</td>
-            <td align="right">{{ number_format($saldo['kredit'], 2) }}</td>
-            <td align="right">{{ number_format($saldo_awal_tahun, 2) }}</td>
+            <td align="right">{{ number_format($saldo['debit'], 2, ',','.') }}</td>
+            <td align="right">{{ number_format($saldo['kredit'], 2, ',','.') }}</td>
+            <td align="right">{{ number_format($saldo_awal_tahun, 2, ',','.') }}</td>
             <td align="center"></td>
             @if ($KolomAksi)
                 <td align="center"></td>
@@ -68,9 +68,9 @@
             <td align="center"></td>
             <td>Komulatif Transaksi s/d Bulan Lalu</td>
             <td>&nbsp;</td>
-            <td align="right">{{ number_format($d_bulan_lalu, 2) }}</td>
-            <td align="right">{{ number_format($k_bulan_lalu, 2) }}</td>
-            <td align="right">{{ number_format($total_saldo, 2) }}</td>
+            <td align="right">{{ number_format($d_bulan_lalu, 2, ',','.') }}</td>
+            <td align="right">{{ number_format($k_bulan_lalu, 2, ',','.') }}</td>
+            <td align="right">{{ number_format($total_saldo, 2, ',','.') }}</td>
             <td align="center"></td>
             @if ($KolomAksi)
                 <td align="center"></td>
@@ -197,9 +197,9 @@
                 <td align="center">{{ $ref }}</td>
                 <td>{{ $trx->keterangan_transaksi }}</td>
                 <td align="center">{{ $trx->idt }}</td>
-                <td align="right">{{ number_format($debit, 2) }}</td>
-                <td align="right">{{ number_format($kredit, 2) }}</td>
-                <td align="right">{{ number_format($total_saldo, 2) }}</td>
+                <td align="right">{{ number_format($debit, 2, ',','.') }}</td>
+                <td align="right">{{ number_format($kredit, 2, ',','.') }}</td>
+                <td align="right">{{ number_format($total_saldo, 2, ',','.') }}</td>
                 <td align="center">{{ $ins }}</td>
                 @if ($KolomAksi)
                     <td align="right">
@@ -325,13 +325,13 @@
                 <b>Total Transaksi {{ ucwords($sub_judul) }}</b>
             </td>
             <td align="right">
-                <b>{{ number_format($total_debit, 2) }}</b>
+                <b>{{ number_format($total_debit, 2, ',','.') }}</b>
             </td>
             <td align="right">
-                <b>{{ number_format($total_kredit, 2) }}</b>
+                <b>{{ number_format($total_kredit, 2, ',','.') }}</b>
             </td>
             <td colspan="3" rowspan="3" align="center" style="vertical-align: middle">
-                <b>{{ number_format($total_saldo, 2) }}</b>
+                <b>{{ number_format($total_saldo, 2, ',','.') }}</b>
             </td>
         </tr>
 
@@ -340,10 +340,10 @@
                 <b>Total Transaksi sampai dengan {{ ucwords($sub_judul) }}</b>
             </td>
             <td align="right">
-                <b>{{ number_format($d_bulan_lalu + $total_debit, 2) }}</b>
+                <b>{{ number_format($d_bulan_lalu + $total_debit, 2, ',','.') }}</b>
             </td>
             <td align="right">
-                <b>{{ number_format($k_bulan_lalu + $total_kredit, 2) }}</b>
+                <b>{{ number_format($k_bulan_lalu + $total_kredit, 2, ',','.') }}</b>
             </td>
         </tr>
 
@@ -352,10 +352,10 @@
                 <b>Total Transaksi Komulatif sampai dengan Tahun {{ $tahun }}</b>
             </td>
             <td align="right">
-                <b>{{ number_format($saldo['debit'] + $d_bulan_lalu + $total_debit, 2) }}</b>
+                <b>{{ number_format($saldo['debit'] + $d_bulan_lalu + $total_debit, 2, ',','.') }}</b>
             </td>
             <td align="right">
-                <b>{{ number_format($saldo['kredit'] + $k_bulan_lalu + $total_kredit, 2) }}</b>
+                <b>{{ number_format($saldo['kredit'] + $k_bulan_lalu + $total_kredit, 2, ',','.') }}</b>
             </td>
         </tr>
     </tbody>

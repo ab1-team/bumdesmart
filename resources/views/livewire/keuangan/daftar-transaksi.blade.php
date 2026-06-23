@@ -37,7 +37,7 @@
                             <div class="text-muted small">{{ $payment->accountKredit->nama ?? '-' }}</div>
                         </td>
                         <td class="text-nowrap fw-bold">
-                            Rp {{ number_format($payment->total_harga, 0, ',', '.') }}
+                            Rp {{ number_format($payment->total_harga, 2, ',','.') }}
                         </td>
                         <td>
                             {{ $payment->catatan }}

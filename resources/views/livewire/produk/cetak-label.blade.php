@@ -16,7 +16,7 @@
                             <div class="shelf-tag-name">{{ $product->nama_produk }}</div>
                             <div class="shelf-tag-price-wrapper">
                                 <span class="shelf-tag-currency">Rp</span>
-                                <span class="shelf-tag-price">{{ number_format($product->harga_jual, 0, ',', '.') }}</span>
+                                <span class="shelf-tag-price">{{ number_format($product->harga_jual, 2, ',','.') }}</span>
                             </div>
                         </div>
                         <div class="shelf-tag-side">
@@ -62,7 +62,7 @@
                         </div>
 
                         @if ($showPrice)
-                            <div class="product-price">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</div>
+                            <div class="product-price">Rp {{ number_format($product->harga_jual, 2, ',','.') }}</div>
                         @endif
                     </div>
                 @endif

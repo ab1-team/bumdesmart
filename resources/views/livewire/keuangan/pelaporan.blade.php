@@ -73,6 +73,8 @@
                             <optgroup label="📦 Laporan Produk & Stok">
                                 <option value="laporanStok">Laporan Stok (Per Periode)</option>
                                 <option value="produkTerlaris">Laporan Produk Terlaris</option>
+                                <option value="penjualanProduk">Laporan Penjualan Produk</option>
+                                <option value="pembelianProduk">Laporan Pembelian Produk</option>
                                 <option value="marginProduk">Laporan Margin & Profitabilitas</option>
                                 <option value="inventoryTurnover">Laporan Inventory Turnover</option>
                                 <option value="stokOpname">Laporan Stok Opname</option>
@@ -94,8 +96,11 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end">
-                <button @click="openReport" class="btn btn-primary">
+            <div class="d-flex justify-content-end gap-2">
+                <button @click="openReportExcel" class="btn btn-success">
+                    Download Excel
+                </button>
+                <button @click="openReport" class="btn btn-secondary">
                     Preview (New Window)
                 </button>
             </div>
@@ -133,6 +138,17 @@
                             value: account.kode,
                             text: `${account.kode}. ${account.nama}`
                         });
+                    });
+                } else if (value === 'penjualanProduk') {
+                    this.daftarPelanggan.forEach(cus => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: `cus:${cus.id}`,
+                            text: `Pelanggan: ${cus.nama}`
+                        });
+                    });
+                    Select['jenis_sub_laporan'].addOption({
+                        value: '',
+                        text: 'Semua Produk'
                     });
                 } else if (value === 'penjualanHarian' || value === 'cashierReport') {
                     if (this.daftarUser.length > 1) {
@@ -218,6 +234,26 @@
                 });
 
                 window.open('/keuangan/pelaporan/cetak?' + params.toString(), '_blank');
+            },
+            openReportExcel() {
+                if (!this.jenis_laporan) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Silakan pilih nama laporan terlebih dahulu.'
+                    });
+
+                    return;
+                }
+
+                let params = new URLSearchParams({
+                    tahun: this.tahun,
+                    bulan: this.bulan,
+                    periode: this.periode,
+                    laporan: this.jenis_laporan,
+                    sub_laporan: this.jenis_sub_laporan
+                });
+
+                window.open('/keuangan/pelaporan/export?' + params.toString(), '_blank');
             }
         }
     }

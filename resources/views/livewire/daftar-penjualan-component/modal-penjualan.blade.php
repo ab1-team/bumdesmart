@@ -69,24 +69,24 @@
                                     <tr>
                                         <td class="text-center">{{ $loop->iteration }}</td>
                                         <td>{{ $saleDetail->product->nama_produk }}</td>
-                                        <td class="text-end">{{ number_format($saleDetail->harga_satuan, 0, ',', '.') }}
+                                        <td class="text-end">{{ number_format($saleDetail->harga_satuan, 2, ',','.') }}
                                         </td>
                                         <td class="text-center">{{ $saleDetail->jumlah }}</td>
                                         <td class="text-end">
                                             @if ($saleDetail->jenis_diskon == 'persen')
                                                 {{ $saleDetail->jumlah_diskon }}%
                                             @else
-                                                {{ number_format($saleDetail->jumlah_diskon, 0, ',', '.') }}
+                                                {{ number_format($saleDetail->jumlah_diskon, 2, ',','.') }}
                                             @endif
                                         </td>
                                         <td class="text-end">
                                             @if ($saleDetail->jenis_cashback == 'persen')
                                                 {{ $saleDetail->jumlah_cashback }}%
                                             @else
-                                                {{ number_format($saleDetail->jumlah_cashback, 0, ',', '.') }}
+                                                {{ number_format($saleDetail->jumlah_cashback, 2, ',','.') }}
                                             @endif
                                         </td>
-                                        <td class="text-end">{{ number_format($saleDetail->subtotal, 0, ',', '.') }}
+                                        <td class="text-end">{{ number_format($saleDetail->subtotal, 2, ',','.') }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -94,7 +94,7 @@
                             <tfoot>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total</td>
-                                    <td class="text-end fw-bold">{{ number_format($subtotal, 0, ',', '.') }}</td>
+                                    <td class="text-end fw-bold">{{ number_format($subtotal, 2, ',','.') }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Diskon</td>
@@ -102,7 +102,7 @@
                                         @if ($detailSale->jenis_diskon == 'persen')
                                             {{ $detailSale->jumlah_diskon }}%
                                         @else
-                                            {{ number_format($detailSale->jumlah_diskon, 0, ',', '.') }}
+                                            {{ number_format($detailSale->jumlah_diskon, 2, ',','.') }}
                                         @endif
                                     </td>
                                 </tr>
@@ -112,24 +112,24 @@
                                         @if ($detailSale->jenis_cashback == 'persen')
                                             {{ $detailSale->jumlah_cashback }}%
                                         @else
-                                            {{ number_format($detailSale->jumlah_cashback, 0, ',', '.') }}
+                                            {{ number_format($detailSale->jumlah_cashback, 2, ',','.') }}
                                         @endif
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total Keseluruhan</td>
-                                    <td class="text-end fw-bold">{{ number_format($detailSale->total, 0, ',', '.') }}
+                                    <td class="text-end fw-bold">{{ number_format($detailSale->total, 2, ',','.') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total Dibayar</td>
-                                    <td class="text-end fw-bold">{{ number_format($detailSale->dibayar, 0, ',', '.') }}
+                                    <td class="text-end fw-bold">{{ number_format($detailSale->dibayar, 2, ',','.') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Kembalian</td>
                                     <td class="text-end fw-bold">
-                                        {{ number_format($detailSale->kembalian, 0, ',', '.') }}
+                                        {{ number_format($detailSale->kembalian, 2, ',','.') }}
                                     </td>
                                 </tr>
                             </tfoot>

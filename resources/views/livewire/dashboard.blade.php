@@ -48,7 +48,7 @@
                     <div class="d-flex align-items-center">
                         <div class="subheader">Total Penjualan</div>
                     </div>
-                    <div class="h1 mb-1">Rp {{ number_format($totalSales, 0, ',', '.') }}</div>
+                    <div class="h1 mb-1">Rp {{ number_format($totalSales, 2, ',','.') }}</div>
                     <div class="d-flex align-items-center">
                         @if ($salesGrowth >= 0)
                             <span class="text-success d-inline-flex align-items-center lh-1">
@@ -84,7 +84,7 @@
                     <div class="d-flex align-items-center">
                         <div class="subheader">Total Profit</div>
                     </div>
-                    <div class="h1 mb-1 text-success">Rp {{ number_format($totalProfit, 0, ',', '.') }}</div>
+                    <div class="h1 mb-1 text-success">Rp {{ number_format($totalProfit, 2, ',','.') }}</div>
                     @if ($totalSales > 0)
                         <div class="text-muted">
                             Margin {{ round(($totalProfit / $totalSales) * 100, 1) }}%
@@ -101,7 +101,7 @@
                     </div>
                     <div class="h1 mb-1">{{ number_format($totalTransactions, 0) }}</div>
                     <div class="text-muted">
-                        Rata-rata Rp {{ number_format($avgTransaction, 0, ',', '.') }}
+                        Rata-rata Rp {{ number_format($avgTransaction, 2, ',','.') }}
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
                                         </div>
                                         <small class="text-muted">{{ number_format($item->total_qty, 0) }} terjual
                                             •
-                                            Rp {{ number_format($item->total_revenue, 0, ',', '.') }}</small>
+                                            Rp {{ number_format($item->total_revenue, 2, ',','.') }}</small>
                                     </div>
                                 </div>
                             @endforeach
@@ -205,7 +205,7 @@
                             <td class="fw-medium">{{ $item->product->nama_produk ?? '-' }}</td>
                             <td class="text-end">{{ number_format($item->total_qty, 0) }}</td>
                             <td class="text-end fw-bold text-success">Rp
-                                {{ number_format($item->total_revenue, 0, ',', '.') }}</td>
+                                {{ number_format($item->total_revenue, 2, ',','.') }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -243,7 +243,7 @@
                         <tr>
                             <td><code>{{ $tx->no_invoice }}</code></td>
                             <td>{{ $tx->customer->nama_pelanggan ?? 'Walk-in' }}</td>
-                            <td class="text-end fw-bold">Rp {{ number_format($tx->total, 0, ',', '.') }}</td>
+                            <td class="text-end fw-bold">Rp {{ number_format($tx->total, 2, ',','.') }}</td>
                             <td>
                                 @if ($tx->status == 'paid' || $tx->status == 'lunas')
                                     <span class="badge bg-success-lt">Lunas</span>

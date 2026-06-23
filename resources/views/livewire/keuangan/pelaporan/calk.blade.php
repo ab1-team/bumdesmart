@@ -60,7 +60,7 @@
                                 {{ $account->nama }}
                             </td>
                             <td style="border: 0; text-align: right; width: 30%; font-size: 0.9em;">
-                                {{ number_format($saldo, 2) }}
+                                {{ number_format($saldo, 2, '.', ',') }}
                             </td>
                         </tr>
                     @endforeach
@@ -72,7 +72,7 @@
                     Jumlah {{ $akunLevel1->nama }}
                 </td>
                 <td style="text-align: right; border: 0; font-weight: bold;">
-                    {{ number_format($saldoAkunLevel1[$akunLevel1->id], 2) }}
+                    {{ number_format($saldoAkunLevel1[$akunLevel1->id], 2, '.', ',') }}
                 </td>
             </tr>
 
@@ -92,7 +92,7 @@
                 Jumlah Liabilitas + Ekuitas
             </td>
             <td style="text-align: right; border: 0; font-weight: bold;">
-                {{ number_format($totalLiabilitasEkuitas, 2) }}
+                {{ number_format($totalLiabilitasEkuitas, 2, '.', ',') }}
             </td>
         </tr>
     </table>

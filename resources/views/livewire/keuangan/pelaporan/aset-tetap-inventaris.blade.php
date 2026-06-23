@@ -127,12 +127,12 @@
                             </td>
                             <td style="border: 1px solid #000; padding: 3px;" align="center">{{ $inv->jumlah }}</td>
                             <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                {{ number_format($inv->harga_satuan, 2) }}</td>
+                                {{ number_format($inv->harga_satuan, 2, '.', ',') }}</td>
                             <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                {{ number_format($inv->harga_satuan * $inv->jumlah, 2) }}</td>
+                                {{ number_format($inv->harga_satuan * $inv->jumlah, 2, '.', ',') }}</td>
                             <td style="border: 1px solid #000; padding: 3px;" colspan="6"></td>
                             <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                {{ number_format($nilai_buku, 2) }}</td>
+                                {{ number_format($nilai_buku, 2, '.', ',') }}</td>
                         @else
                             {{-- Golongan dengan Penyusutan --}}
                             @php
@@ -225,21 +225,21 @@
                                     {{ ucfirst($inv->status) }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="center">{{ $inv->jumlah }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                    {{ number_format($inv->harga_satuan, 2) }}</td>
+                                    {{ number_format($inv->harga_satuan, 2, '.', ',') }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                    {{ number_format($inv->harga_satuan * $inv->jumlah, 2) }}</td>
+                                    {{ number_format($inv->harga_satuan * $inv->jumlah, 2, '.', ',') }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="center">
                                     {{ $inv->umur_ekonomis }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                    {{ number_format($_satuan_susut, 2) }}</td>
+                                    {{ number_format($_satuan_susut, 2, '.', ',') }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="center">{{ $umur_pakai }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                    {{ number_format($penyusutan, 2) }}</td>
+                                    {{ number_format($penyusutan, 2, '.', ',') }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="center">{{ $akum_umur }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                    {{ number_format($akum_susut, 2) }}</td>
+                                    {{ number_format($akum_susut, 2, '.', ',') }}</td>
                                 <td style="border: 1px solid #000; padding: 3px;" align="right">
-                                    {{ number_format($nilai_buku, 2) }}</td>
+                                    {{ number_format($nilai_buku, 2, '.', ',') }}</td>
                             @endif
                         @endif
                     </tr>
@@ -252,16 +252,16 @@
                         </td>
                         <td style="border: 1px solid #000; padding: 3px;" align="center">{{ $j_unit }}</td>
                         <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
-                        <td style="border: 1px solid #000; padding: 3px;" align="right">{{ number_format($j_harga, 2) }}
+                        <td style="border: 1px solid #000; padding: 3px;" align="right">{{ number_format($j_harga, 2, '.', ',') }}
                         </td>
                         <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
                         <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
                         <td style="border: 1px solid #000; padding: 3px;" align="right" colspan="2">
-                            {{ number_format($j_penyusutan, 2) }}</td>
+                            {{ number_format($j_penyusutan, 2, '.', ',') }}</td>
                         <td style="border: 1px solid #000; padding: 3px;" align="right" colspan="2">
-                            {{ number_format($j_akum_susut, 2) }}</td>
+                            {{ number_format($j_akum_susut, 2, '.', ',') }}</td>
                         <td style="border: 1px solid #000; padding: 3px;" align="right">
-                            {{ number_format($j_nilai_buku, 2) }}</td>
+                            {{ number_format($j_nilai_buku, 2, '.', ',') }}</td>
                     </tr>
                 @endif
 
@@ -274,7 +274,7 @@
                     </td>
                     <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
                     <td style="border: 1px solid #000; padding: 3px;" align="right">
-                        <b>{{ number_format($t_harga, 2) }}</b>
+                        <b>{{ number_format($t_harga, 2, '.', ',') }}</b>
                     </td>
                     @if ($kategori == 1)
                         <td style="border: 1px solid #000; padding: 3px;" colspan="6">&nbsp;</td>
@@ -283,15 +283,15 @@
                         <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
                         <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
                         <td style="border: 1px solid #000; padding: 3px;" align="right">
-                            <b>{{ number_format($t_penyusutan, 2) }}</b>
+                            <b>{{ number_format($t_penyusutan, 2, '.', ',') }}</b>
                         </td>
                         <td style="border: 1px solid #000; padding: 3px;">&nbsp;</td>
                         <td style="border: 1px solid #000; padding: 3px;" align="right">
-                            <b>{{ number_format($t_akum_susut, 2) }}</b>
+                            <b>{{ number_format($t_akum_susut, 2, '.', ',') }}</b>
                         </td>
                     @endif
                     <td style="border: 1px solid #000; padding: 3px;" align="right">
-                        <b>{{ number_format($t_nilai_buku, 2) }}</b>
+                        <b>{{ number_format($t_nilai_buku, 2, '.', ',') }}</b>
                     </td>
                 </tr>
             </tbody>

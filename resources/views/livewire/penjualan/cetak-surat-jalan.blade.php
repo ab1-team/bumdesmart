@@ -218,14 +218,14 @@
                         <td>{{ $item->product->barcode ?? $item->product->sku ?? '-' }}</td>
                         <td>{{ $item->product->nama_produk ?? 'Produk' }}</td>
                         <td class="text-center">@1 {{ $item->product->unit->nama_satuan ?? 'PCS' }}</td>
-                        <td class="text-right">{{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($item->jumlah, 2, ',','.') }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
 
         <div class="fw-bold" style="text-align: right; margin-right: 2px; font-size: 8px;">
-            Total Qty {{ number_format($totalQty, 0, ',', '.') }}
+            Total Qty {{ number_format($totalQty, 2, ',','.') }}
         </div>
 
         <!-- Footer -->

@@ -16,7 +16,7 @@
                 @endphp
                 <option value="{{ $inv->id }}#{{ $inv->unit }}#{{ $nilai_buku }}">
                     {{ $inv->id }}. {{ $inv->nama_barang }} ({{ $inv->unit }} unit x
-                    {{ number_format($inv->harsat) }}) | NB. {{ number_format($nilai_buku, 2) }}
+                    {{ number_format($inv->harsat, 2, ',', '.') }}) | NB. {{ number_format($nilai_buku, 2, ',', '.') }}
                 </option>
             @endforeach
         </select>

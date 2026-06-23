@@ -66,7 +66,7 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center text-danger text-gradient text-sm font-weight-bold">
-                            - Rp. {{ number_format($trx->jumlah, 2) }}
+                            - Rp. {{ number_format($trx->jumlah, 2, ',','.') }}
                         </div>
                     </li>
                     <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
@@ -82,7 +82,7 @@
                             </div>
                         </div>
                         <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
-                            + Rp. {{ number_format($trx->jumlah, 2) }}
+                            + Rp. {{ number_format($trx->jumlah, 2, ',','.') }}
                         </div>
                     </li>
                 </ul>

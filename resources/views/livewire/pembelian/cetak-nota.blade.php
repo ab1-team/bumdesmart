@@ -221,9 +221,9 @@
                     <tr>
                         <td>{{ $item->product->barcode ?? $item->product->sku ?? '-' }}</td>
                         <td>{{ $item->product->nama_produk ?? 'Produk' }}</td>
-                        <td class="text-right">{{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
-                        <td class="text-center">{{ number_format($item->jumlah, 0, ',', '.') }}</td>
-                        <td class="text-right">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($item->harga_satuan, 2, ',','.') }}</td>
+                        <td class="text-center">{{ number_format($item->jumlah, 2, ',','.') }}</td>
+                        <td class="text-right">{{ number_format($item->subtotal, 2, ',','.') }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -236,30 +236,30 @@
                     <tr>
                         <td style="text-align: left;">Subtotal</td>
                         <td style="text-align: center; width: 10px;">:</td>
-                        <td class="text-right">{{ number_format($purchase->subtotal, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($purchase->subtotal, 2, ',','.') }}</td>
                     </tr>
                     @if ($purchase->jumlah_diskon > 0)
                     <tr>
                         <td style="text-align: left;">Diskon</td>
                         <td style="text-align: center;">:</td>
-                        <td class="text-right">-{{ number_format($purchase->jumlah_diskon, 0, ',', '.') }}</td>
+                        <td class="text-right">-{{ number_format($purchase->jumlah_diskon, 2, ',','.') }}</td>
                     </tr>
                     @endif
                     <tr class="fw-bold" style="border-top: 1px solid #000;">
                         <td style="text-align: left;">TOTAL</td>
                         <td style="text-align: center;">:</td>
-                        <td class="text-right">{{ number_format($purchase->total, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($purchase->total, 2, ',','.') }}</td>
                     </tr>
                     <tr>
                         <td style="text-align: left;">Dibayar</td>
                         <td style="text-align: center;">:</td>
-                        <td class="text-right">{{ number_format($purchase->dibayar, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($purchase->dibayar, 2, ',','.') }}</td>
                     </tr>
                     @if($purchase->jumlah_utang > 0)
                     <tr class="fw-bold">
                         <td style="text-align: left;">Sisa Hutang</td>
                         <td style="text-align: center;">:</td>
-                        <td class="text-right">{{ number_format($purchase->jumlah_utang, 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($purchase->jumlah_utang, 2, ',','.') }}</td>
                     </tr>
                     @endif
                 </table>

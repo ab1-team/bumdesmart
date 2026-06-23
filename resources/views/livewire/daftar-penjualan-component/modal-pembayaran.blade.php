@@ -35,7 +35,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $payment['no_referensi'] ?? '-' }}</td>
-                                    <td>{{ number_format($payment['total_harga']) }}</td>
+                                    <td>{{ number_format($payment['total_harga'], 2, ',', '.') }}</td>
                                     <td>
                                         <button class="btn btn-danger btn-sm"
                                             x-on:click="deletePayment({{ $payment['id'] }})">

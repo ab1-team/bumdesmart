@@ -60,9 +60,9 @@
                                 <tr>
                                     <td class="text-center">{{ $loop->iteration }}</td>
                                     <td>{{ $salesReturnDetails->product->nama_produk }}</td>
-                                    <td class="text-end">{{ number_format($salesReturnDetails->harga_satuan) }}</td>
+                                    <td class="text-end">{{ number_format($salesReturnDetails->harga_satuan, 2, ',', '.') }}</td>
                                     <td class="text-center">{{ $salesReturnDetails->jumlah }}</td>
-                                    <td class="text-end">{{ number_format($salesReturnDetails->sub_total) }}</td>
+                                    <td class="text-end">{{ number_format($salesReturnDetails->sub_total, 2, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
