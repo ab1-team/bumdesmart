@@ -106,13 +106,24 @@ class KeuanganUtil
             'sd' => $vPenjualan['sd'] - $vDiskonPenj['sd'] - $vReturPenj['sd'] - $vCashbackPenj['sd'],
         ];
 
+        // Persediaan Awal = saldo s/d akhir bulan kemarin
         $vPersediaanAwal = [
-            'lalu' => $getS('1.1.03.01', $bulanInt - 2), // SD month-2
-            'ini' => $getS('1.1.03.01', $bulanInt - 1) - $getS('1.1.03.01', $bulanInt - 2),
-            'sd' => $getS('1.1.03.01', $bulanInt - 1),
+            'lalu' => $getS('1.1.03.01', $bulanInt - 1),
+            'ini'  => 0,
+            'sd'   => $getS('1.1.03.01', $bulanInt - 1),
         ];
-        
-        $vPembelian = $getV('1.1.03.01');
+
+        // Pembelian = pertambahan persediaan bulan ini (debit - kredit bulan ini)
+        $saldoSdBulanIni    = $getS('1.1.03.01', $bulanInt);
+        $saldoSdBulanLalu   = $getS('1.1.03.01', $bulanInt - 1);
+        $pembelianBulanIni  = $saldoSdBulanIni - $saldoSdBulanLalu;
+
+        $vPembelian = [
+            'lalu' => 0,
+            'ini'  => $pembelianBulanIni,
+            'sd'   => $pembelianBulanIni,
+        ];
+
         $vDiskonPemb = $getV('5.1.01.02');
         $vReturPemb = $getV('5.1.01.03');
         $vCashbackPemb = $getV('5.1.01.06');
@@ -131,7 +142,13 @@ class KeuanganUtil
             'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
         ];
 
-        $vPersediaanAkhir = $getV('1.1.03.01');
+        // Persediaan Akhir = saldo 1.1.03.01 s/d bulan ini (sama dengan buku besar)
+        $vPersediaanAkhir = [
+            'lalu' => $saldoSdBulanLalu,
+            'ini'  => $pembelianBulanIni,
+            'sd'   => $saldoSdBulanIni,
+        ];
+
         $hpp = [
             'lalu' => $totalPersediaan['lalu'] - $vPersediaanAkhir['lalu'],
             'ini' => $totalPersediaan['ini'] - $vPersediaanAkhir['ini'],
