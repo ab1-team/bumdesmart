@@ -106,22 +106,45 @@ class KeuanganUtil
             'sd' => $vPenjualan['sd'] - $vDiskonPenj['sd'] - $vReturPenj['sd'] - $vCashbackPenj['sd'],
         ];
 
-        // Persediaan Awal = saldo s/d akhir bulan kemarin
+        // HPP untuk satu periode (s/d bulanEnd):
+        //   Persediaan Awal   = saldo 1.1.03.01 s/d akhir bulan (bulanEnd - 1)
+        //   Pembelian         = pertambahan 1.1.03.01 selama bulanEnd
+        //   Persediaan Akhir  = saldo 1.1.03.01 s/d akhir bulan bulanEnd
+        //   HPP               = Persediaan Awal + Pembelian - Persediaan Akhir
+        $hitungHPP = function ($bulanEnd) use ($getS) {
+            $saldoSdBulanIni  = $getS('1.1.03.01', $bulanEnd);
+            $saldoSdBulanLalu = $getS('1.1.03.01', $bulanEnd - 1);
+            $persediaanAwal   = $saldoSdBulanLalu;
+            $pembelian        = $saldoSdBulanIni - $saldoSdBulanLalu;
+            $persediaanAkhir  = $saldoSdBulanIni;
+            return [
+                'persediaan_awal'  => $persediaanAwal,
+                'pembelian'        => $pembelian,
+                'persediaan_akhir' => $persediaanAkhir,
+            ];
+        };
+
+        $hppLalu = $hitungHPP($bulanInt - 1);
+        $hppIni  = $hitungHPP($bulanInt);
+
+        // Untuk "bulan lalu" dan "s.d bulan ini", HPP dihitung langsung dari helper.
+        // Untuk "bulan ini" = selisih.
         $vPersediaanAwal = [
-            'lalu' => $getS('1.1.03.01', $bulanInt - 1),
-            'ini'  => 0,
-            'sd'   => $getS('1.1.03.01', $bulanInt - 1),
+            'lalu' => $hppLalu['persediaan_awal'],
+            'ini'  => $hppIni['persediaan_awal'] - $hppLalu['persediaan_awal'],
+            'sd'   => $hppIni['persediaan_awal'],
         ];
 
-        // Pembelian = pertambahan persediaan bulan ini (debit - kredit bulan ini)
-        $saldoSdBulanIni    = $getS('1.1.03.01', $bulanInt);
-        $saldoSdBulanLalu   = $getS('1.1.03.01', $bulanInt - 1);
-        $pembelianBulanIni  = $saldoSdBulanIni - $saldoSdBulanLalu;
+        $vPersediaanAkhir = [
+            'lalu' => $hppLalu['persediaan_akhir'],
+            'ini'  => $hppIni['persediaan_akhir'] - $hppLalu['persediaan_akhir'],
+            'sd'   => $hppIni['persediaan_akhir'],
+        ];
 
         $vPembelian = [
-            'lalu' => 0,
-            'ini'  => $pembelianBulanIni,
-            'sd'   => $pembelianBulanIni,
+            'lalu' => $hppLalu['pembelian'],
+            'ini'  => $hppIni['pembelian'] - $hppLalu['pembelian'],
+            'sd'   => $hppIni['pembelian'],
         ];
 
         $vDiskonPemb = $getV('5.1.01.02');
@@ -140,13 +163,6 @@ class KeuanganUtil
             'lalu' => $vPersediaanAwal['lalu'] + $pembelianBersih['lalu'],
             'ini' => $vPersediaanAwal['ini'] + $pembelianBersih['ini'],
             'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
-        ];
-
-        // Persediaan Akhir = saldo 1.1.03.01 s/d bulan ini (sama dengan buku besar)
-        $vPersediaanAkhir = [
-            'lalu' => $saldoSdBulanLalu,
-            'ini'  => $pembelianBulanIni,
-            'sd'   => $saldoSdBulanIni,
         ];
 
         $hpp = [
