@@ -113,7 +113,7 @@ class KeuanganUtil
                 ->where('rekening_debit', '1.1.03.01')
                 ->whereYear('tanggal_pembayaran', $tahun)
                 ->whereMonth('tanggal_pembayaran', '<=', $bulanEnd)
-                ->sum('nominal');
+                ->sum('total_harga');
         };
 
         // s.d bulan lalu = debit Jan..bulanLalu
