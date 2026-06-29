@@ -299,12 +299,12 @@
         /* Custom 50x18mm (L 5cm x T 1,8cm) */
         .size-custom_50_18 {
             grid-template-columns: repeat(3, 50mm);
-            column-gap: 1mm;
-            row-gap: 1mm;
+            column-gap: 0.5mm;
+            row-gap: 0.5mm;
             padding: 2mm 1mm 2mm 1mm;
-            width: 154mm;
+            width: 152.5mm;
         }
-        .size-custom_50_18 .label-item { width: 50mm; height: 20mm; padding: 1mm 0.5mm 0.5mm 0.5mm; }
+        .size-custom_50_18 .label-item { width: 50mm; height: 19mm; padding: 1.5mm 0.5mm 0.5mm 0.5mm; }
         .size-custom_50_18 .product-name { font-size: 6pt; line-height: 1; max-height: 1.2em; margin-bottom: 0.2mm; }
         .size-custom_50_18 .product-price { font-size: 7pt; margin-top: 0.2mm; }
         .size-custom_50_18 .barcode-wrapper svg { height: 18px !important; }
