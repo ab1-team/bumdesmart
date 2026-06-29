@@ -349,6 +349,8 @@
                                 <optgroup label="Label Rak (Kertas/Karton)">
                                     <option value="shelf_80_40">Label Rak (80x40mm)</option>
                                     <option value="shelf_90_55">Label Rak (90x55mm) - Kartu Nama</option>
+                                    <option value="custom_50_18">Custom (50x18mm) - L 5cm x T 1,8cm</option>
+                                    <option value="custom_30_1">Custom (3x1mm) - Sangat Kecil</option>
                                 </optgroup>
                             </select>
                         </div>

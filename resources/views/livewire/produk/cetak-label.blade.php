@@ -296,6 +296,36 @@
         .size-shelf_90_55 .shelf-tag-price { font-size: 32pt; }
         .size-shelf_90_55 .shelf-tag-name { font-size: 14pt; }
 
+        /* Custom 50x18mm (L 5cm x T 1,8cm) */
+        .size-custom_50_18 {
+            grid-template-columns: repeat(3, 50mm);
+            column-gap: 2.5mm;
+            row-gap: 3mm;
+            padding: 5mm 3mm;
+            width: 165mm;
+        }
+        .size-custom_50_18 .label-item { width: 50mm; height: 18mm; padding: 0.5mm; }
+        .size-custom_50_18 .product-name { font-size: 6pt; line-height: 1; max-height: 1.2em; margin-bottom: 0.2mm; }
+        .size-custom_50_18 .product-price { font-size: 7pt; margin-top: 0.2mm; }
+        .size-custom_50_18 .barcode-wrapper svg { height: 18px !important; }
+        .size-custom_50_18 .qrcode { width: 12mm !important; height: 12mm !important; }
+        .size-custom_50_18 .qrcode img,
+        .size-custom_50_18 .qrcode canvas { width: 12mm !important; height: 12mm !important; }
+
+        /* Custom 3mm x 1mm (Sangat Kecil - micro strip) */
+        .size-custom_30_1 {
+            grid-template-columns: repeat(20, 3mm);
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 3mm 2mm;
+            width: 85mm;
+        }
+        .size-custom_30_1 .label-item { width: 3mm; height: 1mm; padding: 0; border: none; overflow: hidden; }
+        .size-custom_30_1 .product-name,
+        .size-custom_30_1 .product-price,
+        .size-custom_30_1 .qrcode { display: none !important; }
+        .size-custom_30_1 .barcode-wrapper { display: none !important; }
+
         @media print {
             @page {
                 size: auto;
