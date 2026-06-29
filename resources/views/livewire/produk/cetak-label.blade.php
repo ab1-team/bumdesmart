@@ -301,10 +301,10 @@
             grid-template-columns: repeat(3, 50mm);
             column-gap: 1mm;
             row-gap: 1mm;
-            padding: 2mm 1mm;
+            padding: 2mm 1mm 2mm 1mm;
             width: 154mm;
         }
-        .size-custom_50_18 .label-item { width: 50mm; height: 18mm; padding: 0.5mm; }
+        .size-custom_50_18 .label-item { width: 50mm; height: 20mm; padding: 1mm 0.5mm 0.5mm 0.5mm; }
         .size-custom_50_18 .product-name { font-size: 6pt; line-height: 1; max-height: 1.2em; margin-bottom: 0.2mm; }
         .size-custom_50_18 .product-price { font-size: 7pt; margin-top: 0.2mm; }
         .size-custom_50_18 .barcode-wrapper svg { height: 18px !important; }
