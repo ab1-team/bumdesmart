@@ -88,9 +88,9 @@
             align-items: center;
             justify-content: center;
             background: white;
-            border: 1px dashed #ccc;
+            border: 1px solid #ccc;
             box-sizing: border-box;
-            padding: 1mm;
+            padding: 0.5mm;
             text-align: center;
             overflow: hidden;
             page-break-inside: avoid;
@@ -127,35 +127,35 @@
         /* --- Precise T&J / Kojiko Size Definitions --- */
 
         /* No. 107 (18x50mm) - 3 Columns */
-        .size-107 { 
-            grid-template-columns: repeat(3, 50mm); 
-            column-gap: 2.5mm;
-            row-gap: 5mm;
-            padding: 5mm 3mm;
-            width: 165mm; 
+        .size-107 {
+            grid-template-columns: repeat(3, 50mm);
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 2mm 1mm;
+            width: 154mm;
         }
         .size-107 .label-item { width: 50mm; height: 18mm; }
         .size-107 .barcode-wrapper svg { height: 25px !important; }
 
         /* No. 108 (18x38mm) - 4 Columns */
-        .size-108 { 
-            grid-template-columns: repeat(4, 38mm); 
-            column-gap: 2.5mm;
-            row-gap: 5mm;
-            padding: 5mm 3mm;
-            width: 165mm; 
+        .size-108 {
+            grid-template-columns: repeat(4, 38mm);
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 2mm 1mm;
+            width: 156mm;
         }
         .size-108 .label-item { width: 38mm; height: 18.5mm; }
         .size-108 .product-name { font-size: 6pt; }
         .size-108 .barcode-wrapper svg { height: 22px !important; }
 
         /* No. 103 (32x64mm) - 2 Columns */
-        .size-103 { 
-            grid-template-columns: repeat(2, 64mm); 
-            column-gap: 3.5mm;
-            row-gap: 5mm;
-            padding: 8mm 4mm;
-            width: 165mm; 
+        .size-103 {
+            grid-template-columns: repeat(2, 64mm);
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 2mm 1mm;
+            width: 132mm;
         }
         .size-103 .label-item { width: 64mm; height: 32mm; padding: 2mm; }
         .size-103 .product-name { font-size: 9pt; }
@@ -163,12 +163,12 @@
         .size-103 .barcode-wrapper svg { height: 45px !important; }
 
         /* No. 121 (38x75mm) - 2 Columns */
-        .size-121 { 
-            grid-template-columns: repeat(2, 75mm); 
-            column-gap: 3.5mm;
-            row-gap: 5mm;
-            padding: 8mm 4mm;
-            width: 165mm; 
+        .size-121 {
+            grid-template-columns: repeat(2, 75mm);
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 2mm 1mm;
+            width: 154mm;
         }
         .size-121 .label-item { width: 75mm; height: 38mm; padding: 2mm; }
         .size-121 .product-name { font-size: 10pt; }
@@ -176,11 +176,11 @@
         .size-121 .barcode-wrapper svg { height: 55px !important; }
 
         /* No. 123 (12x30mm) - 6 Columns */
-        .size-123 { 
-            grid-template-columns: repeat(6, 30mm); 
-            gap: 1mm;
-            padding: 5mm 1mm;
-            width: 190mm; 
+        .size-123 {
+            grid-template-columns: repeat(6, 30mm);
+            gap: 0.5mm;
+            padding: 2mm 1mm;
+            width: 184mm;
         }
         .size-123 .label-item { width: 30mm; height: 12mm; padding: 0.5mm; }
         .size-123 .product-name { font-size: 5pt; }
@@ -188,11 +188,11 @@
         .size-123 .barcode-wrapper svg { height: 14px !important; }
 
         /* A4 Bulk (3 columns x 9 rows) */
-        .size-A4_3_9 { 
-            grid-template-columns: repeat(3, 63mm); 
-            gap: 2mm;
-            padding: 10mm;
-            width: 210mm; 
+        .size-A4_3_9 {
+            grid-template-columns: repeat(3, 63mm);
+            gap: 1mm;
+            padding: 5mm;
+            width: 200mm;
         }
         .size-A4_3_9 .label-item { width: 63mm; height: 30mm; padding: 2mm; }
         .size-A4_3_9 .barcode-wrapper svg { height: 40px !important; }
@@ -278,19 +278,19 @@
         /* --- Shelf Tag Sizes --- */
         .size-shelf_80_40 {
             grid-template-columns: repeat(2, 80mm);
-            column-gap: 5mm;
-            row-gap: 5mm;
-            padding: 10mm;
-            width: 180mm;
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 3mm;
+            width: 167mm;
         }
         .size-shelf_80_40 .shelf-tag-item { width: 80mm; height: 40mm; }
 
         .size-shelf_90_55 {
             grid-template-columns: repeat(2, 90mm);
-            column-gap: 5mm;
-            row-gap: 5mm;
-            padding: 10mm;
-            width: 200mm;
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 3mm;
+            width: 187mm;
         }
         .size-shelf_90_55 .shelf-tag-item { width: 90mm; height: 55mm; }
         .size-shelf_90_55 .shelf-tag-price { font-size: 32pt; }
@@ -299,10 +299,10 @@
         /* Custom 50x18mm (L 5cm x T 1,8cm) */
         .size-custom_50_18 {
             grid-template-columns: repeat(3, 50mm);
-            column-gap: 2.5mm;
-            row-gap: 3mm;
-            padding: 5mm 3mm;
-            width: 165mm;
+            column-gap: 1mm;
+            row-gap: 1mm;
+            padding: 2mm 1mm;
+            width: 154mm;
         }
         .size-custom_50_18 .label-item { width: 50mm; height: 18mm; padding: 0.5mm; }
         .size-custom_50_18 .product-name { font-size: 6pt; line-height: 1; max-height: 1.2em; margin-bottom: 0.2mm; }
@@ -315,10 +315,10 @@
         /* Custom 3mm x 1mm (Sangat Kecil - micro strip) */
         .size-custom_30_1 {
             grid-template-columns: repeat(20, 3mm);
-            column-gap: 1mm;
-            row-gap: 1mm;
-            padding: 3mm 2mm;
-            width: 85mm;
+            column-gap: 0.5mm;
+            row-gap: 0.5mm;
+            padding: 1mm;
+            width: 70mm;
         }
         .size-custom_30_1 .label-item { width: 3mm; height: 1mm; padding: 0; border: none; overflow: hidden; }
         .size-custom_30_1 .product-name,
@@ -339,11 +339,13 @@
             }
             .no-print { display: none !important; }
             .label-item { border: none !important; }
-            .label-container { 
+            .label-container {
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
             }
+            .label-item { border: none !important; padding: 0 !important; }
+            .size-custom_30_1 .label-item { border: none !important; }
         }
     </style>
 
