@@ -27,12 +27,12 @@
         }
 
         .header-logo {
-            width: 160px;
+            width: 110px;
         }
 
         .header-logo img {
-            max-width: 150px;
-            max-height: 150px;
+            max-width: 100px;
+            max-height: 90px;
         }
 
         .header-title {
@@ -42,7 +42,7 @@
         }
 
         .header-title h1 {
-            font-size: 18pt;
+            font-size: 14pt;
             margin: 0 0 6px;
             font-weight: bold;
             color: #1f5f6f;
@@ -179,7 +179,7 @@
             font-size: 11pt;
             font-weight: bold;
             color: #1f5f6f;
-            margin: 70px 0 10px;
+            margin: 6px 0 8px;
             text-align: left;
             letter-spacing: 0.5px;
         }
@@ -256,8 +256,6 @@
         .footer-right {
             text-align: center;
             width: 45%;
-            position: relative;
-            min-height: 180px;
         }
 
         .footer-right > div,
@@ -274,20 +272,13 @@
         }
 
         .footer-right .nama {
-            position: absolute;
-            bottom: 40px;
-            left: 0;
-            right: 0;
+            margin-top: 6px;
             padding-bottom: 2px;
             font-weight: bold;
-            display: block;
-            letter-spacing: 0.5px;
-            z-index: 2;
-        }
-
-        .footer-right .nama span {
             display: inline-block;
-            padding: 0 8px;
+            border-bottom: 1.5px solid #000;
+            border-radius: 2px;
+            letter-spacing: 0.5px;
         }
 
         .keterangan-box {

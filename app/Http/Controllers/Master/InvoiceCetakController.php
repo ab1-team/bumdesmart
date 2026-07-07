@@ -66,9 +66,7 @@ class InvoiceCetakController extends Controller
             ->setOption('margin-bottom', '20mm')
             ->setOption('margin-left', '15mm')
             ->setOption('margin-right', '15mm')
-            ->setOption('enable-local-file-access', true)
-            ->setOption('disable-smart-shrinking', true)
-            ->setOption('print-media-type', true);
+            ->setOption('enable-local-file-access', true);
 
         return $pdf->inline('invoice-'.$invoice->no.'.pdf');
     }
