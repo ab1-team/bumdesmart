@@ -1,5 +1,8 @@
 <div>
     <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Invoice</h3>
+        </div>
         <div class="card-body">
             <div class="row justify-content-between mb-3">
                 <div class="col-md-4">
@@ -39,44 +42,58 @@
                 </div>
             </div>
 
-            <x-table :headers="$headers" :results="$invoices" :sortColumn="$sortBy" :sortDirection="$sortDirection">
-                @forelse ($invoices as $invoice)
-                    <tr style="cursor:pointer;" onclick="window.open('/keuangan/invoice/{{ $invoice->id }}/cetak', '_blank')">
-                        <td class="text-center">
-                            <span class="badge bg-blue-lt">{{ $invoice->no }}</span>
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">{{ $invoice->jenis_pembayaran }}</span>
-                        </td>
-                        <td class="text-nowrap">
-                            {{ \Carbon\Carbon::parse($invoice->tanggal_invoice)->format('d/m/Y') }}
-                        </td>
-                        <td class="text-nowrap fw-bold">
-                            Rp {{ number_format($invoice->tagihan, 0, ',', '.') }}
-                        </td>
-                        <td class="text-nowrap">
-                            Rp {{ number_format($invoice->saldo, 0, ',', '.') }}
-                        </td>
-                        <td>
-                            @if ($invoice->status === 'PAID')
-                                <span class="badge bg-success">PAID</span>
-                            @elseif ($invoice->status === 'PARTIAL')
-                                <span class="badge bg-info">PARTIAL</span>
-                            @elseif ($invoice->status === 'UNPAID')
-                                <span class="badge bg-warning">UNPAID</span>
-                            @else
-                                <span class="badge bg-secondary">{{ $invoice->status }}</span>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">
-                            Tidak ada invoice ditemukan.
-                        </td>
-                    </tr>
-                @endforelse
-            </x-table>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Jenis Pembayaran</th>
+                            <th>Tanggal</th>
+                            <th>Tagihan</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($invoices as $invoice)
+                            <tr style="cursor:pointer;" onclick="window.open('/keuangan/invoice/{{ $invoice->id }}/cetak', '_blank')">
+                                <td>
+                                    <span class="badge bg-blue-lt">{{ $invoice->no }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ $invoice->jenis_pembayaran }}</span>
+                                </td>
+                                <td class="text-nowrap">
+                                    {{ \Carbon\Carbon::parse($invoice->tanggal_invoice)->format('d/m/Y') }}
+                                </td>
+                                <td class="fw-bold">
+                                    Rp {{ number_format($invoice->tagihan, 0, ',', '.') }}
+                                </td>
+                                <td>
+                                    @if ($invoice->status === 'PAID')
+                                        <span class="badge bg-success">PAID</span>
+                                    @elseif ($invoice->status === 'PARTIAL')
+                                        <span class="badge bg-info">PARTIAL</span>
+                                    @elseif ($invoice->status === 'UNPAID')
+                                        <span class="badge bg-warning">UNPAID</span>
+                                    @else
+                                        <span class="badge bg-secondary">{{ $invoice->status }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    Tidak ada invoice ditemukan.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                {{ $invoices->links() }}
+            </div>
         </div>
     </div>
 </div>

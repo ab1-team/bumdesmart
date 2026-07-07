@@ -26,7 +26,6 @@ class InvoicePage extends Component
         ['key' => 'jenis_pembayaran', 'label' => 'Jenis Pembayaran', 'sortable' => true],
         ['key' => 'tanggal_invoice', 'label' => 'Tanggal Invoice', 'sortable' => true],
         ['key' => 'tagihan', 'label' => 'Tagihan', 'sortable' => true],
-        ['key' => 'saldo', 'label' => 'Saldo', 'sortable' => true],
         ['key' => 'status', 'label' => 'Status', 'sortable' => true],
     ];
 
@@ -73,7 +72,10 @@ class InvoicePage extends Component
 
     public function render()
     {
-        $invoices = Invoice::where('business_id', auth()->user()->business_id)
+        $invoices = Invoice::with('business.owner')
+            ->whereHas('business', function ($q) {
+                $q->where('id', auth()->user()->business_id);
+            })
             ->where(function ($q) {
                 $q->where('no', 'like', '%' . $this->search . '%')
                     ->orWhere('jenis_pembayaran', 'like', '%' . $this->search . '%');
