@@ -37,6 +37,10 @@ class InvoiceCetakController extends Controller
         $fileUrlLunas = $this->toFileUrl($logoLunas);
         $fileUrlTtd = $this->toFileUrl($ttdSantoso);
 
+        $logoUrlAbt = url('assets/img/logo/logo_abt.png');
+        $logoUrlLunas = url('assets/img/logo/lunas.png');
+        $logoUrlTtd = url('assets/img/logo/ttd_santoso.png');
+
         $sisaTagihan = max(0, (int) $invoice->tagihan - (int) $invoice->saldo);
 
         $data = [
@@ -49,6 +53,9 @@ class InvoiceCetakController extends Controller
             'fileUrlAbt' => $fileUrlAbt,
             'fileUrlLunas' => $fileUrlLunas,
             'fileUrlTtd' => $fileUrlTtd,
+            'logoUrlAbt' => $logoUrlAbt,
+            'logoUrlLunas' => $logoUrlLunas,
+            'logoUrlTtd' => $logoUrlTtd,
         ];
 
         $html = view('livewire.master.pdf.invoice', $data)->render();
