@@ -35,6 +35,9 @@
                             <a href="/master/business?owner_id={{ $owner->id }}" class="btn btn-sm btn-outline-info">
                                 <i class="fas fa-store"></i> Kelola Bisnis
                             </a>
+                            <button class="btn btn-sm btn-success" wire:click="buatInvoice('{{ $owner->id }}')">
+                                <i class="fas fa-file-invoice"></i> Buat Invoice
+                            </button>
                             <button class="btn btn-sm btn-primary" wire:click="edit('{{ $owner->id }}')">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
@@ -118,4 +121,6 @@
             </div>
         </div>
     </div>
+
+    @livewire('master.master-invoice-create')
 </div>

@@ -55,6 +55,8 @@ foreach (config('tenancy.central_domains') as $domain) {
 }
 
 use App\Livewire\Master\MasterDashboard;
+use App\Livewire\Master\MasterInvoice;
+use App\Http\Controllers\Master\InvoiceCetakController;
 
 // === MASTER ROUTES ===
 Route::group([
@@ -64,6 +66,8 @@ Route::group([
     Route::get('/dashboard', MasterDashboard::class);
     Route::get('/owner', MasterOwner::class);
     Route::get('/business', MasterBusiness::class);
+    Route::get('/invoice', MasterInvoice::class);
+    Route::get('/invoice/{invoiceId}/{ownerId}/cetak', [InvoiceCetakController::class, 'cetak']);
 });
 
 // Fix 404: Redirect central /dashboard to /master/dashboard

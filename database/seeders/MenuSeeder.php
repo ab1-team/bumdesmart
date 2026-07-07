@@ -107,6 +107,7 @@ class MenuSeeder extends Seeder
                     ['title' => 'Chart of Accounts', 'url' => '/keuangan/coa', 'order' => 1],
                     ['title' => 'Jurnal Umum', 'url' => '/keuangan/jurnal-umum', 'order' => 2],
                     ['title' => 'Pelaporan', 'url' => '/keuangan/pelaporan', 'order' => 3],
+                    ['title' => 'Invoice', 'url' => '/keuangan/invoice', 'order' => 4],
                     ['title' => 'Daftar Transaksi', 'url' => '/keuangan/daftar-transaksi', 'order' => 99],
                 ],
             ],

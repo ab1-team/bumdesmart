@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Keuangan\InvoiceCetakController;
 use App\Livewire\DaftarPembelian;
 use App\Livewire\DaftarPenjualan;
 use App\Livewire\DaftarReturPembelian;
@@ -120,6 +121,8 @@ Route::middleware([
 
             Route::get('/keuangan/jurnal-umum', JurnalUmum::class);
             Route::get('/keuangan/daftar-transaksi', \App\Livewire\Keuangan\DaftarTransaksi::class);
+            Route::get('/keuangan/invoice', \App\Livewire\Keuangan\InvoicePage::class);
+            Route::get('/keuangan/invoice/{invoiceId}/cetak', [InvoiceCetakController::class, 'cetak']);
             Route::get('/master-pengaturan', Pengaturan::class);
         });
 

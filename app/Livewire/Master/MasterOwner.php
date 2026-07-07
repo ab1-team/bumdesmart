@@ -70,6 +70,33 @@ class MasterOwner extends Component
         $this->dispatch('show-modal', modalId: 'masterOwnerModal');
     }
 
+    public function buatInvoice($id)
+    {
+        $owner = Owner::findOrFail($id);
+
+        if (tenancy()->initialized) {
+            tenancy()->end();
+        }
+
+        tenancy()->initialize($owner);
+
+        try {
+            $business = \App\Models\Business::where('owner_id', $owner->id)->first();
+
+            if (! $business) {
+                $this->dispatch('alert', type: 'error', message: 'Tenant belum memiliki business. Sync business terlebih dahulu.');
+
+                return;
+            }
+
+            $this->dispatch('open-invoice-modal', ownerId: $owner->id, businessId: $business->id, namaUsaha: $owner->nama_usaha);
+        } finally {
+            if (tenancy()->initialized) {
+                tenancy()->end();
+            }
+        }
+    }
+
     public function store()
     {
         $this->validate();

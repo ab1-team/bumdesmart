@@ -99,12 +99,14 @@
 
 <body>
     {{-- JUDUL LAPORAN --}}
-    <div class="report-title">
-        <h2>{{ $title }}</h2>
-        @if (isset($subtitle))
-            <p>{{ $subtitle }}</p>
-        @endif
-    </div>
+    @if (!empty($title))
+        <div class="report-title">
+            <h2>{{ $title }}</h2>
+            @if (isset($subtitle))
+                <p>{{ $subtitle }}</p>
+            @endif
+        </div>
+    @endif
 
     {{-- KONTEN LAPORAN --}}
     <div class="content">

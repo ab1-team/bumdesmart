@@ -13,6 +13,11 @@
                 'url'   => '/master/owner',
                 'icon'  => 'person',
             ],
+            [
+                'title' => 'Invoice',
+                'url'   => '/master/invoice',
+                'icon'  => 'receipt_long',
+            ],
         ];
     } else {
         $userRole = auth()->user()->role ?? null;
