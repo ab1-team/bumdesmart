@@ -299,12 +299,12 @@
         <table class="header-table">
             <tr>
                 <td class="header-logo">
-                    @if (!empty($logoUrlAbt))
+                    @if (!empty($base64Abt))
+                        <img src="{{ $base64Abt }}" alt="ABT">
+                    @elseif (!empty($logoUrlAbt))
                         <img src="{{ $logoUrlAbt }}" alt="ABT">
                     @elseif (!empty($fileUrlAbt))
                         <img src="{{ $fileUrlAbt }}" alt="ABT">
-                    @elseif (!empty($base64Abt))
-                        <img src="{{ $base64Abt }}" alt="ABT">
                     @endif
                 </td>
                 <td class="header-title">
@@ -344,12 +344,12 @@
                         <span class="status-label">&nbsp;</span>
                         <span class="status-value">{{ strtoupper($invoice->status) }}</span>
                         @if (strtoupper($invoice->status) === 'PAID')
-                            @if (!empty($logoUrlLunas))
+                            @if (!empty($base64Lunas))
+                                <img class="lunas-stamp" src="{{ $base64Lunas }}" alt="Lunas">
+                            @elseif (!empty($logoUrlLunas))
                                 <img class="lunas-stamp" src="{{ $logoUrlLunas }}" alt="Lunas">
                             @elseif (!empty($fileUrlLunas))
                                 <img class="lunas-stamp" src="{{ $fileUrlLunas }}" alt="Lunas">
-                            @elseif (!empty($base64Lunas))
-                                <img class="lunas-stamp" src="{{ $base64Lunas }}" alt="Lunas">
                             @endif
                         @endif
                     </div>
@@ -475,12 +475,12 @@
             <td class="footer-right">
                 <div>Hormat Kami,</div>
                 <div>Direktur PT. Asta Brata Teknologi</div>
-                @if (!empty($logoUrlTtd))
+                @if (!empty($base64Ttd))
+                    <img class="ttd" src="{{ $base64Ttd }}" alt="TTD">
+                @elseif (!empty($logoUrlTtd))
                     <img class="ttd" src="{{ $logoUrlTtd }}" alt="TTD">
                 @elseif (!empty($fileUrlTtd))
                     <img class="ttd" src="{{ $fileUrlTtd }}" alt="TTD">
-                @elseif (!empty($base64Ttd))
-                    <img class="ttd" src="{{ $base64Ttd }}" alt="TTD">
                 @endif
                 <div class="nama"><span>Santoso</span></div>
             </td>
