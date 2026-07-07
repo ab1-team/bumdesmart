@@ -29,12 +29,12 @@ class InvoiceCetakController extends Controller
             'invoice' => $invoice,
             'owner' => $owner,
             'sisaTagihan' => max(0, (int) $invoice->tagihan - (int) $invoice->saldo),
-            'base64Abt' => $this->toBase64(public_path('assets/img/logo/logo_abt.png')),
-            'logoAbtUri' => $this->toFileUri(public_path('assets/img/logo/logo_abt.png')),
-            'base64Lunas' => $this->toBase64(public_path('assets/img/logo/lunas.png')),
-            'logoLunasUri' => $this->toFileUri(public_path('assets/img/logo/lunas.png')),
-            'base64Ttd' => $this->toBase64(public_path('assets/img/logo/ttd_santoso.png')),
-            'logoTtdUri' => $this->toFileUri(public_path('assets/img/logo/ttd_santoso.png')),
+            'base64Abt' => $this->toBase64(resource_path('logo_invoice/logo_abt.png')),
+            'logoAbtUri' => $this->toFileUri(resource_path('logo_invoice/logo_abt.png')),
+            'base64Lunas' => $this->toBase64(resource_path('logo_invoice/lunas.png')),
+            'logoLunasUri' => $this->toFileUri(resource_path('logo_invoice/lunas.png')),
+            'base64Ttd' => $this->toBase64(resource_path('logo_invoice/ttd_santoso.png')),
+            'logoTtdUri' => $this->toFileUri(resource_path('logo_invoice/ttd_santoso.png')),
         ];
 
         $html = view('livewire.master.pdf.invoice', $data)->render();
