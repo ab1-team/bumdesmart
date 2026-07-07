@@ -22,9 +22,9 @@ class InvoicePage extends Component
     public $sortDirection = 'desc';
 
     public $headers = [
-        ['key' => 'no', 'label' => 'No', 'sortable' => true],
         ['key' => 'jenis_pembayaran', 'label' => 'Jenis Pembayaran', 'sortable' => true],
         ['key' => 'tanggal_invoice', 'label' => 'Tanggal Invoice', 'sortable' => true],
+        ['key' => 'tanggal_diterima', 'label' => 'Tanggal Diterima', 'sortable' => true],
         ['key' => 'tagihan', 'label' => 'Tagihan', 'sortable' => true],
         ['key' => 'status', 'label' => 'Status', 'sortable' => true],
     ];
@@ -80,13 +80,6 @@ class InvoicePage extends Component
                 $q->where('no', 'like', '%' . $this->search . '%')
                     ->orWhere('jenis_pembayaran', 'like', '%' . $this->search . '%');
             })
-            ->when($this->jenisPembayaran, function ($q) {
-                $q->where('jenis_pembayaran', $this->jenisPembayaran);
-            })
-            ->when($this->status, function ($q) {
-                $q->where('status', $this->status);
-            })
-            ->whereBetween('tanggal_invoice', [$this->startDate, $this->endDate])
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(15);
 

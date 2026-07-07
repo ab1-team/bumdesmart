@@ -39,6 +39,10 @@ class InvoiceCetakController extends Controller
         $base64Lunas = $this->toBase64($logoLunas);
         $base64Ttd = $this->toBase64($ttdSantoso);
 
+        $fileUrlAbt = $this->toFileUrl($logoAbt);
+        $fileUrlLunas = $this->toFileUrl($logoLunas);
+        $fileUrlTtd = $this->toFileUrl($ttdSantoso);
+
         $sisaTagihan = max(0, (int) $invoice->tagihan - (int) $invoice->saldo);
 
         $data = [
@@ -48,6 +52,9 @@ class InvoiceCetakController extends Controller
             'base64Abt' => $base64Abt,
             'base64Lunas' => $base64Lunas,
             'base64Ttd' => $base64Ttd,
+            'fileUrlAbt' => $fileUrlAbt,
+            'fileUrlLunas' => $fileUrlLunas,
+            'fileUrlTtd' => $fileUrlTtd,
         ];
 
         $html = view('livewire.master.pdf.invoice', $data)->render();
@@ -59,7 +66,9 @@ class InvoiceCetakController extends Controller
             ->setOption('margin-bottom', '20mm')
             ->setOption('margin-left', '15mm')
             ->setOption('margin-right', '15mm')
-            ->setOption('enable-local-file-access', true);
+            ->setOption('enable-local-file-access', true)
+            ->setOption('disable-smart-shrinking', true)
+            ->setOption('print-media-type', true);
 
         return $pdf->inline('invoice-'.$invoice->no.'.pdf');
     }
@@ -69,9 +78,22 @@ class InvoiceCetakController extends Controller
         if (! file_exists($path)) {
             return null;
         }
-        $type = pathinfo($path, PATHINFO_EXTENSION);
+        $type = mime_content_type($path) ?: 'image/'.pathinfo($path, PATHINFO_EXTENSION);
         $data = file_get_contents($path);
 
-        return 'data:image/'.$type.';base64,'.base64_encode($data);
+        return 'data:'.$type.';base64,'.base64_encode($data);
+    }
+
+    private function toFileUrl($path)
+    {
+        if (! file_exists($path)) {
+            return null;
+        }
+
+        $real = realpath($path);
+        $isWin = DIRECTORY_SEPARATOR === '\\';
+        $prefix = $isWin ? 'file:///' : 'file://';
+
+        return $prefix.str_replace('\\', '/', $real);
     }
 }

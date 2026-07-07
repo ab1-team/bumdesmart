@@ -1,44 +1,10 @@
 <div>
     <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Invoice</h3>
-        </div>
         <div class="card-body">
             <div class="row justify-content-between mb-3">
                 <div class="col-md-4">
                     <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                         placeholder="Cari no atau jenis pembayaran...">
-                </div>
-                <div class="col-md-8">
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <select class="form-select tom-select" id="filterJenisPembayaran"
-                                wire:model.live="jenisPembayaran">
-                                <option value="">Semua Pembayaran</option>
-                                <option value="Biaya Lisensi Instalasi">Biaya Lisensi Instalasi</option>
-                                <option value="Biaya Perpanjangan Maintenance dan Server">Biaya Perpanjangan Maintenance dan Server</option>
-                                <option value="Biaya Bimbingan Teknis">Biaya Bimbingan Teknis</option>
-                                <option value="Biaya Migrasi Ulang">Biaya Migrasi Ulang</option>
-                                <option value="Biaya Aktivasi WA Gateway">Biaya Aktivasi WA Gateway</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select tom-select" id="filterStatusInvoice" wire:model.live="status">
-                                <option value="">Semua Status</option>
-                                <option value="PAID">PAID</option>
-                                <option value="PARTIAL">PARTIAL</option>
-                                <option value="UNPAID">UNPAID</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <input type="text" class="form-control litepicker" id="filterStartDate"
-                                wire:model="startDate" placeholder="Dari tanggal" autocomplete="off">
-                        </div>
-                        <div class="col-md-3">
-                            <input type="text" class="form-control litepicker" id="filterEndDate"
-                                wire:model="endDate" placeholder="Sampai tanggal" autocomplete="off">
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -46,9 +12,9 @@
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>No</th>
                             <th>Jenis Pembayaran</th>
-                            <th>Tanggal</th>
+                            <th>Tanggal Invoice</th>
+                            <th>Tanggal Diterima</th>
                             <th>Tagihan</th>
                             <th>Status</th>
                         </tr>
@@ -56,14 +22,12 @@
                     <tbody>
                         @forelse ($invoices as $invoice)
                             <tr style="cursor:pointer;" onclick="window.open('/keuangan/invoice/{{ $invoice->id }}/cetak', '_blank')">
-                                <td>
-                                    <span class="badge bg-blue-lt">{{ $invoice->no }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ $invoice->jenis_pembayaran }}</span>
-                                </td>
+                                <td>{{ $invoice->jenis_pembayaran }}</td>
                                 <td class="text-nowrap">
                                     {{ \Carbon\Carbon::parse($invoice->tanggal_invoice)->format('d/m/Y') }}
+                                </td>
+                                <td class="text-nowrap">
+                                    {{ $invoice->tanggal_diterima ? \Carbon\Carbon::parse($invoice->tanggal_diterima)->format('d/m/Y') : '-' }}
                                 </td>
                                 <td class="fw-bold">
                                     Rp {{ number_format($invoice->tagihan, 0, ',', '.') }}

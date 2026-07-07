@@ -27,12 +27,12 @@
         }
 
         .header-logo {
-            width: 130px;
+            width: 160px;
         }
 
         .header-logo img {
-            max-width: 120px;
-            max-height: 100px;
+            max-width: 150px;
+            max-height: 150px;
         }
 
         .header-title {
@@ -308,7 +308,9 @@
         <table class="header-table">
             <tr>
                 <td class="header-logo">
-                    @if ($base64Abt)
+                    @if (!empty($fileUrlAbt))
+                        <img src="{{ $fileUrlAbt }}" alt="ABT">
+                    @elseif (!empty($base64Abt))
                         <img src="{{ $base64Abt }}" alt="ABT">
                     @endif
                 </td>
@@ -348,8 +350,12 @@
                     <div class="status-text">
                         <span class="status-label">&nbsp;</span>
                         <span class="status-value">{{ strtoupper($invoice->status) }}</span>
-                        @if (strtoupper($invoice->status) === 'PAID' && $base64Lunas)
-                            <img class="lunas-stamp" src="{{ $base64Lunas }}" alt="Lunas">
+                        @if (strtoupper($invoice->status) === 'PAID')
+                            @if (!empty($fileUrlLunas))
+                                <img class="lunas-stamp" src="{{ $fileUrlLunas }}" alt="Lunas">
+                            @elseif (!empty($base64Lunas))
+                                <img class="lunas-stamp" src="{{ $base64Lunas }}" alt="Lunas">
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -474,7 +480,9 @@
             <td class="footer-right">
                 <div>Hormat Kami,</div>
                 <div>Direktur PT. Asta Brata Teknologi</div>
-                @if ($base64Ttd)
+                @if (!empty($fileUrlTtd))
+                    <img class="ttd" src="{{ $fileUrlTtd }}" alt="TTD">
+                @elseif (!empty($base64Ttd))
                     <img class="ttd" src="{{ $base64Ttd }}" alt="TTD">
                 @endif
                 <div class="nama"><span>Santoso</span></div>
