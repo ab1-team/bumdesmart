@@ -30,8 +30,11 @@ class InvoiceCetakController extends Controller
             'owner' => $owner,
             'sisaTagihan' => max(0, (int) $invoice->tagihan - (int) $invoice->saldo),
             'base64Abt' => $this->toBase64(public_path('assets/img/logo/logo_abt.png')),
+            'logoAbtUri' => $this->toFileUri(public_path('assets/img/logo/logo_abt.png')),
             'base64Lunas' => $this->toBase64(public_path('assets/img/logo/lunas.png')),
+            'logoLunasUri' => $this->toFileUri(public_path('assets/img/logo/lunas.png')),
             'base64Ttd' => $this->toBase64(public_path('assets/img/logo/ttd_santoso.png')),
+            'logoTtdUri' => $this->toFileUri(public_path('assets/img/logo/ttd_santoso.png')),
         ];
 
         $html = view('livewire.master.pdf.invoice', $data)->render();
@@ -52,8 +55,21 @@ class InvoiceCetakController extends Controller
         if (! file_exists($path)) {
             return null;
         }
-        $type = mime_content_type($path) ?: 'image/'.pathinfo($path, PATHINFO_EXTENSION);
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $map = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 'svg' => 'image/svg+xml'];
+        $type = $map[$ext] ?? (mime_content_type($path) ?: 'image/png');
 
         return 'data:'.$type.';base64,'.base64_encode(file_get_contents($path));
+    }
+
+    private function toFileUri($path)
+    {
+        if (! file_exists($path)) {
+            return null;
+        }
+        $real = realpath($path);
+        $uri = 'file:///'.str_replace('\\', '/', $real);
+
+        return str_replace(' ', '%20', $uri);
     }
 }

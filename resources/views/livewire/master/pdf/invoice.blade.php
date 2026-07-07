@@ -268,17 +268,18 @@
             display: block;
             max-width: 240px;
             max-height: 170px;
-            margin: 4px auto;
+            margin: 4px auto 0;
         }
 
         .footer-right .nama {
-            margin-top: 6px;
-            padding-bottom: 2px;
+            position: relative;
+            top: -70px;
+            margin-top: 0;
+            padding-bottom: 0;
             font-weight: bold;
             display: inline-block;
-            border-bottom: 1.5px solid #000;
-            border-radius: 2px;
-            letter-spacing: 0.5px;
+            border: 0;
+            letter-spacing: 0;
         }
 
         .keterangan-box {
@@ -301,6 +302,8 @@
                 <td class="header-logo">
                     @if (!empty($base64Abt))
                         <img src="{{ $base64Abt }}" alt="ABT">
+                    @elseif (!empty($logoAbtUri))
+                        <img src="{{ $logoAbtUri }}" alt="ABT">
                     @endif
                 </td>
                 <td class="header-title">
@@ -339,8 +342,12 @@
                     <div class="status-text">
                         <span class="status-label">&nbsp;</span>
                         <span class="status-value">{{ strtoupper($invoice->status) }}</span>
-                        @if (strtoupper($invoice->status) === 'PAID' && !empty($base64Lunas))
-                            <img class="lunas-stamp" src="{{ $base64Lunas }}" alt="Lunas">
+                        @if (strtoupper($invoice->status) === 'PAID')
+                            @if (!empty($base64Lunas))
+                                <img class="lunas-stamp" src="{{ $base64Lunas }}" alt="Lunas">
+                            @elseif (!empty($logoLunasUri))
+                                <img class="lunas-stamp" src="{{ $logoLunasUri }}" alt="Lunas">
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -467,6 +474,8 @@
                 <div>Direktur PT. Asta Brata Teknologi</div>
                 @if (!empty($base64Ttd))
                     <img class="ttd" src="{{ $base64Ttd }}" alt="TTD">
+                @elseif (!empty($logoTtdUri))
+                    <img class="ttd" src="{{ $logoTtdUri }}" alt="TTD">
                 @endif
                 <div class="nama"><span>Santoso</span></div>
             </td>
