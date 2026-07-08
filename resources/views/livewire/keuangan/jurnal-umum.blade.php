@@ -27,7 +27,7 @@
                             </select>
                         </div>
 
-                        <div class="col-sm-6 mb-3">
+                        <div class="col-sm-6 mb-3" x-show="mode !== 'hapus'">
                             <label class="form-label" for="disimpan_ke">Disimpan Ke</label>
                             <select class="form-control" x-model="selectedDisimpanKe" id="disimpan_ke">
                                 <option value="">-- Disimpan Ke --</option>
