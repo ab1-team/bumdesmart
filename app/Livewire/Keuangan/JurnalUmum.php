@@ -58,6 +58,7 @@ class JurnalUmum extends Component
         'setHargaPerolehan' => 'setHargaPerolehan',
         'setInventaris' => 'setInventaris',
         'setHapusInventaris' => 'setHapusInventaris',
+        'filterInventarisBySumberDana' => 'filterInventarisBySumberDana',
     ];
 
     public function setInventaris($payload)
@@ -92,11 +93,32 @@ class JurnalUmum extends Component
         $this->loadInventaris();
     }
 
-    public function loadInventaris()
+    public function loadInventaris($sumberDana = null)
     {
-        $this->inventarisList = Inventory::where('business_id', $this->business_id)
-            ->orderBy('nama_barang')
-            ->get();
+        $query = Inventory::where('business_id', $this->business_id)
+            ->where('status', 'baik')
+            ->orderBy('nama_barang');
+
+        if ($sumberDana) {
+            if ($sumberDana === '1.2.01.01') {
+                $query->where('jenis', 1)->where('kategori', 1);
+            } elseif ($sumberDana === '1.2.02.01') {
+                $query->where('jenis', 1)->where('kategori', 2);
+            } elseif ($sumberDana === '1.2.02.02') {
+                $query->where('jenis', 1)->where('kategori', 3);
+            } elseif ($sumberDana === '1.2.02.03') {
+                $query->where('jenis', 1)->where('kategori', 4);
+            }
+        }
+
+        $this->inventarisList = $query->get();
+    }
+
+    public function filterInventarisBySumberDana($sumberDana)
+    {
+        $this->loadInventaris($sumberDana);
+        $this->inventarisList = $this->inventarisList->values();
+        $this->dispatch('refreshNamaBarangSelect');
     }
 
     public $inventarisList = [];

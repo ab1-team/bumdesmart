@@ -11,8 +11,10 @@
     <div class="col-sm-8 mb-3">
         <label class="form-label" for="nama_barang">Nama Barang</label>
         @if ($inventaris->isEmpty())
-            <div class="alert alert-warning text-white py-2 mb-0">
-                Belum ada data inventaris. Tambahkan aset melalui Jurnal Umum (Pembelian) terlebih dahulu.
+            <div class="alert alert-warning text-dark py-2 mb-0"
+                style="background-color:#fef3c7;border:1px solid #facc15;color:#92400e;">
+                <strong>Belum ada data inventaris.</strong> Tambahkan aset melalui Jurnal Umum (Pembelian)
+                terlebih dahulu.
             </div>
         @else
             <select class="form-control tom-select" name="nama_barang" id="nama_barang"
@@ -59,13 +61,13 @@
         <small class="text-danger" id="msg_nilai_buku"></small>
     </div>
 
-    <div id="col_harga_jual" class="col-sm-4 mb-3" style="display: none">
+    <div id="col_harga_jual" class="col-sm-4 mb-3 d-none">
         <label class="form-label" for="harga_jual">Harga Jual</label>
         <input autocomplete="off" type="text" name="harga_jual" id="harga_jual" class="form-control">
         <small class="text-danger" id="msg_harga_jual"></small>
     </div>
 
-    <div id="col_harga_revaluasi" class="col-sm-4 mb-3" style="display: none">
+    <div id="col_harga_revaluasi" class="col-sm-4 mb-3 d-none">
         <label class="form-label" for="harga_revaluasi">Harga Revaluasi</label>
         <input autocomplete="off" type="text" name="harga_revaluasi" id="harga_revaluasi"
             class="form-control">

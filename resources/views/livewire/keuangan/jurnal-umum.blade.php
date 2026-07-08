@@ -148,64 +148,94 @@
                         if (alasan && !alasan.tomselect && typeof initSingleTomSelect === 'function') {
                             initSingleTomSelect(alasan);
                         }
+                        hookAll();
                     });
 
-                    const nilaiBuku = document.getElementById('nilai_buku');
-                    const unit = document.getElementById('unit');
-                    const colHargaJual = document.getElementById('col_harga_jual');
-                    const colHargaRevaluasi = document.getElementById('col_harga_revaluasi');
-                    const namaBarang = document.getElementById('nama_barang');
-                    const alasan = document.getElementById('alasan');
-                    if (!namaBarang) return;
+                    function hookAll() {
+                        const namaBarang = document.getElementById('nama_barang');
+                        const alasan = document.getElementById('alasan');
+                        const nilaiBuku = document.getElementById('nilai_buku');
+                        const unit = document.getElementById('unit');
+                        const colHargaJual = document.getElementById('col_harga_jual');
+                        const colHargaRevaluasi = document.getElementById('col_harga_revaluasi');
+                        if (!namaBarang || !alasan) return false;
 
-                    const fire = () => {
-                        const v = namaBarang.value ? namaBarang.value.split('#') : [];
-                        const alasanVal = alasan ? alasan.value : '';
-                        const idBarang = v[0] || '';
-                        const totalUnit = parseInt(v[1] || 0);
-                        const totalNilaiBuku = parseFloat(v[2] || 0);
-                        const totalHargaPerolehan = parseFloat(v[3] || 0);
+                        const fire = () => {
+                            const v = namaBarang.value ? namaBarang.value.split('#') : [];
+                            const alasanVal = alasan.value || '';
+                            const idBarang = v[0] || '';
+                            const totalUnit = parseInt(v[1] || 0);
+                            const totalNilaiBuku = parseFloat(v[2] || 0);
+                            const totalHargaPerolehan = parseFloat(v[3] || 0);
 
-                        const u = parseInt(unit.value || 0);
-                        const nbPerUnit = totalUnit > 0 ? (totalNilaiBuku / totalUnit) : 0;
-                        const nb = u > 0 ? nbPerUnit * u : 0;
+                            const u = parseInt(unit.value || 0);
+                            const nbPerUnit = totalUnit > 0 ? (totalNilaiBuku / totalUnit) : 0;
+                            const nb = u > 0 ? nbPerUnit * u : 0;
 
-                        if (nilaiBuku) {
-                            nilaiBuku.value = new Intl.NumberFormat('id-ID', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }).format(nb);
-                        }
-
-                        const showHargaJual = alasanVal === 'dijual';
-                        const showHargaRev = alasanVal === 'revaluasi';
-                        if (colHargaJual) colHargaJual.style.display = showHargaJual ? '' : 'none';
-                        if (colHargaRevaluasi) colHargaRevaluasi.style.display = showHargaRev ? '' : 'none';
-
-                        window.dispatchEvent(new CustomEvent('hapusInventarisUpdated', {
-                            detail: {
-                                id_barang: idBarang,
-                                alasan: alasanVal,
-                                unit: u,
-                                total_unit: totalUnit,
-                                nilai_buku: nb,
-                                harga_perolehan_total: totalHargaPerolehan,
-                                harga_jual: showHargaJual ? (document.getElementById('harga_jual')?.value || '')
-                                    .replace(/\D/g, '') : null,
-                                harga_revaluasi: showHargaRev ? (document.getElementById('harga_revaluasi')?.value || '')
-                                    .replace(/\D/g, '') : null,
+                            if (nilaiBuku) {
+                                nilaiBuku.value = new Intl.NumberFormat('id-ID', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }).format(nb);
                             }
-                        }));
-                    };
 
-                    namaBarang.addEventListener('change', fire);
-                    alasan.addEventListener('change', fire);
-                    unit.addEventListener('input', fire);
+                            const showHargaJual = alasanVal === 'dijual';
+                            const showHargaRev = alasanVal === 'revaluasi';
+                            if (colHargaJual) {
+                                colHargaJual.classList.toggle('d-none', !showHargaJual);
+                            }
+                            if (colHargaRevaluasi) {
+                                colHargaRevaluasi.classList.toggle('d-none', !showHargaRev);
+                            }
 
-                    const hj = document.getElementById('harga_jual');
-                    if (hj) hj.addEventListener('input', fire);
-                    const hrev = document.getElementById('harga_revaluasi');
-                    if (hrev) hrev.addEventListener('input', fire);
+                            window.dispatchEvent(new CustomEvent('hapusInventarisUpdated', {
+                                detail: {
+                                    id_barang: idBarang,
+                                    alasan: alasanVal,
+                                    unit: u,
+                                    total_unit: totalUnit,
+                                    nilai_buku: nb,
+                                    harga_perolehan_total: totalHargaPerolehan,
+                                    harga_jual: showHargaJual ? (document.getElementById('harga_jual')?.value || '')
+                                        .replace(/\D/g, '') : null,
+                                    harga_revaluasi: showHargaRev ? (document.getElementById('harga_revaluasi')?.value || '')
+                                        .replace(/\D/g, '') : null,
+                                }
+                            }));
+                        };
+
+                        namaBarang.addEventListener('change', fire);
+                        alasan.addEventListener('change', fire);
+                        unit.addEventListener('input', fire);
+
+                        const hj = document.getElementById('harga_jual');
+                        if (hj) hj.addEventListener('input', fire);
+                        const hrev = document.getElementById('harga_revaluasi');
+                        if (hrev) hrev.addEventListener('input', fire);
+
+                        try {
+                            if (typeof Select !== 'undefined') {
+                                if (Select['alasan']) {
+                                    Select['alasan'].off('change');
+                                    Select['alasan'].on('change', fire);
+                                }
+                                if (Select['nama_barang']) {
+                                    Select['nama_barang'].off('change');
+                                    Select['nama_barang'].on('change', fire);
+                                }
+                            }
+                        } catch (e) {}
+
+                        window.__hapusFire = fire;
+                        return true;
+                    }
+                    window.__hookAll = hookAll;
+
+                    let tries = 0;
+                    const retry = setInterval(() => {
+                        tries++;
+                        if (hookAll() || tries >= 10) clearInterval(retry);
+                    }, 100);
                 }
             }
         }
@@ -229,7 +259,14 @@
             options: [],
             onChange: function(value) {
                 let el = document.querySelector('[x-data]');
-                if (el) Alpine.$data(el).selectedSumberDana = value;
+                if (el) {
+                    Alpine.$data(el).selectedSumberDana = value;
+                    if (Alpine.$data(el).mode === 'hapus' && value) {
+                        Livewire.dispatch('filterInventarisBySumberDana', {
+                            sumberDana: value
+                        });
+                    }
+                }
             }
         });
 
@@ -275,6 +312,36 @@
 
                     window.addEventListener('hapusInventarisUpdated', (event) => {
                         this.hapusData = event.detail;
+                    });
+
+                    window.addEventListener('refreshNamaBarangSelect', () => {
+                        this.$nextTick(() => {
+                            const nb = document.getElementById('nama_barang');
+                            if (!nb) return;
+                            try {
+                                if (typeof Select !== 'undefined' && Select['nama_barang']) {
+                                    const opts = [];
+                                    nb.querySelectorAll('option').forEach(o => {
+                                        opts.push({
+                                            value: o.value,
+                                            text: o.textContent,
+                                            $option: o
+                                        });
+                                    });
+                                    Select['nama_barang'].clear(true);
+                                    Select['nama_barang'].clearOptions();
+                                    opts.forEach(o => {
+                                        Select['nama_barang'].addOption({
+                                            value: o.value,
+                                            text: o.text
+                                        });
+                                    });
+                                    Select['nama_barang'].setValue('');
+                                }
+                            } catch (e) {
+                                console.error('refreshNamaBarangSelect:', e);
+                            }
+                        });
                     });
 
                     this.$watch('selectedJenisTransaksi', (value) => {
@@ -518,9 +585,16 @@
                 },
 
                 setAkunHapusInventaris() {
+                    const allowedSumberDana = [
+                        '1.2.01.01',
+                        '1.2.02.01',
+                        '1.2.02.02',
+                        '1.2.02.03'
+                    ];
+
                     let akunSumberDana = [];
                     this.akun.forEach(item => {
-                        if (item.kode.startsWith('1.2.01') || item.kode.startsWith('1.2.02')) {
+                        if (allowedSumberDana.includes(item.kode)) {
                             akunSumberDana.push({
                                 id: item.id,
                                 kode: item.kode,
