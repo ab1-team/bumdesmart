@@ -87,10 +87,14 @@ class KeuanganUtil
         $getV = function ($kode) use ($getS, $bulanInt) {
             $sd_lalu = $getS($kode, $bulanInt - 1);
             $sd_ini = $getS($kode, $bulanInt);
+            // sd_ini dihitung ulang sebagai sd_lalu + bulan_ini untuk konsistensi
+            // karena ada akun khusus yang saldo bulan ini = saldo s.d bulan ini,
+            // sehingga nilai sd_ini langsung dari DB tidak match dengan sd_lalu + bulan_ini.
+            $ini = $sd_ini - $sd_lalu;
             return [
                 'lalu' => $sd_lalu,
-                'ini' => $sd_ini - $sd_lalu,
-                'sd' => $sd_ini
+                'ini' => $ini,
+                'sd' => $sd_lalu + $ini,
             ];
         };
 
