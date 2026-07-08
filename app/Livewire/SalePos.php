@@ -328,7 +328,6 @@ class SalePos extends Component
                 $totalHpp += ($needed * $fallbackCost);
             }
 
-            $avgHpp = ($qty > 0) ? ($totalHpp / $qty) : 0;
             $itemSubtotal = \App\Utils\NumberUtil::parse($item['price']) * $qty;
             $itemDiscount = isset($item['diskon']) ? $this->calculateItemDiscount($item) : 0;
 
@@ -341,7 +340,7 @@ class SalePos extends Component
                 'jenis_cashback' => 'nominal',
                 'jumlah_cashback' => 0,
                 'subtotal' => $itemSubtotal - $itemDiscount,
-                'hpp' => $avgHpp,
+                'hpp' => $totalHpp,
                 'profit' => ($itemSubtotal - $itemDiscount) - $totalHpp,
             ]);
 
@@ -415,7 +414,7 @@ class SalePos extends Component
         $totalCashbackAll = 0;
 
         foreach ($details as $detail) {
-            $totalHppAll += $detail->hpp * $detail->jumlah;
+            $totalHppAll += $detail->hpp;
             $totalGrossAll += $detail->harga_satuan * $detail->jumlah;
             $totalDiskonAll += $detail->jumlah_diskon;
             $totalCashbackAll += $detail->jumlah_cashback;
