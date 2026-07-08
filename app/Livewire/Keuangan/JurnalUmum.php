@@ -227,7 +227,7 @@ class JurnalUmum extends Component
                             'metode_pembayaran' => 'tunai',
                             'no_referensi' => null,
                             'catatan' => 'Penghapusan '.$inv->nama_barang.' ('.$unitHapus.' unit)',
-                            'rekening_debit' => '7.2.02.01',
+                            'rekening_debit' => $simpan,
                             'rekening_kredit' => $sumber,
                         ]);
 

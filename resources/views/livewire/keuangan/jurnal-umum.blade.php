@@ -521,7 +521,7 @@
 
                     let akunDisimpanKe = [];
                     this.akun.forEach(item => {
-                        if (item.kode === '7.2.02.01') {
+                        if (item.kode.startsWith('7.')) {
                             akunDisimpanKe.push({
                                 id: item.id,
                                 kode: item.kode,
