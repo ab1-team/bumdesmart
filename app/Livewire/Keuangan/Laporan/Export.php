@@ -1226,7 +1226,7 @@ class Export extends Controller
 
         $sales = $query->orderBy('tanggal_transaksi', 'desc')->get();
 
-        $headers = ['No', 'No. Invoice', 'Tanggal', 'Pelanggan', 'Kasir', 'Item', 'Total Penjualan', 'Sum HPP', 'Sum Untung', 'Sum Rugi'];
+        $headers = ['No', 'No. Invoice', 'Tanggal', 'Pelanggan', 'Kasir', 'Item', 'Total Penjualan', 'HPP', 'Untung', 'Rugi'];
         $rows = [];
         $totPenjualan = 0; $totHpp = 0; $totUntung = 0; $totRugi = 0;
 

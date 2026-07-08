@@ -11,9 +11,9 @@
                 <th class="text-center">Kasir</th>
                 <th class="text-center">Item</th>
                 <th class="text-right">Total Penjualan</th>
-                <th class="text-right">Sum HPP</th>
-                <th class="text-right">Sum Untung</th>
-                <th class="text-right">Sum Rugi</th>
+                <th class="text-right">HPP</th>
+                <th class="text-right">Untung</th>
+                <th class="text-right">Rugi</th>
             </tr>
         </thead>
         <tbody>
