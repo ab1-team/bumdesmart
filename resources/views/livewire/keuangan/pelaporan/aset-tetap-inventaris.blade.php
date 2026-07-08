@@ -207,7 +207,7 @@
                                     : 0;
                             @endphp
 
-                            @if ($nilai_buku == 0 && $tahun_validasi < $tahun && $tahun_validasi > 0)
+                            @if ($is_status_invalid && $tgl_kondisi >= $inv->tanggal_validasi && $tahun_validasi < $tahun && $tahun_validasi > 0)
                                 @php
                                     $j_unit += $inv->jumlah;
                                     $j_harga += $inv->harga_satuan * $inv->jumlah;
