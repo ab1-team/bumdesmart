@@ -1,32 +1,26 @@
 @php
     use App\Utils\InventarisUtil;
+    $inventarisData = $inventaris->map(function ($inv) use ($tgl_transaksi) {
+        $nb = InventarisUtil::nilaiBuku($tgl_transaksi, $inv);
+        return [
+            'id' => $inv->id,
+            'nama' => $inv->nama_barang,
+            'jumlah' => (int) $inv->jumlah,
+            'harga_satuan' => (float) $inv->harga_satuan,
+            'nilai_buku' => (float) $nb,
+            'kategori' => (int) $inv->kategori,
+            'jenis' => (int) $inv->jenis,
+        ];
+    })->values();
 @endphp
 
-<div x-data="formHapusInventaris()" class="row" x-init="init()">
+<div x-data='formHapusInventaris(@json($inventarisData))' class="row" x-init="init()">
     <div class="col-sm-8 mb-3">
         <label class="form-label" for="nama_barang">Nama Barang</label>
-        @if ($inventaris->isEmpty())
-            <div class="alert alert-warning text-dark py-2 mb-0"
-                style="background-color:#fef3c7;border:1px solid #facc15;color:#92400e;">
-                <strong>Belum ada data inventaris.</strong> Tambahkan aset melalui Jurnal Umum (Pembelian)
-                terlebih dahulu.
-            </div>
-        @else
-            <select class="form-control tom-select" name="nama_barang" id="nama_barang"
-                placeholder="-- Pilih Nama Barang --">
-                <option value="">-- Pilih Nama Barang --</option>
-                @foreach ($inventaris as $inv)
-                    @php
-                        $nilai_buku = InventarisUtil::nilaiBuku($tgl_transaksi, $inv);
-                    @endphp
-                    <option value="{{ $inv->id }}#{{ $inv->jumlah }}#{{ $nilai_buku }}#{{ $inv->harga_satuan * $inv->jumlah }}">
-                        {{ $inv->nama_barang }} ({{ $inv->jumlah }} unit x
-                        {{ number_format($inv->harga_satuan, 0, ',', '.') }}) | NB.
-                        {{ number_format($nilai_buku, 0, ',', '.') }}
-                    </option>
-                @endforeach
-            </select>
-        @endif
+        <select class="form-control tom-select" name="nama_barang" id="nama_barang"
+            placeholder="-- Pilih Nama Barang --">
+            <option value="">-- Pilih Nama Barang --</option>
+        </select>
         <small class="text-danger" id="msg_nama_barang"></small>
     </div>
 
@@ -45,16 +39,13 @@
 
     <div id="col_unit" class="col-sm-4 mb-3">
         <label class="form-label" for="unit">Jumlah (unit)</label>
-        <input autocomplete="off" type="number" name="unit" id="unit" class="form-control"
-            min="1">
-        <small class="text-muted d-block" id="info_unit">Pilih nama barang dulu</small>
+        <input autocomplete="off" type="number" name="unit" id="unit" class="form-control" min="1">
         <small class="text-danger d-none" id="msg_unit"></small>
     </div>
 
     <div id="col_nilai_buku" class="col-sm-4 mb-3">
         <label class="form-label" for="nilai_buku">Nilai Buku</label>
-        <input autocomplete="off" readonly type="text" name="nilai_buku" id="nilai_buku"
-            class="form-control">
+        <input autocomplete="off" readonly type="text" name="nilai_buku" id="nilai_buku" class="form-control">
         <small class="text-danger d-none" id="msg_nilai_buku"></small>
     </div>
 
@@ -66,8 +57,7 @@
 
     <div id="col_harga_revaluasi" class="col-sm-4 mb-3 d-none">
         <label class="form-label" for="harga_revaluasi">Harga Revaluasi</label>
-        <input autocomplete="off" type="text" name="harga_revaluasi" id="harga_revaluasi"
-            class="form-control">
+        <input autocomplete="off" type="text" name="harga_revaluasi" id="harga_revaluasi" class="form-control">
         <small class="text-danger d-none" id="msg_harga_revaluasi"></small>
     </div>
 </div>
@@ -83,36 +73,18 @@
                     }
                     var $hj = jQuery('#harga_jual');
                     var $hrev = jQuery('#harga_revaluasi');
-                    var $nb = jQuery('#nilai_buku');
-
-                    if ($nb.length && !$nb.data('masked')) {
-                        $nb.data('masked', true);
-                    }
-
                     if ($hj.length && !$hj.data('masked')) {
-                        if (!$hj.data('maskMoney')) {
-                            $hj.maskMoney({
-                                prefix: 'Rp ',
-                                thousands: '.',
-                                decimal: ',',
-                                precision: 0,
-                                allowZero: true,
-                                allowNegative: false
-                            });
-                        }
+                        $hj.maskMoney({
+                            prefix: 'Rp ', thousands: '.', decimal: ',', precision: 0,
+                            allowZero: true, allowNegative: false
+                        });
                         $hj.data('masked', true);
                     }
                     if ($hrev.length && !$hrev.data('masked')) {
-                        if (!$hrev.data('maskMoney')) {
-                            $hrev.maskMoney({
-                                prefix: 'Rp ',
-                                thousands: '.',
-                                decimal: ',',
-                                precision: 0,
-                                allowZero: true,
-                                allowNegative: false
-                            });
-                        }
+                        $hrev.maskMoney({
+                            prefix: 'Rp ', thousands: '.', decimal: ',', precision: 0,
+                            allowZero: true, allowNegative: false
+                        });
                         $hrev.data('masked', true);
                     }
                 }
@@ -121,9 +93,7 @@
                 } else {
                     initMask();
                 }
-                jQuery(document).ajaxComplete(function() {
-                    setTimeout(initMask, 200);
-                });
+                jQuery(document).ajaxComplete(function() { setTimeout(initMask, 200); });
             })();
         </script>
     @endpush

@@ -58,7 +58,6 @@ class JurnalUmum extends Component
         'setHargaPerolehan' => 'setHargaPerolehan',
         'setInventaris' => 'setInventaris',
         'setHapusInventaris' => 'setHapusInventaris',
-        'filterInventarisBySumberDana' => 'filterInventarisBySumberDana',
     ];
 
     public function setInventaris($payload)
@@ -93,62 +92,15 @@ class JurnalUmum extends Component
         $this->loadInventaris();
     }
 
-    public function loadInventaris($sumberDana = null)
+    public function loadInventaris()
     {
-        $query = Inventory::where('business_id', $this->business_id)
+        $this->inventarisList = Inventory::where('business_id', $this->business_id)
             ->where('status', 'baik')
-            ->orderBy('nama_barang');
-
-        if ($sumberDana) {
-            $parts = explode('.', $sumberDana);
-            $digitKe3 = isset($parts[2]) ? intval($parts[2]) : 0;
-            $digitKe4 = isset($parts[3]) ? intval($parts[3]) : 0;
-
-            if (str_starts_with($sumberDana, '1.2.01.')) {
-                $jenis = 1;
-                $kategori = $digitKe4;
-            } elseif (str_starts_with($sumberDana, '1.2.02.')) {
-                $jenis = 1;
-                $akumToKategori = [
-                    '1.2.02.01' => 2,
-                    '1.2.02.02' => 3,
-                    '1.2.02.03' => 4,
-                ];
-                $kategori = $akumToKategori[$sumberDana] ?? 0;
-            } elseif (str_starts_with($sumberDana, '1.2.03.')) {
-                $jenis = 1;
-                $kategori = $digitKe4;
-            } else {
-                $jenis = 0;
-                $kategori = 0;
-            }
-
-            if ($jenis > 0 && $kategori > 0) {
-                $query->where('jenis', $jenis)->where('kategori', $kategori);
-            }
-        }
-
-        $this->inventarisList = $query->get();
-    }
-
-    public function filterInventarisBySumberDana($sumberDana)
-    {
-        if (is_array($sumberDana)) {
-            $sumberDana = $sumberDana['sumberDana'] ?? null;
-        }
-        $this->currentSumberDanaFilter = $sumberDana;
-        $this->loadInventaris($sumberDana);
-        $this->inventarisList = $this->inventarisList->values();
-    }
-
-    public function updatedInventarisList()
-    {
-        $this->dispatch('refreshNamaBarangSelect');
+            ->orderBy('nama_barang')
+            ->get();
     }
 
     public $inventarisList = [];
-
-    public $currentSumberDanaFilter = null;
 
     public function saveJurnalUmum($data)
     {
@@ -531,7 +483,7 @@ class JurnalUmum extends Component
 
     public function render()
     {
-        $this->loadInventaris($this->currentSumberDanaFilter);
+        $this->loadInventaris();
 
         return view('livewire.keuangan.jurnal-umum', [
             'inventarisList' => $this->inventarisList,

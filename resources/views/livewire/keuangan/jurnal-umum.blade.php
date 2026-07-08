@@ -49,7 +49,7 @@
                         @include('livewire.keuangan.partials.form_inventaris')
                     </div>
 
-                    <div x-show="mode === 'hapus'" wire:key="form-hapus-{{ $inventarisList->count() }}-{{ $currentSumberDanaFilter ?? 'all' }}">
+                    <div x-show="mode === 'hapus'">
                         @include('livewire.keuangan.partials.form_hapus_inventaris', [
                             'inventaris' => $inventarisList,
                             'tgl_transaksi' => date('Y-m-d'),
@@ -136,174 +136,193 @@
             }
         }
 
-        function formHapusInventaris() {
+        function formHapusInventaris(allInventaris) {
             return {
+                all: allInventaris || [],
+                selectedId: '',
+
                 init() {
                     this.$nextTick(() => {
-                        const namaBarang = document.getElementById('nama_barang');
-                        const alasan = document.getElementById('alasan');
-                        if (namaBarang && !namaBarang.tomselect && typeof initSingleTomSelect === 'function') {
-                            initSingleTomSelect(namaBarang);
-                        }
-                        if (alasan && !alasan.tomselect && typeof initSingleTomSelect === 'function') {
-                            initSingleTomSelect(alasan);
-                        }
-                        hookAll();
+                        this.initTomSelects();
+                        this.populateBarang();
+                        this.bindEvents();
                     });
 
-                    function hookAll() {
-                        const namaBarang = document.getElementById('nama_barang');
-                        const alasan = document.getElementById('alasan');
-                        const nilaiBuku = document.getElementById('nilai_buku');
-                        const unit = document.getElementById('unit');
-                        const colHargaJual = document.getElementById('col_harga_jual');
-                        const colHargaRevaluasi = document.getElementById('col_harga_revaluasi');
-                        if (!namaBarang || !alasan) return false;
+                    // Re-init saat sumber dana berubah (dipanggil global dari Alpine parent)
+                    window.addEventListener('sumber-dana-changed', () => {
+                        this.$nextTick(() => this.populateBarang());
+                    });
+                },
 
-                        if (namaBarang.dataset.hooked !== '1') {
-                            namaBarang.dataset.hooked = '1';
-                            namaBarang.addEventListener('change', () => fire({ fromBarang: true }));
-                        }
-                        if (alasan.dataset.hooked !== '1') {
-                            alasan.dataset.hooked = '1';
-                            alasan.addEventListener('change', () => fire());
-                        }
-
-                        const fire = (opts = {}) => {
-                            const v = namaBarang.value ? namaBarang.value.split('#') : [];
-                            const alasanVal = alasan.value || '';
-                            const idBarang = v[0] || '';
-                            const totalUnit = parseInt(v[1] || 0);
-                            const totalNilaiBuku = parseFloat(v[2] || 0);
-                            const totalHargaPerolehan = parseFloat(v[3] || 0);
-
-                            const isJustPickedBarang = opts.fromBarang && (!unit.value || unit.value === '0');
-
-                            if (isJustPickedBarang && totalUnit > 0) {
-                                unit.value = totalUnit;
-                            }
-
-                            if (totalUnit > 0) {
-                                unit.setAttribute('max', totalUnit);
-                            } else {
-                                unit.removeAttribute('max');
-                            }
-
-                            let u = parseInt(unit.value || 0);
-                            if (totalUnit > 0 && u > totalUnit) {
-                                unit.value = totalUnit;
-                                u = totalUnit;
-                            }
-                            if (u < 1) u = 0;
-
-                            const nbPerUnit = totalUnit > 0 ? (totalNilaiBuku / totalUnit) : 0;
-                            const nb = u > 0 ? nbPerUnit * u : 0;
-
-                            if (nilaiBuku) {
-                                nilaiBuku.value = nb > 0 ?
-                                    new Intl.NumberFormat('id-ID').format(Math.round(nb)) :
-                                    '';
-                            }
-
-                            const infoEl = document.getElementById('info_unit');
-                            if (infoEl) {
-                                if (totalUnit > 0) {
-                                    infoEl.textContent = `Maks ${totalUnit} unit (sisa inventaris)`;
-                                    infoEl.classList.remove('text-muted');
-                                    infoEl.classList.add('text-info');
-                                } else {
-                                    infoEl.textContent = 'Pilih nama barang dulu';
-                                    infoEl.classList.add('text-muted');
-                                    infoEl.classList.remove('text-info');
-                                }
-                            }
-
-                            const showHargaJual = alasanVal === 'dijual';
-                            const showHargaRev = alasanVal === 'revaluasi';
-                            if (colHargaJual) {
-                                colHargaJual.classList.toggle('d-none', !showHargaJual);
-                            }
-                            if (colHargaRevaluasi) {
-                                colHargaRevaluasi.classList.toggle('d-none', !showHargaRev);
-                            }
-
-                            let hargaJualRaw = '';
-                            if (showHargaJual) {
-                                const rawEl = document.getElementById('harga_jual');
-                                if (rawEl) {
-                                    try {
-                                        hargaJualRaw = jQuery(rawEl).maskMoney('unmasked')[0] || '';
-                                    } catch (e) {
-                                        hargaJualRaw = (rawEl.value || '').replace(/[^0-9]/g, '');
-                                    }
-                                }
-                            }
-
-                            let hargaRevRaw = '';
-                            if (showHargaRev) {
-                                const rawEl = document.getElementById('harga_revaluasi');
-                                if (rawEl) {
-                                    try {
-                                        hargaRevRaw = jQuery(rawEl).maskMoney('unmasked')[0] || '';
-                                    } catch (e) {
-                                        hargaRevRaw = (rawEl.value || '').replace(/[^0-9]/g, '');
-                                    }
-                                }
-                            }
-
-                            window.dispatchEvent(new CustomEvent('hapusInventarisUpdated', {
-                                detail: {
-                                    id_barang: idBarang,
-                                    alasan: alasanVal,
-                                    unit: u,
-                                    total_unit: totalUnit,
-                                    nilai_buku: nb,
-                                    harga_perolehan_total: totalHargaPerolehan,
-                                    harga_jual: showHargaJual ? (parseFloat(hargaJualRaw) || 0) : null,
-                                    harga_revaluasi: showHargaRev ? (parseFloat(hargaRevRaw) || 0) : null,
-                                }
-                            }));
-                        };
-
-                        if (!unit || unit.dataset.hooked !== '1') {
-                            if (unit) unit.dataset.hooked = '1';
-                            unit.addEventListener('input', () => fire());
-                        }
-
-                        const hj = document.getElementById('harga_jual');
-                        if (hj && hj.dataset.hooked !== '1') {
-                            hj.dataset.hooked = '1';
-                            hj.addEventListener('input', fire);
-                        }
-                        const hrev = document.getElementById('harga_revaluasi');
-                        if (hrev && hrev.dataset.hooked !== '1') {
-                            hrev.dataset.hooked = '1';
-                            hrev.addEventListener('input', fire);
-                        }
-
-                        try {
-                            if (typeof Select !== 'undefined') {
-                                if (Select['alasan']) {
-                                    Select['alasan'].off('change');
-                                    Select['alasan'].on('change', fire);
-                                }
-                                if (Select['nama_barang']) {
-                                    Select['nama_barang'].off('change');
-                                    Select['nama_barang'].on('change', fire);
-                                }
-                            }
-                        } catch (e) {}
-
-                        window.__hapusFire = fire;
-                        return true;
+                initTomSelects() {
+                    const nb = document.getElementById('nama_barang');
+                    const al = document.getElementById('alasan');
+                    if (nb && !nb.tomselect && typeof initSingleTomSelect === 'function') {
+                        initSingleTomSelect(nb);
                     }
-                    window.__hookAll = hookAll;
+                    if (al && !al.tomselect && typeof initSingleTomSelect === 'function') {
+                        initSingleTomSelect(al);
+                    }
+                },
 
-                    let tries = 0;
-                    const retry = setInterval(() => {
-                        tries++;
-                        if (hookAll() || tries >= 10) clearInterval(retry);
-                    }, 100);
+                getKategoriForSumber(sumberDana) {
+                    if (!sumberDana) return null;
+                    if (sumberDana === '1.2.01.01') return 1;
+                    if (sumberDana === '1.2.01.02') return 2;
+                    if (sumberDana === '1.2.01.03') return 3;
+                    if (sumberDana === '1.2.01.04') return 4;
+                    if (sumberDana === '1.2.02.01') return 2;
+                    if (sumberDana === '1.2.02.02') return 3;
+                    if (sumberDana === '1.2.02.03') return 4;
+                    return null;
+                },
+
+                populateBarang() {
+                    const nb = document.getElementById('nama_barang');
+                    if (!nb) return;
+
+                    const sumberDana = window.__selectedSumberDana || '';
+                    const kategori = this.getKategoriForSumber(sumberDana);
+                    const list = (kategori === null)
+                        ? this.all
+                        : this.all.filter(x => parseInt(x.kategori) === kategori);
+
+                    const opts = list.map(x => ({
+                        value: x.id + '#' + x.jumlah + '#' + x.nilai_buku + '#' + (x.harga_satuan * x.jumlah),
+                        text: `${x.nama} (${x.jumlah} unit x ${new Intl.NumberFormat('id-ID').format(x.harga_satuan)}) | NB. ${new Intl.NumberFormat('id-ID').format(Math.round(x.nilai_buku))}`
+                    }));
+
+                    if (typeof Select !== 'undefined' && Select['nama_barang']) {
+                        Select['nama_barang'].clear(true);
+                        Select['nama_barang'].clearOptions();
+                        opts.forEach(o => Select['nama_barang'].addOption(o));
+                        Select['nama_barang'].refreshOptions(false);
+                    } else {
+                        // fallback jika TomSelect belum ready
+                        nb.innerHTML = '<option value="">-- Pilih Nama Barang --</option>';
+                        opts.forEach(o => {
+                            const opt = document.createElement('option');
+                            opt.value = o.value;
+                            opt.textContent = o.text;
+                            nb.appendChild(opt);
+                        });
+                    }
+
+                    this.resetForm();
+                },
+
+                resetForm() {
+                    this.selectedId = '';
+                    const unit = document.getElementById('unit');
+                    const nb = document.getElementById('nilai_buku');
+                    if (unit) { unit.value = ''; unit.removeAttribute('max'); }
+                    if (nb) nb.value = '';
+                    this.emit();
+                },
+
+                bindEvents() {
+                    const self = this;
+                    const nb = document.getElementById('nama_barang');
+                    const al = document.getElementById('alasan');
+                    const unit = document.getElementById('unit');
+                    const hj = document.getElementById('harga_jual');
+                    const hrev = document.getElementById('harga_revaluasi');
+                    const colHJ = document.getElementById('col_harga_jual');
+                    const colHR = document.getElementById('col_harga_revaluasi');
+                    if (!nb || !al || !unit) return;
+
+                    const fire = () => {
+                        const rawValue = nb.value || (Select['nama_barang'] ? Select['nama_barang'].getValue() : '');
+                        const v = rawValue ? rawValue.split('#') : [];
+                        const idBarang = v[0] || '';
+                        const totalUnit = parseInt(v[1] || 0);
+                        const totalNB = parseFloat(v[2] || 0);
+
+                        this.selectedId = idBarang;
+
+                        // Auto-fill unit saat barang baru dipilih
+                        if (idBarang && (!unit.value || parseInt(unit.value) === 0)) {
+                            unit.value = totalUnit;
+                        }
+
+                        if (totalUnit > 0) {
+                            unit.setAttribute('max', totalUnit);
+                        } else {
+                            unit.removeAttribute('max');
+                        }
+
+                        let u = parseInt(unit.value || 0);
+                        if (totalUnit > 0 && u > totalUnit) { unit.value = totalUnit; u = totalUnit; }
+                        if (u < 1) u = 0;
+
+                        const nbPerUnit = totalUnit > 0 ? (totalNB / totalUnit) : 0;
+                        const nbVal = u > 0 ? nbPerUnit * u : 0;
+                        const nilaiBuku = document.getElementById('nilai_buku');
+                        if (nilaiBuku) {
+                            nilaiBuku.value = nbVal > 0
+                                ? new Intl.NumberFormat('id-ID').format(Math.round(nbVal))
+                                : '';
+                        }
+
+                        const alasanVal = al.value || '';
+                        if (colHJ) colHJ.classList.toggle('d-none', alasanVal !== 'dijual');
+                        if (colHR) colHR.classList.toggle('d-none', alasanVal !== 'revaluasi');
+
+                        this.emit(nbVal, totalUnit, totalNB);
+                    };
+
+                    nb.addEventListener('change', fire);
+                    al.addEventListener('change', fire);
+                    unit.addEventListener('input', fire);
+                    if (hj) hj.addEventListener('input', fire);
+                    if (hrev) hrev.addEventListener('input', fire);
+
+                    if (typeof Select !== 'undefined') {
+                        if (Select['nama_barang']) {
+                            Select['nama_barang'].off('change');
+                            Select['nama_barang'].on('change', () => {
+                                try { nb.value = Select['nama_barang'].getValue() || ''; } catch (e) {}
+                                fire();
+                            });
+                        }
+                        if (Select['alasan']) {
+                            Select['alasan'].off('change');
+                            Select['alasan'].on('change', () => {
+                                try { al.value = Select['alasan'].getValue() || ''; } catch (e) {}
+                                fire();
+                            });
+                        }
+                    }
+                },
+
+                emit(nbVal, totalUnit, totalHP) {
+                    const al = document.getElementById('alasan');
+                    const unit = document.getElementById('unit');
+                    const hj = document.getElementById('harga_jual');
+                    const hrev = document.getElementById('harga_revaluasi');
+                    let hjRaw = 0, hrevRaw = 0;
+                    if (hj) {
+                        try { hjRaw = parseFloat((jQuery(hj).maskMoney('unmasked')[0] || '').toString().replace(',', '.')) || 0; }
+                        catch (e) { hjRaw = parseFloat((hj.value || '').replace(/[^0-9]/g, '')) || 0; }
+                    }
+                    if (hrev) {
+                        try { hrevRaw = parseFloat((jQuery(hrev).maskMoney('unmasked')[0] || '').toString().replace(',', '.')) || 0; }
+                        catch (e) { hrevRaw = parseFloat((hrev.value || '').replace(/[^0-9]/g, '')) || 0; }
+                    }
+
+                    const alasanVal = al ? al.value : '';
+                    window.dispatchEvent(new CustomEvent('hapusInventarisUpdated', {
+                        detail: {
+                            id_barang: this.selectedId,
+                            alasan: alasanVal,
+                            unit: parseInt(unit ? unit.value : 0) || 0,
+                            total_unit: totalUnit || 0,
+                            nilai_buku: nbVal || 0,
+                            harga_perolehan_total: totalHP || 0,
+                            harga_jual: alasanVal === 'dijual' ? hjRaw : null,
+                            harga_revaluasi: alasanVal === 'revaluasi' ? hrevRaw : null,
+                        }
+                    }));
                 }
             }
         }
@@ -329,14 +348,12 @@
                 let el = document.querySelector('[x-data]');
                 if (el) {
                     Alpine.$data(el).selectedSumberDana = value;
-                    if (Alpine.$data(el).mode === 'hapus' && value) {
-                        Livewire.dispatch('filterInventarisBySumberDana', {
-                            sumberDana: value
-                        });
-                    }
+                    window.__selectedSumberDana = value;
+                    window.dispatchEvent(new CustomEvent('sumber-dana-changed', { detail: value }));
                 }
             }
         });
+        window.__selectedSumberDana = '';
 
         let disimpanKe = new TomSelect('#disimpan_ke', {
             valueField: 'kode',
@@ -380,64 +397,6 @@
 
                     window.addEventListener('hapusInventarisUpdated', (event) => {
                         this.hapusData = event.detail;
-                    });
-
-                    window.addEventListener('refreshNamaBarangSelect', () => {
-                        const sync = () => {
-                            const nb = document.getElementById('nama_barang');
-                            if (!nb) return;
-
-                            const opts = [];
-                            nb.querySelectorAll('option').forEach(o => {
-                                if (o.value === '') return;
-                                opts.push({
-                                    value: o.value,
-                                    text: o.textContent
-                                });
-                            });
-
-                            try {
-                                if (typeof Select !== 'undefined' && Select['nama_barang']) {
-                                    try { Select['nama_barang'].destroy(); } catch (e) {}
-                                    delete Select['nama_barang'];
-                                }
-                                if (nb.tomselect) {
-                                    try { nb.tomselect.destroy(); } catch (e) {}
-                                }
-                                nb.innerHTML = '';
-                                const placeholder = document.createElement('option');
-                                placeholder.value = '';
-                                placeholder.textContent = '-- Pilih Nama Barang --';
-                                nb.appendChild(placeholder);
-                                opts.forEach(o => {
-                                    const opt = document.createElement('option');
-                                    opt.value = o.value;
-                                    opt.textContent = o.text;
-                                    nb.appendChild(opt);
-                                });
-                                if (typeof initSingleTomSelect === 'function') {
-                                    initSingleTomSelect(nb);
-                                }
-                                if (typeof window.__hookAll === 'function') {
-                                    try { window.__hookAll(); } catch (e) {}
-                                }
-                                try {
-                                    nb.dispatchEvent(new Event('change', { bubbles: true }));
-                                } catch (e) {}
-                            } catch (e) {
-                                console.error('refreshNamaBarangSelect:', e);
-                            }
-                        };
-
-                        let tries = 0;
-                        const loop = () => {
-                            tries++;
-                            sync();
-                            if (tries < 5) {
-                                setTimeout(loop, 80);
-                            }
-                        };
-                        setTimeout(loop, 50);
                     });
 
                     this.$watch('selectedJenisTransaksi', (value) => {
@@ -749,9 +708,8 @@
                     this.$nextTick(() => {
                         const sd = this.selectedSumberDana;
                         if (sd && allowedSumberDana.includes(sd)) {
-                            Livewire.dispatch('filterInventarisBySumberDana', {
-                                sumberDana: sd
-                            });
+                            window.__selectedSumberDana = sd;
+                            window.dispatchEvent(new CustomEvent('sumber-dana-changed', { detail: sd }));
                         }
                     });
                 },
