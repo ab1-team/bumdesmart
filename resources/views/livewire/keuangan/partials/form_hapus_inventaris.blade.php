@@ -2,11 +2,6 @@
     use App\Utils\InventarisUtil;
 @endphp
 
-<input type="hidden" name="_nilai_buku" id="_nilai_buku">
-<input type="hidden" name="harsat" id="harsat">
-<input type="hidden" name="relasi" id="relasi">
-<input type="hidden" name="id_barang" id="id_barang">
-
 <div x-data="formHapusInventaris()" class="row" x-init="init()">
     <div class="col-sm-8 mb-3">
         <label class="form-label" for="nama_barang">Nama Barang</label>
@@ -26,8 +21,8 @@
                     @endphp
                     <option value="{{ $inv->id }}#{{ $inv->jumlah }}#{{ $nilai_buku }}#{{ $inv->harga_satuan * $inv->jumlah }}">
                         {{ $inv->nama_barang }} ({{ $inv->jumlah }} unit x
-                        {{ number_format($inv->harga_satuan, 2, ',', '.') }}) | NB.
-                        {{ number_format($nilai_buku, 2, ',', '.') }}
+                        {{ number_format($inv->harga_satuan, 0, ',', '.') }}) | NB.
+                        {{ number_format($nilai_buku, 0, ',', '.') }}
                     </option>
                 @endforeach
             </select>
@@ -53,27 +48,27 @@
         <input autocomplete="off" type="number" name="unit" id="unit" class="form-control"
             min="1">
         <small class="text-muted d-block" id="info_unit">Pilih nama barang dulu</small>
-        <small class="text-danger" id="msg_unit"></small>
+        <small class="text-danger d-none" id="msg_unit"></small>
     </div>
 
     <div id="col_nilai_buku" class="col-sm-4 mb-3">
         <label class="form-label" for="nilai_buku">Nilai Buku</label>
         <input autocomplete="off" readonly type="text" name="nilai_buku" id="nilai_buku"
             class="form-control">
-        <small class="text-danger" id="msg_nilai_buku"></small>
+        <small class="text-danger d-none" id="msg_nilai_buku"></small>
     </div>
 
     <div id="col_harga_jual" class="col-sm-4 mb-3 d-none">
         <label class="form-label" for="harga_jual">Harga Jual</label>
         <input autocomplete="off" type="text" name="harga_jual" id="harga_jual" class="form-control">
-        <small class="text-danger" id="msg_harga_jual"></small>
+        <small class="text-danger d-none" id="msg_harga_jual"></small>
     </div>
 
     <div id="col_harga_revaluasi" class="col-sm-4 mb-3 d-none">
         <label class="form-label" for="harga_revaluasi">Harga Revaluasi</label>
         <input autocomplete="off" type="text" name="harga_revaluasi" id="harga_revaluasi"
             class="form-control">
-        <small class="text-danger" id="msg_harga_revaluasi"></small>
+        <small class="text-danger d-none" id="msg_harga_revaluasi"></small>
     </div>
 </div>
 
@@ -86,35 +81,39 @@
                         setTimeout(initMask, 100);
                         return;
                     }
-                    var $nb = jQuery('#nilai_buku');
                     var $hj = jQuery('#harga_jual');
                     var $hrev = jQuery('#harga_revaluasi');
+                    var $nb = jQuery('#nilai_buku');
+
                     if ($nb.length && !$nb.data('masked')) {
-                        $nb.on('input', function() {
-                            var v = String(this.value || '').replace(/[^0-9]/g, '');
-                            this.value = v ? new Intl.NumberFormat('id-ID').format(parseInt(v)) : '';
-                        });
                         $nb.data('masked', true);
                     }
+
                     if ($hj.length && !$hj.data('masked')) {
-                        $hj.maskMoney({
-                            prefix: 'Rp ',
-                            thousands: '.',
-                            decimal: ',',
-                            precision: 0,
-                            allowZero: true,
-                            allowNegative: false
-                        }).data('masked', true);
+                        if (!$hj.data('maskMoney')) {
+                            $hj.maskMoney({
+                                prefix: 'Rp ',
+                                thousands: '.',
+                                decimal: ',',
+                                precision: 0,
+                                allowZero: true,
+                                allowNegative: false
+                            });
+                        }
+                        $hj.data('masked', true);
                     }
                     if ($hrev.length && !$hrev.data('masked')) {
-                        $hrev.maskMoney({
-                            prefix: 'Rp ',
-                            thousands: '.',
-                            decimal: ',',
-                            precision: 0,
-                            allowZero: true,
-                            allowNegative: false
-                        }).data('masked', true);
+                        if (!$hrev.data('maskMoney')) {
+                            $hrev.maskMoney({
+                                prefix: 'Rp ',
+                                thousands: '.',
+                                decimal: ',',
+                                precision: 0,
+                                allowZero: true,
+                                allowNegative: false
+                            });
+                        }
+                        $hrev.data('masked', true);
                     }
                 }
                 if (document.readyState === 'loading') {
@@ -122,6 +121,9 @@
                 } else {
                     initMask();
                 }
+                jQuery(document).ajaxComplete(function() {
+                    setTimeout(initMask, 200);
+                });
             })();
         </script>
     @endpush

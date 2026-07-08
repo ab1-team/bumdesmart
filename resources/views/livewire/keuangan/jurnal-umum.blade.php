@@ -174,22 +174,39 @@
                                 unit.value = totalUnit;
                             }
 
-                            const u = parseInt(unit.value || 0);
+                            if (totalUnit > 0) {
+                                unit.setAttribute('max', totalUnit);
+                            } else {
+                                unit.removeAttribute('max');
+                            }
+
+                            let u = parseInt(unit.value || 0);
+                            if (totalUnit > 0 && u > totalUnit) {
+                                unit.value = totalUnit;
+                                u = totalUnit;
+                            }
+                            if (u < 1) u = 0;
+
                             const nbPerUnit = totalUnit > 0 ? (totalNilaiBuku / totalUnit) : 0;
                             const nb = u > 0 ? nbPerUnit * u : 0;
 
                             if (nilaiBuku) {
-                                nilaiBuku.value = new Intl.NumberFormat('id-ID', {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0
-                                }).format(nb);
+                                nilaiBuku.value = nb > 0 ?
+                                    new Intl.NumberFormat('id-ID').format(Math.round(nb)) :
+                                    '';
                             }
 
                             const infoEl = document.getElementById('info_unit');
                             if (infoEl) {
-                                infoEl.textContent = totalUnit > 0 ?
-                                    `Sisa unit inventaris: ${totalUnit}` :
-                                    'Pilih nama barang dulu';
+                                if (totalUnit > 0) {
+                                    infoEl.textContent = `Maks ${totalUnit} unit (sisa inventaris)`;
+                                    infoEl.classList.remove('text-muted');
+                                    infoEl.classList.add('text-info');
+                                } else {
+                                    infoEl.textContent = 'Pilih nama barang dulu';
+                                    infoEl.classList.add('text-muted');
+                                    infoEl.classList.remove('text-info');
+                                }
                             }
 
                             const showHargaJual = alasanVal === 'dijual';
@@ -201,6 +218,30 @@
                                 colHargaRevaluasi.classList.toggle('d-none', !showHargaRev);
                             }
 
+                            let hargaJualRaw = '';
+                            if (showHargaJual) {
+                                const rawEl = document.getElementById('harga_jual');
+                                if (rawEl) {
+                                    try {
+                                        hargaJualRaw = jQuery(rawEl).maskMoney('unmasked')[0] || '';
+                                    } catch (e) {
+                                        hargaJualRaw = (rawEl.value || '').replace(/[^0-9]/g, '');
+                                    }
+                                }
+                            }
+
+                            let hargaRevRaw = '';
+                            if (showHargaRev) {
+                                const rawEl = document.getElementById('harga_revaluasi');
+                                if (rawEl) {
+                                    try {
+                                        hargaRevRaw = jQuery(rawEl).maskMoney('unmasked')[0] || '';
+                                    } catch (e) {
+                                        hargaRevRaw = (rawEl.value || '').replace(/[^0-9]/g, '');
+                                    }
+                                }
+                            }
+
                             window.dispatchEvent(new CustomEvent('hapusInventarisUpdated', {
                                 detail: {
                                     id_barang: idBarang,
@@ -209,10 +250,8 @@
                                     total_unit: totalUnit,
                                     nilai_buku: nb,
                                     harga_perolehan_total: totalHargaPerolehan,
-                                    harga_jual: showHargaJual ? (document.getElementById('harga_jual')?.value || '')
-                                        .replace(/\D/g, '') : null,
-                                    harga_revaluasi: showHargaRev ? (document.getElementById('harga_revaluasi')?.value || '')
-                                        .replace(/\D/g, '') : null,
+                                    harga_jual: showHargaJual ? (parseFloat(hargaJualRaw) || 0) : null,
+                                    harga_revaluasi: showHargaRev ? (parseFloat(hargaRevRaw) || 0) : null,
                                 }
                             }));
                         };
@@ -328,33 +367,45 @@
                     });
 
                     window.addEventListener('refreshNamaBarangSelect', () => {
-                        this.$nextTick(() => {
+                        const sync = () => {
                             const nb = document.getElementById('nama_barang');
                             if (!nb) return;
+                            if (typeof Select === 'undefined' || !Select['nama_barang']) return;
+
+                            const opts = [];
+                            nb.querySelectorAll('option').forEach(o => {
+                                if (o.value === '') return;
+                                opts.push({
+                                    value: o.value,
+                                    text: o.textContent
+                                });
+                            });
                             try {
-                                if (typeof Select !== 'undefined' && Select['nama_barang']) {
-                                    const opts = [];
-                                    nb.querySelectorAll('option').forEach(o => {
-                                        opts.push({
-                                            value: o.value,
-                                            text: o.textContent,
-                                            $option: o
-                                        });
+                                Select['nama_barang'].clear(true);
+                                Select['nama_barang'].clearOptions();
+                                opts.forEach(o => {
+                                    Select['nama_barang'].addOption({
+                                        value: o.value,
+                                        text: o.text
                                     });
-                                    Select['nama_barang'].clear(true);
-                                    Select['nama_barang'].clearOptions();
-                                    opts.forEach(o => {
-                                        Select['nama_barang'].addOption({
-                                            value: o.value,
-                                            text: o.text
-                                        });
-                                    });
-                                    Select['nama_barang'].setValue('');
-                                }
+                                });
+                                Select['nama_barang'].refreshOptions();
+                                Select['nama_barang'].setValue('', true);
+                                Select['nama_barang'].setTextboxValue('');
                             } catch (e) {
                                 console.error('refreshNamaBarangSelect:', e);
                             }
-                        });
+                        };
+
+                        let tries = 0;
+                        const loop = () => {
+                            tries++;
+                            sync();
+                            if (tries < 5) {
+                                setTimeout(loop, 80);
+                            }
+                        };
+                        loop();
                     });
 
                     this.$watch('selectedJenisTransaksi', (value) => {
@@ -434,8 +485,9 @@
                             }];
                         }
 
-                        console.log(this.showFormInventaris);
                         this.setAkunJenisTransaksi1();
+                        if (this.selectedSumberDana) sumberDana.setValue(this.selectedSumberDana, true);
+                        if (this.selectedDisimpanKe) disimpanKe.setValue(this.selectedDisimpanKe, true);
                     }
 
                     if (jenisTransaksiId === '2') {
@@ -457,12 +509,8 @@
                                 { label: 'Keterangan', value: '' }
                             ];
                             this.setAkunJenisTransaksi2();
-                            if (this.selectedSumberDana) {
-                                sumberDana.setValue(this.selectedSumberDana, true);
-                            }
-                            if (this.selectedDisimpanKe) {
-                                disimpanKe.setValue(this.selectedDisimpanKe, true);
-                            }
+                            if (this.selectedSumberDana) sumberDana.setValue(this.selectedSumberDana, true);
+                            if (this.selectedDisimpanKe) disimpanKe.setValue(this.selectedDisimpanKe, true);
                             return;
                         }
 
@@ -484,6 +532,8 @@
                         }
 
                         this.setAkunJenisTransaksi2();
+                        if (this.selectedSumberDana) sumberDana.setValue(this.selectedSumberDana, true);
+                        if (this.selectedDisimpanKe) disimpanKe.setValue(this.selectedDisimpanKe, true);
                     }
 
                     if (jenisTransaksiId === '3') {
@@ -507,6 +557,8 @@
                             }];
                         }
                         this.setAkunJenisTransaksi3();
+                        if (this.selectedSumberDana) sumberDana.setValue(this.selectedSumberDana, true);
+                        if (this.selectedDisimpanKe) disimpanKe.setValue(this.selectedDisimpanKe, true);
                     }
                 },
 
@@ -655,15 +707,21 @@
                         try {
                             sumberDana.setValue(this.selectedSumberDana, true);
                         } catch (e) {}
-                        Livewire.dispatch('filterInventarisBySumberDana', {
-                            sumberDana: this.selectedSumberDana
-                        });
                     }
                     if (this.selectedDisimpanKe) {
                         try {
                             disimpanKe.setValue(this.selectedDisimpanKe, true);
                         } catch (e) {}
                     }
+
+                    this.$nextTick(() => {
+                        const sd = this.selectedSumberDana;
+                        if (sd && allowedSumberDana.includes(sd)) {
+                            Livewire.dispatch('filterInventarisBySumberDana', {
+                                sumberDana: sd
+                            });
+                        }
+                    });
                 },
 
                 simpanTransaksi() {

@@ -100,14 +100,26 @@ class JurnalUmum extends Component
             ->orderBy('nama_barang');
 
         if ($sumberDana) {
-            if ($sumberDana === '1.2.01.01') {
-                $query->where('jenis', 1)->where('kategori', 1);
-            } elseif ($sumberDana === '1.2.02.01') {
-                $query->where('jenis', 1)->where('kategori', 2);
-            } elseif ($sumberDana === '1.2.02.02') {
-                $query->where('jenis', 1)->where('kategori', 3);
-            } elseif ($sumberDana === '1.2.02.03') {
-                $query->where('jenis', 1)->where('kategori', 4);
+            $parts = explode('.', $sumberDana);
+            $digitKe3 = isset($parts[2]) ? intval($parts[2]) : 0;
+            $digitKe4 = isset($parts[3]) ? intval($parts[3]) : 0;
+
+            if (str_starts_with($sumberDana, '1.2.01.')) {
+                $jenis = $digitKe3;
+                $kategori = $digitKe4;
+            } elseif (str_starts_with($sumberDana, '1.2.02.')) {
+                $jenis = 1;
+                $kategori = $digitKe4 + 1;
+            } elseif (str_starts_with($sumberDana, '1.2.03.')) {
+                $jenis = $digitKe3;
+                $kategori = $digitKe4;
+            } else {
+                $jenis = 0;
+                $kategori = 0;
+            }
+
+            if ($jenis > 0 && $kategori > 0) {
+                $query->where('jenis', $jenis)->where('kategori', $kategori);
             }
         }
 
@@ -147,11 +159,12 @@ class JurnalUmum extends Component
             $noPembayaran = 'PAY-'.date('Ymd').'-'.
                 str_pad(Payment::withTrashed()->whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
 
-            $urutan = Jurnal::whereYear('tanggal', $this->tahun)
-                ->whereMonth('tanggal', $this->bulan)
-                ->whereDay('tanggal', $this->tanggal)
+            $ts = strtotime($data['tanggal_pembayaran']);
+            $urutan = Jurnal::whereYear('tanggal', date('Y', $ts))
+                ->whereMonth('tanggal', date('m', $ts))
+                ->whereDay('tanggal', date('d', $ts))
                 ->count() + 1;
-            $noJurnal = 'JU-'.date('Ymd').'-'.str_pad($urutan, 4, '0', STR_PAD_LEFT);
+            $noJurnal = 'JU-'.date('Ymd', $ts).'-'.str_pad($urutan, 4, '0', STR_PAD_LEFT);
 
             // PENGHAPUSAN / PENJUALAN ASET (Sumber dari akun Aset / Akumulasi Penyusutan)
             if (
@@ -189,8 +202,8 @@ class JurnalUmum extends Component
                     $hargaJual = (float) ($hapus['harga_jual'] ?? 0);
                     $nilaiBuku = (float) ($hapus['nilai_buku'] ?? 0);
 
-                    $totalNilaiBuku = round($nilaiBuku * $unitHapus, 2);
-                    $totalHapus = $inv->harga_satuan * $unitHapus;
+                    $totalNilaiBuku = round($nilaiBuku, 2);
+                    $totalHapus = round($inv->harga_satuan * $unitHapus, 2);
 
                     if ($alasan === 'hapus') {
                         $sisaUnit = $inv->jumlah - $unitHapus;
@@ -386,8 +399,12 @@ class JurnalUmum extends Component
                             'rekening_kredit' => $sumber,
                         ]);
 
-                        $noUrut2 = Jurnal::whereDate('tanggal', $data['tanggal_pembayaran'])->count() + 1;
-                        $noJurnal2 = 'JU-'.date('Ymd', strtotime($data['tanggal_pembayaran'])).'-'.str_pad($noUrut2, 4, '0', STR_PAD_LEFT);
+                        $ts = strtotime($data['tanggal_pembayaran']);
+                        $noUrut2 = Jurnal::whereYear('tanggal', date('Y', $ts))
+                            ->whereMonth('tanggal', date('m', $ts))
+                            ->whereDay('tanggal', date('d', $ts))
+                            ->count() + 2;
+                        $noJurnal2 = 'JU-'.date('Ymd', $ts).'-'.str_pad($noUrut2, 4, '0', STR_PAD_LEFT);
 
                         $jurnal2 = Jurnal::create([
                             'business_id' => $this->business_id,
