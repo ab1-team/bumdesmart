@@ -49,7 +49,7 @@
                         @include('livewire.keuangan.partials.form_inventaris')
                     </div>
 
-                    <div x-show="mode === 'hapus'">
+                    <div x-show="mode === 'hapus'" wire:key="form-hapus-{{ $inventarisList->count() }}-{{ $currentSumberDanaFilter ?? 'all' }}">
                         @include('livewire.keuangan.partials.form_hapus_inventaris', [
                             'inventaris' => $inventarisList,
                             'tgl_transaksi' => date('Y-m-d'),

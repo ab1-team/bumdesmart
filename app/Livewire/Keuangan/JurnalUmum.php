@@ -139,6 +139,10 @@ class JurnalUmum extends Component
         $this->currentSumberDanaFilter = $sumberDana;
         $this->loadInventaris($sumberDana);
         $this->inventarisList = $this->inventarisList->values();
+    }
+
+    public function updatedInventarisList()
+    {
         $this->dispatch('refreshNamaBarangSelect');
     }
 
