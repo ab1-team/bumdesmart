@@ -411,9 +411,7 @@ class DaftarPenjualan extends Component
         $rekeningKas = $kodeRekening['sales']['rekening_debit'];
 
         // Calculate Splits
-        $totalHpp = $this->detailSale->saleDetails->sum(function ($detail) {
-            return $detail->hpp * $detail->jumlah;
-        });
+        $totalHpp = $this->detailSale->saleDetails->sum('hpp');
 
         $alreadyPaid = $this->detailSale->dibayar;
         $remainingHpp = max(0, $totalHpp - $alreadyPaid);

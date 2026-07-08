@@ -516,7 +516,6 @@ class TambahPenjualan extends Component
                 $totalHpp += ($needed * $fallbackCost);
             }
 
-            $avgHpp = ($qty > 0) ? ($totalHpp / $qty) : 0;
             // --- FIFO LOGIC END ---
 
             // 2. Create Sale Detail
@@ -529,7 +528,7 @@ class TambahPenjualan extends Component
                 'jenis_cashback' => 'nominal',
                 'jumlah_cashback' => 0,
                 'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
-                'hpp' => $avgHpp,
+                'hpp' => $totalHpp,
                 'profit' => \App\Utils\NumberUtil::parse($item['subtotal']) - $totalHpp,
             ]);
 
@@ -626,7 +625,7 @@ class TambahPenjualan extends Component
         $totalCashbackAll = 0;
 
         foreach ($details as $detail) {
-            $totalHppAll += $detail->hpp * $detail->jumlah;
+            $totalHppAll += $detail->hpp;
             // Gross per item = harga_satuan * jumlah
             $totalGrossAll += $detail->harga_satuan * $detail->jumlah;
             // Item discounts and cashback are already calculated in details
