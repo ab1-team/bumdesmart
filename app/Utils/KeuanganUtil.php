@@ -128,9 +128,11 @@ class KeuanganUtil
         $pembelianIni    = $pembelianSdIni - $pembelianSdLalu;
 
         // Persediaan Awal & Akhir dari saldo 1.1.03.01 di tabel balances.
-        // Kolom "bulan ini" dan "s.d bulan ini" nilainya sama.
+        // Karena akun ini saldo bulan ini = saldo s.d bulan ini (bukan kumulatif),
+        // sd_ini dihitung ulang sebagai sd_lalu + bulan_ini untuk konsistensi.
         $saldoSdBulanLalu = $getS('1.1.03.01', $bulanInt - 1);
         $saldoSdBulanIni  = $getS('1.1.03.01', $bulanInt);
+        $selisihBulanIni  = $saldoSdBulanIni - $saldoSdBulanLalu;
 
         $vPersediaanAwal = [
             'lalu' => $getS('1.1.03.01', $bulanInt - 2),
@@ -140,8 +142,8 @@ class KeuanganUtil
 
         $vPersediaanAkhir = [
             'lalu' => $saldoSdBulanLalu,
-            'ini'  => $saldoSdBulanIni,
-            'sd'   => $saldoSdBulanIni,
+            'ini'  => $selisihBulanIni,
+            'sd'   => $saldoSdBulanLalu + $selisihBulanIni,
         ];
 
         $vPembelian = [
