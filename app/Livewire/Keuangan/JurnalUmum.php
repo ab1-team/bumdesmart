@@ -105,13 +105,18 @@ class JurnalUmum extends Component
             $digitKe4 = isset($parts[3]) ? intval($parts[3]) : 0;
 
             if (str_starts_with($sumberDana, '1.2.01.')) {
-                $jenis = $digitKe3;
+                $jenis = 1;
                 $kategori = $digitKe4;
             } elseif (str_starts_with($sumberDana, '1.2.02.')) {
                 $jenis = 1;
-                $kategori = $digitKe4 + 1;
+                $akumToKategori = [
+                    '1.2.02.01' => 2,
+                    '1.2.02.02' => 3,
+                    '1.2.02.03' => 4,
+                ];
+                $kategori = $akumToKategori[$sumberDana] ?? 0;
             } elseif (str_starts_with($sumberDana, '1.2.03.')) {
-                $jenis = $digitKe3;
+                $jenis = 1;
                 $kategori = $digitKe4;
             } else {
                 $jenis = 0;
@@ -459,8 +464,11 @@ class JurnalUmum extends Component
                 ]);
 
                 $kodeInventaris = explode('.', $simpan);
-                $jenis = intval($kodeInventaris[2] ?? 1);
-                $kategori = intval($kodeInventaris[3] ?? 1);
+                $jenis = 1;
+                $kategori = 0;
+                if (str_starts_with($simpan, '1.2.01.') || str_starts_with($simpan, '1.2.03.')) {
+                    $kategori = intval($kodeInventaris[3] ?? 1);
+                }
 
                 if (! empty($data['inventaris'])) {
                     $inv = $data['inventaris'];
