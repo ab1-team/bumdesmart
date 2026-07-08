@@ -370,7 +370,6 @@
                         const sync = () => {
                             const nb = document.getElementById('nama_barang');
                             if (!nb) return;
-                            if (typeof Select === 'undefined' || !Select['nama_barang']) return;
 
                             const opts = [];
                             nb.querySelectorAll('option').forEach(o => {
@@ -380,18 +379,32 @@
                                     text: o.textContent
                                 });
                             });
+
                             try {
-                                Select['nama_barang'].clear(true);
-                                Select['nama_barang'].clearOptions();
+                                if (typeof Select !== 'undefined' && Select['nama_barang']) {
+                                    try { Select['nama_barang'].destroy(); } catch (e) {}
+                                    delete Select['nama_barang'];
+                                }
+                                if (nb.tomselect) {
+                                    try { nb.tomselect.destroy(); } catch (e) {}
+                                }
+                                nb.innerHTML = '';
+                                const placeholder = document.createElement('option');
+                                placeholder.value = '';
+                                placeholder.textContent = '-- Pilih Nama Barang --';
+                                nb.appendChild(placeholder);
                                 opts.forEach(o => {
-                                    Select['nama_barang'].addOption({
-                                        value: o.value,
-                                        text: o.text
-                                    });
+                                    const opt = document.createElement('option');
+                                    opt.value = o.value;
+                                    opt.textContent = o.text;
+                                    nb.appendChild(opt);
                                 });
-                                Select['nama_barang'].refreshOptions();
-                                Select['nama_barang'].setValue('', true);
-                                Select['nama_barang'].setTextboxValue('');
+                                if (typeof initSingleTomSelect === 'function') {
+                                    initSingleTomSelect(nb);
+                                }
+                                if (typeof window.__hookAll === 'function') {
+                                    try { window.__hookAll(); } catch (e) {}
+                                }
                             } catch (e) {
                                 console.error('refreshNamaBarangSelect:', e);
                             }
@@ -405,7 +418,7 @@
                                 setTimeout(loop, 80);
                             }
                         };
-                        loop();
+                        setTimeout(loop, 50);
                     });
 
                     this.$watch('selectedJenisTransaksi', (value) => {

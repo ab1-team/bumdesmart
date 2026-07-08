@@ -136,12 +136,15 @@ class JurnalUmum extends Component
         if (is_array($sumberDana)) {
             $sumberDana = $sumberDana['sumberDana'] ?? null;
         }
+        $this->currentSumberDanaFilter = $sumberDana;
         $this->loadInventaris($sumberDana);
         $this->inventarisList = $this->inventarisList->values();
         $this->dispatch('refreshNamaBarangSelect');
     }
 
     public $inventarisList = [];
+
+    public $currentSumberDanaFilter = null;
 
     public function saveJurnalUmum($data)
     {
@@ -524,7 +527,7 @@ class JurnalUmum extends Component
 
     public function render()
     {
-        $this->loadInventaris();
+        $this->loadInventaris($this->currentSumberDanaFilter);
 
         return view('livewire.keuangan.jurnal-umum', [
             'inventarisList' => $this->inventarisList,
