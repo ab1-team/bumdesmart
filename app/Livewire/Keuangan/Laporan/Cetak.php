@@ -414,6 +414,81 @@ class Cetak extends Controller
         return $this->streamPdf($html, 'laporan-penjualan-produk.pdf', 'landscape');
     }
 
+    public function penjualanDetail(array $data)
+    {
+        $business = view()->shared('business');
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        $hari = $data['periode'] ?? '-';
+
+        $query = Sale::with(['customer', 'user'])
+            ->where('business_id', $business->id)
+            ->whereYear('tanggal_transaksi', $tahun);
+
+        if ($bulan != '-') {
+            $query->whereMonth('tanggal_transaksi', $bulan);
+        }
+        if ($hari != '-') {
+            $query->whereDay('tanggal_transaksi', $hari);
+        }
+
+        if (isset($data['sub_laporan']) && $data['sub_laporan'] != '') {
+            if (str_starts_with($data['sub_laporan'], 'cus:')) {
+                $cusId = str_replace('cus:', '', $data['sub_laporan']);
+                $query->where('customer_id', $cusId);
+            } elseif (str_starts_with($data['sub_laporan'], 'cat:')) {
+                $catId = str_replace('cat:', '', $data['sub_laporan']);
+                $query->whereHas('saleDetails.product', function ($q) use ($catId) {
+                    $q->where('category_id', $catId);
+                });
+            }
+        }
+
+        $sales = $query->orderBy('tanggal_transaksi', 'desc')->get();
+
+        $totals = [
+            'total_penjualan' => 0,
+            'sum_hpp' => 0,
+            'sum_untung' => 0,
+            'sum_rugi' => 0,
+        ];
+
+        foreach ($sales as $sale) {
+            $details = $sale->saleDetails()->get();
+            $sumHpp = (float) $details->sum('hpp');
+            $sumProfit = (float) $details->sum('profit');
+
+            $sumUntung = $sumProfit > 0 ? $sumProfit : 0;
+            $sumRugi = $sumProfit < 0 ? abs($sumProfit) : 0;
+
+            $sale->total_item = $details->sum('jumlah');
+            $sale->total_penjualan = (float) $sale->total;
+            $sale->sum_hpp = $sumHpp;
+            $sale->sum_untung = $sumUntung;
+            $sale->sum_rugi = $sumRugi;
+
+            $totals['total_penjualan'] += $sale->total_penjualan;
+            $totals['sum_hpp'] += $sumHpp;
+            $totals['sum_untung'] += $sumUntung;
+            $totals['sum_rugi'] += $sumRugi;
+        }
+
+        $title = 'Laporan Penjualan Detail';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+        $periodeParts[] = $tahun;
+        $subtitle = 'Periode: '.implode(' ', $periodeParts);
+        if ($hari != '-') {
+            $subtitle .= ' | Tanggal: '.$hari;
+        }
+
+        $html = view('livewire.keuangan.pelaporan.penjualan-detail', compact('title', 'subtitle', 'sales', 'totals'))->render();
+
+        return $this->streamPdf($html, 'laporan-penjualan-detail.pdf', 'landscape');
+    }
+
     public function pembelianProduk(array $data)
     {
         $business = view()->shared('business');

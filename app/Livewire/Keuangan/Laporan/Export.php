@@ -1194,6 +1194,89 @@ class Export extends Controller
         );
     }
 
+    public function penjualanDetail(array $data)
+    {
+        $business = view()->shared('business');
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        $hari = $data['periode'] ?? '-';
+
+        $query = Sale::with(['customer', 'user'])
+            ->where('business_id', $business->id)
+            ->whereYear('tanggal_transaksi', $tahun);
+
+        if ($bulan != '-') {
+            $query->whereMonth('tanggal_transaksi', $bulan);
+        }
+        if ($hari != '-') {
+            $query->whereDay('tanggal_transaksi', $hari);
+        }
+
+        if (isset($data['sub_laporan']) && $data['sub_laporan'] != '') {
+            if (str_starts_with($data['sub_laporan'], 'cus:')) {
+                $cusId = str_replace('cus:', '', $data['sub_laporan']);
+                $query->where('customer_id', $cusId);
+            } elseif (str_starts_with($data['sub_laporan'], 'cat:')) {
+                $catId = str_replace('cat:', '', $data['sub_laporan']);
+                $query->whereHas('saleDetails.product', function ($q) use ($catId) {
+                    $q->where('category_id', $catId);
+                });
+            }
+        }
+
+        $sales = $query->orderBy('tanggal_transaksi', 'desc')->get();
+
+        $headers = ['No', 'No. Invoice', 'Tanggal', 'Pelanggan', 'Kasir', 'Item', 'Total Penjualan', 'HPP', 'Untung', 'Rugi'];
+        $rows = [];
+        $totPenjualan = 0; $totHpp = 0; $totUntung = 0; $totRugi = 0;
+
+        foreach ($sales as $index => $sale) {
+            $details = $sale->saleDetails()->get();
+            $sumHpp = (float) $details->sum('hpp');
+            $sumProfit = (float) $details->sum('profit');
+            $sumUntung = $sumProfit > 0 ? $sumProfit : 0;
+            $sumRugi = $sumProfit < 0 ? abs($sumProfit) : 0;
+            $totalItem = (int) $details->sum('jumlah');
+
+            $totPenjualan += (float) $sale->total;
+            $totHpp += $sumHpp;
+            $totUntung += $sumUntung;
+            $totRugi += $sumRugi;
+
+            $rows[] = [
+                $index + 1,
+                $sale->no_invoice ?? '-',
+                Carbon::parse($sale->tanggal_transaksi)->format('d/m/Y H:i'),
+                $sale->customer->nama_pelanggan ?? 'Guest',
+                $sale->user->initial ?? '-',
+                $totalItem,
+                $this->rupiah($sale->total),
+                $this->rupiah($sumHpp),
+                $this->rupiah($sumUntung),
+                $this->rupiah($sumRugi),
+            ];
+        }
+
+        $totalsRow = [
+            '', '', '', '', 'Total', '',
+            $this->rupiah($totPenjualan),
+            $this->rupiah($totHpp),
+            $this->rupiah($totUntung),
+            $this->rupiah($totRugi),
+        ];
+
+        return $this->buildExcel(
+            'Laporan Penjualan Detail',
+            $this->periodeSubtitle($tahun, $bulan, $hari),
+            $headers,
+            $rows,
+            $totalsRow,
+            'laporan-penjualan-detail.xlsx',
+            [],
+            [5, 20, 16, 24, 8, 8, 18, 16, 16, 16]
+        );
+    }
+
     public function produkTerlaris(array $data)
     {
         $tahun = $data['tahun'] ?? date('Y');

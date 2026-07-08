@@ -54,6 +54,7 @@
                             <option value="cover">📄 Halaman Sampul (Cover)</option>
                             <optgroup label="📋 Laporan Harian">
                                 <option value="penjualanHarian">Laporan Penjualan Harian</option>
+                                <option value="penjualanDetail">Laporan Penjualan Detail</option>
                                 <option value="stokMinimum">Laporan Stok Minimum</option>
                                 <option value="cashierReport">Laporan Kasir</option>
                             </optgroup>
@@ -149,6 +150,19 @@
                     Select['jenis_sub_laporan'].addOption({
                         value: '',
                         text: 'Semua Produk'
+                    });
+                } else if (value === 'penjualanDetail') {
+                    this.daftarPelanggan.forEach(cus => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: `cus:${cus.id}`,
+                            text: `Pelanggan: ${cus.nama}`
+                        });
+                    });
+                    this.daftarKategori.forEach(cat => {
+                        Select['jenis_sub_laporan'].addOption({
+                            value: `cat:${cat.id}`,
+                            text: `Kategori: ${cat.nama}`
+                        });
                     });
                 } else if (value === 'penjualanHarian' || value === 'cashierReport') {
                     if (this.daftarUser.length > 1) {
