@@ -49,13 +49,13 @@
                     <td colspan="2" style="padding: 5px; font-weight: bold; text-align: left; border: 0;">Total
                         {{ $lr['nama'] }}</td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah_sd_lalu'], 2, '.', ',') }}
+                        {{ number_format(abs($lr['jumlah_sd_lalu']), 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah_bulan_ini'], 2, '.', ',') }}
+                        {{ number_format(abs($lr['jumlah_bulan_ini']), 2, '.', ',') }}
                     </td>
                     <td style="padding: 5px; text-align: right; font-weight: bold; border: 0;">
-                        {{ number_format($lr['jumlah_sd_ini'], 2, '.', ',') }}
+                        {{ number_format(abs($lr['jumlah_sd_ini']), 2, '.', ',') }}
                     </td>
                 </tr>
             @endif
