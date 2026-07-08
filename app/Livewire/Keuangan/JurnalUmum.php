@@ -95,8 +95,6 @@ class JurnalUmum extends Component
     public function loadInventaris()
     {
         $this->inventarisList = Inventory::where('business_id', $this->business_id)
-            ->where('status', 'baik')
-            ->where('jenis', '!=', 1)
             ->orderBy('nama_barang')
             ->get();
     }

@@ -139,12 +139,23 @@
         function formHapusInventaris() {
             return {
                 init() {
-                    const namaBarang = document.getElementById('nama_barang');
-                    const alasan = document.getElementById('alasan');
+                    this.$nextTick(() => {
+                        const namaBarang = document.getElementById('nama_barang');
+                        const alasan = document.getElementById('alasan');
+                        if (namaBarang && !namaBarang.tomselect && typeof initSingleTomSelect === 'function') {
+                            initSingleTomSelect(namaBarang);
+                        }
+                        if (alasan && !alasan.tomselect && typeof initSingleTomSelect === 'function') {
+                            initSingleTomSelect(alasan);
+                        }
+                    });
+
                     const nilaiBuku = document.getElementById('nilai_buku');
                     const unit = document.getElementById('unit');
                     const colHargaJual = document.getElementById('col_harga_jual');
                     const colHargaRevaluasi = document.getElementById('col_harga_revaluasi');
+                    const namaBarang = document.getElementById('nama_barang');
+                    const alasan = document.getElementById('alasan');
                     if (!namaBarang) return;
 
                     const fire = () => {
