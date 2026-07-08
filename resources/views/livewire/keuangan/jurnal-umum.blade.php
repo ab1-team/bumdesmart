@@ -430,6 +430,12 @@
                             this.mode = 'hapus';
                             this.inputKeterangan = [];
                             this.showFormInventaris = false;
+                            this.selectedDisimpanKe = '';
+                            try {
+                                if (typeof Select !== 'undefined' && Select['disimpan_ke']) {
+                                    Select['disimpan_ke'].clear(true);
+                                }
+                            } catch (e) {}
                             this.setAkunHapusInventaris();
                             return;
                         }
@@ -615,17 +621,6 @@
                         }
                     });
                     disimpanKe.addOptions(akunDisimpanKe);
-
-                    const defaultBeban = this.akun.find(a => a.kode === '7.2.02.01');
-                    if (defaultBeban) {
-                        const kode = defaultBeban.kode;
-                        this.selectedDisimpanKe = kode;
-                        try {
-                            if (typeof Select !== 'undefined' && Select['disimpan_ke']) {
-                                Select['disimpan_ke'].setValue(kode, true);
-                            }
-                        } catch (e) {}
-                    }
                 },
 
                 simpanTransaksi() {
