@@ -116,6 +116,9 @@ class JurnalUmum extends Component
 
     public function filterInventarisBySumberDana($sumberDana)
     {
+        if (is_array($sumberDana)) {
+            $sumberDana = $sumberDana['sumberDana'] ?? null;
+        }
         $this->loadInventaris($sumberDana);
         $this->inventarisList = $this->inventarisList->values();
         $this->dispatch('refreshNamaBarangSelect');

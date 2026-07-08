@@ -50,7 +50,9 @@
 
     <div id="col_unit" class="col-sm-4 mb-3">
         <label class="form-label" for="unit">Jumlah (unit)</label>
-        <input autocomplete="off" type="number" name="unit" id="unit" class="form-control">
+        <input autocomplete="off" type="number" name="unit" id="unit" class="form-control"
+            min="1">
+        <small class="text-muted d-block" id="info_unit">Pilih nama barang dulu</small>
         <small class="text-danger" id="msg_unit"></small>
     </div>
 
@@ -74,3 +76,53 @@
         <small class="text-danger" id="msg_harga_revaluasi"></small>
     </div>
 </div>
+
+@once
+    @push('scripts')
+        <script>
+            (function() {
+                function initMask() {
+                    if (typeof jQuery === 'undefined' || typeof jQuery.fn.maskMoney !== 'function') {
+                        setTimeout(initMask, 100);
+                        return;
+                    }
+                    var $nb = jQuery('#nilai_buku');
+                    var $hj = jQuery('#harga_jual');
+                    var $hrev = jQuery('#harga_revaluasi');
+                    if ($nb.length && !$nb.data('masked')) {
+                        $nb.on('input', function() {
+                            var v = String(this.value || '').replace(/[^0-9]/g, '');
+                            this.value = v ? new Intl.NumberFormat('id-ID').format(parseInt(v)) : '';
+                        });
+                        $nb.data('masked', true);
+                    }
+                    if ($hj.length && !$hj.data('masked')) {
+                        $hj.maskMoney({
+                            prefix: 'Rp ',
+                            thousands: '.',
+                            decimal: ',',
+                            precision: 0,
+                            allowZero: true,
+                            allowNegative: false
+                        }).data('masked', true);
+                    }
+                    if ($hrev.length && !$hrev.data('masked')) {
+                        $hrev.maskMoney({
+                            prefix: 'Rp ',
+                            thousands: '.',
+                            decimal: ',',
+                            precision: 0,
+                            allowZero: true,
+                            allowNegative: false
+                        }).data('masked', true);
+                    }
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initMask);
+                } else {
+                    initMask();
+                }
+            })();
+        </script>
+    @endpush
+@endonce
