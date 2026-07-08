@@ -27,7 +27,7 @@
                             </select>
                         </div>
 
-                        <div class="col-sm-6 mb-3" x-show="mode !== 'hapus'">
+                        <div class="col-sm-6 mb-3">
                             <label class="form-label" for="disimpan_ke">Disimpan Ke</label>
                             <select class="form-control" x-model="selectedDisimpanKe" id="disimpan_ke">
                                 <option value="">-- Disimpan Ke --</option>
@@ -615,6 +615,17 @@
                         }
                     });
                     disimpanKe.addOptions(akunDisimpanKe);
+
+                    const defaultBeban = this.akun.find(a => a.kode === '7.2.02.01');
+                    if (defaultBeban) {
+                        const kode = defaultBeban.kode;
+                        this.selectedDisimpanKe = kode;
+                        try {
+                            if (typeof Select !== 'undefined' && Select['disimpan_ke']) {
+                                Select['disimpan_ke'].setValue(kode, true);
+                            }
+                        } catch (e) {}
+                    }
                 },
 
                 simpanTransaksi() {
