@@ -68,7 +68,7 @@
                 } elseif ($index == 1) {
                     $footerLabel = 'LABA KOTOR';
                 } elseif ($index == 2) {
-                    $footerLabel = 'Total Beban';
+                    $footerLabel = null;
                     $secondaryFooter = 'Laba Sebelum Pajak';
                 } elseif ($index == 3) {
                     $footerLabel = 'Laba Bersih';
