@@ -1,10 +1,11 @@
 @php
-    use App\Utils\Inventaris as Inv;
+    use App\Utils\InventarisUtil;
 @endphp
 
 <input type="hidden" name="_nilai_buku" id="_nilai_buku">
 <input type="hidden" name="harsat" id="harsat">
 <input type="hidden" name="relasi" id="relasi">
+<input type="hidden" name="id_barang" id="id_barang">
 <div class="col-sm-8">
     <div class="my-2">
         <label class="form-label" for="nama_barang">Nama Barang</label>
@@ -12,11 +13,12 @@
             <option value="">-- Pilih Nama Barang --</option>
             @foreach ($inventaris as $inv)
                 @php
-                    $nilai_buku = Inv::nilaiBuku($tgl_transaksi, $inv);
+                    $nilai_buku = InventarisUtil::nilaiBuku($tgl_transaksi, $inv);
                 @endphp
-                <option value="{{ $inv->id }}#{{ $inv->unit }}#{{ $nilai_buku }}">
-                    {{ $inv->id }}. {{ $inv->nama_barang }} ({{ $inv->unit }} unit x
-                    {{ number_format($inv->harsat, 2, ',', '.') }}) | NB. {{ number_format($nilai_buku, 2, ',', '.') }}
+                <option value="{{ $inv->id }}#{{ $inv->jumlah }}#{{ $nilai_buku }}#{{ $inv->harga_satuan * $inv->jumlah }}">
+                    {{ $inv->nama_barang }} ({{ $inv->jumlah }} unit x
+                    {{ number_format($inv->harga_satuan, 2, ',', '.') }}) | NB.
+                    {{ number_format($nilai_buku, 2, ',', '.') }}
                 </option>
             @endforeach
         </select>
@@ -47,12 +49,20 @@
 <div id="col_nilai_buku" class="col-sm-6">
     <div class="input-group input-group-static my-3">
         <label for="nilai_buku">Nilai Buku</label>
-        <input autocomplete="off" readonly disabled type="text" name="nilai_buku" id="nilai_buku"
+        <input autocomplete="off" readonly type="text" name="nilai_buku" id="nilai_buku"
             class="form-control">
         <small class="text-danger" id="msg_nilai_buku"></small>
     </div>
 </div>
-<div id="col_harga_jual" class="col-sm-4" style="display: none">
+<div id="col_harga_revaluasi" class="col-sm-6" style="display: none">
+    <div class="input-group input-group-static my-3">
+        <label for="harga_revaluasi">Harga Revaluasi</label>
+        <input autocomplete="off" type="text" name="harga_revaluasi" id="harga_revaluasi"
+            class="form-control">
+        <small class="text-danger" id="msg_harga_revaluasi"></small>
+    </div>
+</div>
+<div id="col_harga_jual" class="col-sm-6" style="display: none">
     <div class="input-group input-group-static my-3">
         <label for="harga_jual">Harga Jual</label>
         <input autocomplete="off" type="text" name="harga_jual" id="harga_jual" class="form-control">
@@ -61,14 +71,8 @@
 </div>
 
 <script>
-    new Choices($('#nama_barang')[0])
-    new Choices($('#alasan')[0])
-
-    $("#nilai_buku").maskMoney({
-        allowNegative: true
-    });
-
-    $("#harga_jual").maskMoney({
-        allowNegative: true
-    });
+    if (window.Choices) {
+        new Choices($('#nama_barang')[0]);
+        new Choices($('#alasan')[0]);
+    }
 </script>

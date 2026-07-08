@@ -35,11 +35,12 @@
                         </div>
                     </div>
 
-                    <div class="row" x-show="!showFormInventaris">
+                    <div class="row" x-show="!showFormInventaris && mode !== 'hapus'">
                         <template x-for="(item, index) in inputKeterangan" :key="index">
                             <div class="mb-3" :class="inputKeterangan.length > 1 ? 'col-sm-6' : 'col-12'">
                                 <label class="form-label" x-text="item.label"></label>
-                                <input type="text" class="form-control" :value="item.value" x-model="item.value">
+                                <input type="text" class="form-control" :value="item.value"
+                                    x-model="item.value">
                             </div>
                         </template>
                     </div>
@@ -48,7 +49,14 @@
                         @include('livewire.keuangan.partials.form_inventaris')
                     </div>
 
-                    <div class="row" x-show="!showFormInventaris">
+                    <div x-show="mode === 'hapus'">
+                        @include('livewire.keuangan.partials.form_hapus_inventaris', [
+                            'inventaris' => $inventarisList,
+                            'tgl_transaksi' => date('Y-m-d'),
+                        ])
+                    </div>
+
+                    <div class="row" x-show="!showFormInventaris && mode !== 'hapus'">
                         <div class="col-12 my-3">
                             <label class="form-label">Nominal Rp.</label>
                             <input type="text" class="form-control" x-model="nominalFormatted"
@@ -127,6 +135,69 @@
                 }
             }
         }
+
+        function formHapusInventaris() {
+            return {
+                init() {
+                    const namaBarang = document.getElementById('nama_barang');
+                    const alasan = document.getElementById('alasan');
+                    const nilaiBuku = document.getElementById('nilai_buku');
+                    const unit = document.getElementById('unit');
+                    const colHargaJual = document.getElementById('col_harga_jual');
+                    const colHargaRevaluasi = document.getElementById('col_harga_revaluasi');
+                    if (!namaBarang) return;
+
+                    const fire = () => {
+                        const v = namaBarang.value ? namaBarang.value.split('#') : [];
+                        const alasanVal = alasan ? alasan.value : '';
+                        const idBarang = v[0] || '';
+                        const totalUnit = parseInt(v[1] || 0);
+                        const totalNilaiBuku = parseFloat(v[2] || 0);
+                        const totalHargaPerolehan = parseFloat(v[3] || 0);
+
+                        const u = parseInt(unit.value || 0);
+                        const nbPerUnit = totalUnit > 0 ? (totalNilaiBuku / totalUnit) : 0;
+                        const nb = u > 0 ? nbPerUnit * u : 0;
+
+                        if (nilaiBuku) {
+                            nilaiBuku.value = new Intl.NumberFormat('id-ID', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }).format(nb);
+                        }
+
+                        const showHargaJual = alasanVal === 'dijual';
+                        const showHargaRev = alasanVal === 'revaluasi';
+                        if (colHargaJual) colHargaJual.style.display = showHargaJual ? '' : 'none';
+                        if (colHargaRevaluasi) colHargaRevaluasi.style.display = showHargaRev ? '' : 'none';
+
+                        window.dispatchEvent(new CustomEvent('hapusInventarisUpdated', {
+                            detail: {
+                                id_barang: idBarang,
+                                alasan: alasanVal,
+                                unit: u,
+                                total_unit: totalUnit,
+                                nilai_buku: nb,
+                                harga_perolehan_total: totalHargaPerolehan,
+                                harga_jual: showHargaJual ? (document.getElementById('harga_jual')?.value || '')
+                                    .replace(/\D/g, '') : null,
+                                harga_revaluasi: showHargaRev ? (document.getElementById('harga_revaluasi')?.value || '')
+                                    .replace(/\D/g, '') : null,
+                            }
+                        }));
+                    };
+
+                    namaBarang.addEventListener('change', fire);
+                    alasan.addEventListener('change', fire);
+                    unit.addEventListener('input', fire);
+
+                    const hj = document.getElementById('harga_jual');
+                    if (hj) hj.addEventListener('input', fire);
+                    const hrev = document.getElementById('harga_revaluasi');
+                    if (hrev) hrev.addEventListener('input', fire);
+                }
+            }
+        }
     </script>
     <script>
         let jenisTransaksi = new TomSelect('#jenis_transaksi', {
@@ -177,6 +248,8 @@
 
                 showFormInventaris: false,
                 inventarisData: null,
+                hapusData: null,
+                mode: 'normal',
 
                 formatNominal() {
                     let angka = this.nominalFormatted.replace(/\D/g, '');
@@ -187,6 +260,10 @@
                 init() {
                     window.addEventListener('inventarisUpdated', (event) => {
                         this.inventarisData = event.detail;
+                    });
+
+                    window.addEventListener('hapusInventarisUpdated', (event) => {
+                        this.hapusData = event.detail;
                     });
 
                     this.$watch('selectedJenisTransaksi', (value) => {
@@ -243,6 +320,8 @@
                     const kodetujuan = akunTujuan ? akunTujuan.kode : '';
 
                     this.showFormInventaris = false;
+                    this.mode = 'normal';
+
                     if (jenisTransaksiId === '1') {
                         if (kodetujuan.startsWith('1.1.01') || kodetujuan.startsWith('1.1.02')) {
                             this.inputKeterangan = [{
@@ -269,6 +348,14 @@
                     }
 
                     if (jenisTransaksiId === '2') {
+                        if (kodesumber.startsWith('1.2.01') || kodesumber.startsWith('1.2.02')) {
+                            this.mode = 'hapus';
+                            this.inputKeterangan = [];
+                            this.showFormInventaris = false;
+                            this.setAkunHapusInventaris();
+                            return;
+                        }
+
                         if (kodesumber.startsWith('1.1.01')) {
                             this.inputKeterangan = [{
                                     label: 'Relasi',
@@ -401,7 +488,7 @@
                             label: `${kode}. - ${nama}`
                         });
                     });
-                    sumberDana.addOption(akunSumberDana);
+                    sumberDana.addOptions(akunSumberDana);
 
                     let akunDisimpanKe = [];
                     this.akun.forEach(item => {
@@ -416,10 +503,51 @@
                             });
                         }
                     });
-                    disimpanKe.addOption(akunDisimpanKe);
+                    disimpanKe.addOptions(akunDisimpanKe);
+                },
+
+                setAkunHapusInventaris() {
+                    let akunSumberDana = [];
+                    this.akun.forEach(item => {
+                        if (item.kode.startsWith('1.2.01') || item.kode.startsWith('1.2.02')) {
+                            akunSumberDana.push({
+                                id: item.id,
+                                kode: item.kode,
+                                label: `${item.kode}. - ${item.nama}`
+                            });
+                        }
+                    });
+                    sumberDana.addOptions(akunSumberDana);
+
+                    let akunDisimpanKe = [];
+                    this.akun.forEach(item => {
+                        if (item.kode === '7.2.02.01') {
+                            akunDisimpanKe.push({
+                                id: item.id,
+                                kode: item.kode,
+                                label: `${item.kode}. - ${item.nama}`
+                            });
+                        }
+                    });
+                    disimpanKe.addOptions(akunDisimpanKe);
                 },
 
                 simpanTransaksi() {
+                    if (this.mode === 'hapus') {
+                        if (!this.hapusData || !this.hapusData.id_barang) {
+                            Swal.fire('Peringatan', 'Pilih nama barang terlebih dahulu', 'warning');
+                            return;
+                        }
+                        if (!this.hapusData.alasan) {
+                            Swal.fire('Peringatan', 'Pilih alasan penghapusan', 'warning');
+                            return;
+                        }
+                        if (!this.hapusData.unit || this.hapusData.unit <= 0) {
+                            Swal.fire('Peringatan', 'Isi jumlah unit', 'warning');
+                            return;
+                        }
+                    }
+
                     Swal.fire({
                         title: 'Simpan Transaksi?',
                         text: 'Data transaksi akan disimpan.',
@@ -443,9 +571,9 @@
                                 0].value : null,
                             keterangan: this.inputKeterangan.length > 1 ? this
                                 .inputKeterangan[1].value : null,
-                            nominal: String(this.nominal).replace(/\D/g,
-                            ''), // <-- koma ini penting
-                            inventaris: this.showFormInventaris ? this.inventarisData : null
+                            nominal: String(this.nominal).replace(/\D/g, ''),
+                            inventaris: this.showFormInventaris ? this.inventarisData : null,
+                            hapus_inventaris: this.mode === 'hapus' ? this.hapusData : null
                         };
 
                         @this.call('saveJurnalUmum', payload);
@@ -455,3 +583,18 @@
         });
     </script>
 @endsection
+
+@pushOnce('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new MutationObserver(() => {
+                if (document.getElementById('nama_barang') &&
+                    !document.getElementById('nama_barang').dataset.bound
+                ) {
+                    document.getElementById('nama_barang').dataset.bound = '1';
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
+@endpushOnce

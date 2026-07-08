@@ -7,6 +7,7 @@ use App\Models\Inventory;
 use App\Models\Jurnal;
 use App\Models\Payment;
 use App\Models\Transaction_type;
+use App\Utils\InventarisUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -56,11 +57,19 @@ class JurnalUmum extends Component
     protected $listeners = [
         'setHargaPerolehan' => 'setHargaPerolehan',
         'setInventaris' => 'setInventaris',
+        'setHapusInventaris' => 'setHapusInventaris',
     ];
 
     public function setInventaris($payload)
     {
         $this->inventaris = $payload;
+    }
+
+    public $hapusInventaris = [];
+
+    public function setHapusInventaris($payload)
+    {
+        $this->hapusInventaris = $payload;
     }
 
     public function mount()
@@ -79,7 +88,20 @@ class JurnalUmum extends Component
             'akun' => $akun,
             'jenis_transaksi' => $this->jenis_transaksi,
         ];
+
+        $this->loadInventaris();
     }
+
+    public function loadInventaris()
+    {
+        $this->inventarisList = Inventory::where('business_id', $this->business_id)
+            ->where('status', 'baik')
+            ->where('jenis', '!=', 1)
+            ->orderBy('nama_barang')
+            ->get();
+    }
+
+    public $inventarisList = [];
 
     public function saveJurnalUmum($data)
     {
@@ -88,7 +110,6 @@ class JurnalUmum extends Component
 
             return;
         }
-        // dd($data);
 
         DB::beginTransaction();
 
@@ -109,50 +130,168 @@ class JurnalUmum extends Component
                 ->count() + 1;
             $noJurnal = 'JU-'.date('Ymd').'-'.str_pad($urutan, 4, '0', STR_PAD_LEFT);
 
-            // PENGHAPUSAN / PENJUALAN ASET
+            // PENGHAPUSAN / PENJUALAN ASET (Sumber dari akun Aset / Akumulasi Penyusutan)
             if (
-                str_starts_with($sumber, '1.2.01.01') ||
+                str_starts_with($sumber, '1.2.01') ||
                 str_starts_with($sumber, '1.2.02')
             ) {
-                if (str_starts_with($simpan, '5.3.02.01') && $data['jenis_transaksi'] == 2) {
-                    $inventaris = Inventory::where('id', $data['id_barang'])->update([
-                        'business_id' => auth()->user()->business_id,
-                        'payment_id' => null,
-                        'nama_barang' => $data['nama_barang'] ?? null,
-                        'tanggal_beli' => $data['tanggal_pembelian'] ?? null,
-                        'tanggal_validasi' => $data['tanggal_validasi'] ?? null,
-                        'jumlah' => $data['jumlah'] ?? 0,
-                        'harga_satuan' => $data['harga_satuan'] ?? 0,
-                        'umur_ekonomis' => $data['umur_ekonomis'] ?? 0,
-                        'jenis' => $data['jenis'] ?? null,
-                        'kategori' => $data['kategori'] ?? null,
-                        'status' => $data['status'] ?? null,
-                    ]);
+                if ($data['jenis_transaksi'] == 2) {
+                    $hapus = $data['hapus_inventaris'] ?? null;
 
-                    Payment::create(
-                        [
-                            'business_id' => auth()->user()->business_id,
+                    if (! $hapus || empty($hapus['id_barang']) || empty($hapus['alasan'])) {
+                        throw new \Exception('Data hapus inventaris tidak lengkap');
+                    }
+
+                    $inv = Inventory::find($hapus['id_barang']);
+                    if (! $inv) {
+                        throw new \Exception('Inventaris tidak ditemukan');
+                    }
+
+                    $unitHapus = (int) ($hapus['unit'] ?? 0);
+                    if ($unitHapus <= 0 || $unitHapus > $inv->jumlah) {
+                        throw new \Exception('Jumlah unit hapus tidak valid');
+                    }
+
+                    $alasan = strtolower($hapus['alasan']);
+                    $alasanMap = [
+                        'hapus' => 'hapus',
+                        'hilang' => 'hilang',
+                        'rusak' => 'rusak',
+                        'dijual' => 'jual',
+                        'revaluasi' => 'revaluasi',
+                    ];
+                    $statusBaru = $alasanMap[$alasan] ?? $alasan;
+
+                    $hargaRevaluasi = (float) ($hapus['harga_revaluasi'] ?? 0);
+                    $hargaJual = (float) ($hapus['harga_jual'] ?? 0);
+                    $nilaiBuku = (float) ($hapus['nilai_buku'] ?? 0);
+
+                    $totalNilaiBuku = $nilaiBuku * $unitHapus;
+                    $totalHapus = $inv->harga_satuan * $unitHapus;
+
+                    if ($alasan === 'hapus') {
+                        $sisaUnit = $inv->jumlah - $unitHapus;
+                        $nilaiSisa = $inv->harga_satuan * $sisaUnit;
+
+                        if ($sisaUnit <= 0) {
+                            $inv->update([
+                                'status' => $statusBaru,
+                            ]);
+                        } else {
+                            if ($nilaiSisa <= 0) {
+                                $inv->update([
+                                    'status' => $statusBaru,
+                                    'harga_satuan' => 1,
+                                    'jumlah' => 1,
+                                ]);
+                            } else {
+                                $inv->update([
+                                    'jumlah' => $sisaUnit,
+                                    'harga_satuan' => round($nilaiSisa / $sisaUnit, 2),
+                                ]);
+
+                                Inventory::create([
+                                    'business_id' => $inv->business_id,
+                                    'payment_id' => $inv->payment_id,
+                                    'nama_barang' => $inv->nama_barang,
+                                    'tanggal_beli' => $inv->tanggal_beli,
+                                    'tanggal_validasi' => $data['tanggal_pembayaran'],
+                                    'jumlah' => $unitHapus,
+                                    'harga_satuan' => round($totalHapus / $unitHapus, 2),
+                                    'umur_ekonomis' => $inv->umur_ekonomis,
+                                    'jenis' => $inv->jenis,
+                                    'kategori' => $inv->kategori,
+                                    'status' => $statusBaru,
+                                ]);
+                            }
+                        }
+
+                        $jurnal = Jurnal::create([
+                            'business_id' => $this->business_id,
+                            'tanggal' => $data['tanggal_pembayaran'],
+                            'keterangan' => 'Penghapusan '.$inv->nama_barang.' ('.$unitHapus.' unit) - '.$hapus['alasan'],
+                            'relasi' => null,
+                            'jumlah' => $totalNilaiBuku,
+                            'urutan' => $noJurnal,
+                            'user_id' => auth()->id(),
+                        ]);
+
+                        Payment::create([
+                            'business_id' => $this->business_id,
                             'user_id' => auth()->id(),
                             'no_pembayaran' => $noPembayaran,
                             'tanggal_pembayaran' => $data['tanggal_pembayaran'],
                             'jenis_transaksi' => 'inventaris',
-                            'transaction_id' => $data['id_barang'] ?? null,
-                            'total_harga' => $data['harga_satuan'] * $data['jumlah'] ?? 0,
+                            'transaction_id' => $jurnal->id,
+                            'total_harga' => $totalNilaiBuku,
                             'metode_pembayaran' => 'tunai',
                             'no_referensi' => null,
-                            'catatan' => $data['keterangan'] ?? 'Penghapusan Inventaris',
-                            'rekening_debit' => $simpan,
+                            'catatan' => 'Penghapusan '.$inv->nama_barang.' ('.$unitHapus.' unit)',
+                            'rekening_debit' => '7.2.02.01',
                             'rekening_kredit' => $sumber,
-                        ]
-                    );
+                        ]);
+
+                        DB::commit();
+                        $this->loadInventaris();
+                        $this->dispatch('alert', type: 'success', message: 'Penghapusan inventaris berhasil dicatat');
+                        $this->dispatch('redirect', url: '/keuangan/jurnal-umum', timeout: 1000);
+
+                        return;
+                    }
+
+                    if ($alasan === 'revaluasi') {
+                        if ($hargaRevaluasi <= 0) {
+                            throw new \Exception('Harga revaluasi wajib diisi');
+                        }
+
+                        $inv->update([
+                            'harga_satuan' => round($hargaRevaluasi / $inv->jumlah, 2),
+                            'tanggal_validasi' => $data['tanggal_pembayaran'],
+                        ]);
+
+                        DB::commit();
+                        $this->loadInventaris();
+                        $this->dispatch('alert', type: 'success', message: 'Revaluasi berhasil disimpan');
+                        $this->dispatch('redirect', url: '/keuangan/jurnal-umum', timeout: 1000);
+
+                        return;
+                    }
+
+                    if (in_array($alasan, ['rusak', 'hilang', 'dijual'])) {
+                        $sisaUnit = $inv->jumlah - $unitHapus;
+                        if ($sisaUnit <= 0) {
+                            $inv->update(['status' => $statusBaru]);
+                        } else {
+                            $inv->update(['jumlah' => $sisaUnit]);
+                            Inventory::create([
+                                'business_id' => $inv->business_id,
+                                'payment_id' => $inv->payment_id,
+                                'nama_barang' => $inv->nama_barang,
+                                'tanggal_beli' => $inv->tanggal_beli,
+                                'tanggal_validasi' => $data['tanggal_pembayaran'],
+                                'jumlah' => $unitHapus,
+                                'harga_satuan' => $inv->harga_satuan,
+                                'umur_ekonomis' => $inv->umur_ekonomis,
+                                'jenis' => $inv->jenis,
+                                'kategori' => $inv->kategori,
+                                'status' => $statusBaru,
+                            ]);
+                        }
+
+                        DB::commit();
+                        $this->loadInventaris();
+                        $this->dispatch('alert', type: 'success', message: 'Status inventaris diperbarui');
+                        $this->dispatch('redirect', url: '/keuangan/jurnal-umum', timeout: 1000);
+
+                        return;
+                    }
                 }
-                // PEMBELIAN INVENTARIS
             } elseif (
                 str_starts_with($simpan, '1.2.01') ||
                 str_starts_with($simpan, '1.2.03')
             ) {
                 $payment = Payment::create([
-                    'business_id' => auth()->user()->business_id,
+                    'business_id' => $this->business_id,
                     'user_id' => auth()->id(),
                     'no_pembayaran' => $noPembayaran,
                     'tanggal_pembayaran' => $data['tanggal_pembayaran'],
@@ -167,13 +306,13 @@ class JurnalUmum extends Component
                 ]);
 
                 $kodeInventaris = explode('.', $simpan);
-                $jenis = intval($kodeInventaris[2]);
-                $kategori = intval($kodeInventaris[3]);
+                $jenis = intval($kodeInventaris[2] ?? 1);
+                $kategori = intval($kodeInventaris[3] ?? 1);
 
                 if (! empty($data['inventaris'])) {
                     $inv = $data['inventaris'];
-                    $inventaris = Inventory::create([
-                        'business_id' => auth()->user()->business_id,
+                    Inventory::create([
+                        'business_id' => $this->business_id,
                         'payment_id' => $payment->id,
                         'nama_barang' => $inv['nama_barang'] ?? null,
                         'tanggal_beli' => $data['tanggal_pembayaran'] ?? null,
@@ -188,7 +327,7 @@ class JurnalUmum extends Component
                 }
             } else {
                 $jurnal = Jurnal::create([
-                    'business_id' => auth()->user()->business_id,
+                    'business_id' => $this->business_id,
                     'tanggal' => $data['tanggal_pembayaran'],
                     'keterangan' => $data['keterangan'] ?? null,
                     'relasi' => $data['relasi'] ?? null,
@@ -198,7 +337,7 @@ class JurnalUmum extends Component
                 ]);
 
                 Payment::create([
-                    'business_id' => auth()->user()->business_id,
+                    'business_id' => $this->business_id,
                     'user_id' => auth()->id(),
                     'no_pembayaran' => $noPembayaran,
                     'tanggal_pembayaran' => $data['tanggal_pembayaran'],
@@ -224,7 +363,12 @@ class JurnalUmum extends Component
 
     public function render()
     {
-        return view('livewire.keuangan.jurnal-umum')
+        $this->loadInventaris();
+
+        return view('livewire.keuangan.jurnal-umum', [
+            'inventarisList' => $this->inventarisList,
+            'tgl_transaksi' => $this->tanggal_transaksi,
+        ])
             ->layout('layouts.app', ['title' => $this->title]);
     }
 }

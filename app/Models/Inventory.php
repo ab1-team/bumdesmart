@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Inventory extends Model
 {
     use HasFactory;
+
     protected $table = 'inventories';
+
     protected $fillable = [
         'business_id',
         'payment_id',
@@ -20,11 +22,11 @@ class Inventory extends Model
         'umur_ekonomis',
         'jenis',
         'kategori',
-        'status'
+        'status',
     ];
 
     public function getPayment()
     {
-        return $this->hasOne(Payment::class, 'transaksi_id', 'id');
+        return $this->hasOne(Payment::class, 'transaction_id', 'id');
     }
 }
