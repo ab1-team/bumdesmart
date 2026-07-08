@@ -160,6 +160,15 @@
                         const colHargaRevaluasi = document.getElementById('col_harga_revaluasi');
                         if (!namaBarang || !alasan) return false;
 
+                        if (namaBarang.dataset.hooked !== '1') {
+                            namaBarang.dataset.hooked = '1';
+                            namaBarang.addEventListener('change', () => fire({ fromBarang: true }));
+                        }
+                        if (alasan.dataset.hooked !== '1') {
+                            alasan.dataset.hooked = '1';
+                            alasan.addEventListener('change', () => fire());
+                        }
+
                         const fire = (opts = {}) => {
                             const v = namaBarang.value ? namaBarang.value.split('#') : [];
                             const alasanVal = alasan.value || '';
@@ -256,14 +265,21 @@
                             }));
                         };
 
-                        namaBarang.addEventListener('change', () => fire({ fromBarang: true }));
-                        alasan.addEventListener('change', () => fire());
-                        unit.addEventListener('input', () => fire());
+                        if (!unit || unit.dataset.hooked !== '1') {
+                            if (unit) unit.dataset.hooked = '1';
+                            unit.addEventListener('input', () => fire());
+                        }
 
                         const hj = document.getElementById('harga_jual');
-                        if (hj) hj.addEventListener('input', fire);
+                        if (hj && hj.dataset.hooked !== '1') {
+                            hj.dataset.hooked = '1';
+                            hj.addEventListener('input', fire);
+                        }
                         const hrev = document.getElementById('harga_revaluasi');
-                        if (hrev) hrev.addEventListener('input', fire);
+                        if (hrev && hrev.dataset.hooked !== '1') {
+                            hrev.dataset.hooked = '1';
+                            hrev.addEventListener('input', fire);
+                        }
 
                         try {
                             if (typeof Select !== 'undefined') {
@@ -405,6 +421,9 @@
                                 if (typeof window.__hookAll === 'function') {
                                     try { window.__hookAll(); } catch (e) {}
                                 }
+                                try {
+                                    nb.dispatchEvent(new Event('change', { bubbles: true }));
+                                } catch (e) {}
                             } catch (e) {
                                 console.error('refreshNamaBarangSelect:', e);
                             }
