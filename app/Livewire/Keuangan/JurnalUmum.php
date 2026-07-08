@@ -186,7 +186,7 @@ class JurnalUmum extends Component
                     $hargaJual = (float) ($hapus['harga_jual'] ?? 0);
                     $nilaiBuku = (float) ($hapus['nilai_buku'] ?? 0);
 
-                    $totalNilaiBuku = $nilaiBuku * $unitHapus;
+                    $totalNilaiBuku = round($nilaiBuku * $unitHapus, 2);
                     $totalHapus = $inv->harga_satuan * $unitHapus;
 
                     if ($alasan === 'hapus') {
@@ -230,7 +230,7 @@ class JurnalUmum extends Component
                             'business_id' => $this->business_id,
                             'tanggal' => $data['tanggal_pembayaran'],
                             'keterangan' => 'Penghapusan '.$inv->nama_barang.' ('.$unitHapus.' unit) - '.$hapus['alasan'],
-                            'relasi' => null,
+                            'relasi' => '',
                             'jumlah' => $totalNilaiBuku,
                             'urutan' => $noJurnal,
                             'user_id' => auth()->id(),
@@ -349,8 +349,8 @@ class JurnalUmum extends Component
                 $jurnal = Jurnal::create([
                     'business_id' => $this->business_id,
                     'tanggal' => $data['tanggal_pembayaran'],
-                    'keterangan' => $data['keterangan'] ?? null,
-                    'relasi' => $data['relasi'] ?? null,
+                    'keterangan' => $data['keterangan'] ?? '',
+                    'relasi' => $data['relasi'] ?? '',
                     'jumlah' => $data['nominal'] ?? 0,
                     'urutan' => $noJurnal ?? 0,
                     'user_id' => auth()->id(),
