@@ -135,8 +135,8 @@ class KeuanganUtil
         $selisihBulanIni  = $saldoSdBulanIni - $saldoSdBulanLalu;
 
         $vPersediaanAwal = [
-            'lalu' => $getS('1.1.03.01', $bulanInt - 2),
-            'ini'  => $saldoSdBulanLalu,
+            'lalu' => $saldoSdBulanLalu,
+            'ini'  => 0,
             'sd'   => $saldoSdBulanLalu,
         ];
 
