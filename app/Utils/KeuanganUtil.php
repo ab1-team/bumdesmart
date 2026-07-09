@@ -170,10 +170,29 @@ class KeuanganUtil
             'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
         ];
 
+        // HPP diambil dari saldo kredit akun 1.1.03.01 (Persediaan).
+        // Sumber kredit: COGS Penjualan (PaymentUtil line 67) dan Retur Pembelian.
+        // Trigger balances menambah kredit_NN saat payment.rekening_kredit = '1.1.03.01'.
+        $kreditHppBln = function ($bulan) use ($business_id, $tahun) {
+            if ($bulan < 1 || $bulan > 12) return 0;
+            $col = 'kredit_' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
+            return (float) \App\Models\Balance::where('kode_akun', '1.1.03.01')
+                ->where('tahun', $tahun)
+                ->where('business_id', $business_id)
+                ->sum($col);
+        };
+
+        $hppSdLalu = 0;
+        for ($i = 1; $i <= $bulanInt - 1; $i++) {
+            $hppSdLalu += $kreditHppBln($i);
+        }
+        $hppBlnIni = $kreditHppBln($bulanInt);
+        $hppSdIni = $hppSdLalu + $hppBlnIni;
+
         $hpp = [
-            'lalu' => $totalPersediaan['lalu'] - $vPersediaanAkhir['lalu'],
-            'ini' => $totalPersediaan['ini'] - $vPersediaanAkhir['ini'],
-            'sd' => $totalPersediaan['sd'] - $vPersediaanAkhir['sd'],
+            'lalu' => $hppSdLalu,
+            'ini' => $hppBlnIni,
+            'sd' => $hppSdIni,
         ];
 
         $group1_kode = [
@@ -193,6 +212,7 @@ class KeuanganUtil
             ['kode' => '', 'nama' => 'Total Pembelian', 'saldo_sd_lalu' => $pembelianBersih['lalu'], 'saldo_bulan_ini' => $pembelianBersih['ini'], 'saldo_sd_ini' => $pembelianBersih['sd'], 'is_bold' => true],
             ['kode' => '', 'nama' => 'Total Persediaan', 'saldo_sd_lalu' => $totalPersediaan['lalu'], 'saldo_bulan_ini' => $totalPersediaan['ini'], 'saldo_sd_ini' => $totalPersediaan['sd'], 'is_bold' => true],
             ['kode' => '', 'nama' => 'Persediaan Akhir', 'saldo_sd_lalu' => $vPersediaanAkhir['lalu'], 'saldo_bulan_ini' => $vPersediaanAkhir['ini'], 'saldo_sd_ini' => $vPersediaanAkhir['sd']],
+            // HPP = total kredit akun 1.1.03.01 dari balances (sumber: jurnal COGS Penjualan + Retur Pembelian).
             ['kode' => '', 'nama' => 'Harga Pokok Penjualan', 'saldo_sd_lalu' => $hpp['lalu'], 'saldo_bulan_ini' => $hpp['ini'], 'saldo_sd_ini' => $hpp['sd'], 'is_bold' => true],
         ];
 
