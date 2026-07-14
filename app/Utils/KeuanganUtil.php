@@ -120,47 +120,40 @@ class KeuanganUtil
                 ->sum('total_harga');
         };
 
-        // Definisi kolom khusus untuk section Beban (group 2):
-        //   S/D Bln Lalu = saldo akhir bulan (bulanX - 2)  [mis. april -> akhir februari]
-        //   Bln Ini      = saldo akhir bulan (bulanX - 1)  [mis. april -> akhir maret]
-        //   S/D Bln Ini  = saldo bulan 0 (saldo awal tahun)
-        // Akun-akun di section ini non-kumulatif per-bulan di balances (kolom bulan berdiri sendiri),
-        // jadi langsung ambil nilainya per-bulan yang diminta.
-        $blnAkhir2 = max($bulanInt - 2, 0); // akhir bulan (bulanX-2)
-        $blnAkhir1 = max($bulanInt - 1, 1); // akhir bulan (bulanX-1)
+        // Section Beban (group 2): "S/D Bln Lalu" pakai logika lama (s.d akhir bulanX-1).
+        // Hanya dua kolom terakhir yang geser:
+        //   Bln Ini    (baru) = saldo sd bulan ini lama (akhir bulanX)
+        //   S/D Bln Ini (baru) = saldo bulan 0 (saldo awal tahun)
+        $blnAkhir = max($bulanInt - 1, 0);
 
         // Pembelian dari tabel payments (rekening_debit = '1.1.03.01').
-        // Untuk section Beban dipakai: s.d Bln Lalu = total s.d akhir (bulanX-2),
-        // Bln Ini = total s.d akhir (bulanX-1) - total s.d akhir (bulanX-2)
-        // (yaitu hanya transaksi di bulan (bulanX-1)),
-        // S/D Bln Ini = saldo awal periode (bulan 0) -> Diasumsikan 0.
-        $pembelianSdLalu = $debitPersediaan($blnAkhir2);
-        $pembelianSdIni  = $debitPersediaan($blnAkhir1);
-        $pembelianIni    = $pembelianSdIni - $pembelianSdLalu;
+        // lalu = total s.d akhir (bulanX-1). bul_ini(baru) = total s.d akhir bulanX. sd_ini(baru) = 0 (bulan 0 -> Diasumsikan 0).
+        $pembelianSdLalu = $debitPersediaan($blnAkhir);
+        $pembelianSdIni  = $debitPersediaan($bulanInt);
+        $pembelianIni    = $pembelianSdIni;
 
         // Persediaan Awal & Akhir dari saldo 1.1.03.01 di tabel balances.
-        // Per definisi baru section Beban:
-        //   s.d Bln Lalu = saldo akhir (bulanX-2), Bln Ini = saldo akhir (bulanX-1), S/D Bln Ini = saldo awal (bulan 0)
-        $saldoAkhir2 = $getS('1.1.03.01', $blnAkhir2);
-        $saldoAkhir1 = $getS('1.1.03.01', $blnAkhir1);
+        // lalu = saldo akhir (bulanX-1), bul_ini(baru) = saldo akhir bulanX, sd_ini(baru) = saldo bulan 0.
+        $saldoSdBulanLalu = $getS('1.1.03.01', $blnAkhir);
+        $saldoSdBulanIni  = $getS('1.1.03.01', $bulanInt);
         $saldoAwalPersediaan = $getS('1.1.03.01', 0);
-        $selisihBulanIni = $saldoAkhir1 - $saldoAkhir2;
+        $selisihBulanIni  = $saldoSdBulanIni - $saldoSdBulanLalu;
 
         $vPersediaanAwal = [
-            'lalu' => $saldoAkhir2,
+            'lalu' => $saldoSdBulanLalu,
             'ini'  => 0,
-            'sd'   => $saldoAkhir2,
+            'sd'   => $saldoSdBulanLalu,
         ];
 
         $vPersediaanAkhir = [
-            'lalu' => $saldoAkhir2,
+            'lalu' => $saldoSdBulanLalu,
             'ini'  => $selisihBulanIni,
-            'sd'   => $saldoAkhir1,
+            'sd'   => $saldoSdBulanLalu + $selisihBulanIni,
         ];
 
         $vPembelian = [
             'lalu' => $pembelianSdLalu,
-            'ini'  => $pembelianIni,
+            'ini'  => $pembelianSdIni,
             'sd'   => 0,
         ];
 
@@ -168,11 +161,21 @@ class KeuanganUtil
         $vReturPemb = $getV('5.1.01.03');
         $vCashbackPemb = $getV('5.1.01.06');
 
+        // Geser kolom: baris Diskon/Retur/Cashback Pembelian di section Beban.
+        //   Bln Ini (baru)    = sd_ini (lama)
+        //   S/D Bln Ini (baru)= saldo bulan 0 (di sini diasumsikan 0)
+        $diskonSd = $vDiskonPemb['sd'];
+        $returSd  = $vReturPemb['sd'];
+        $cashSd   = $vCashbackPemb['sd'];
+        $vDiskonPemb['ini'] = $diskonSd;  $vDiskonPemb['sd'] = 0;
+        $vReturPemb['ini']  = $returSd;   $vReturPemb['sd']  = 0;
+        $vCashbackPemb['ini'] = $cashSd;  $vCashbackPemb['sd'] = 0;
+
         // Diskon/Retur/Cashback Pembelian disimpan sebagai beban (nilai negatif di balances).
         // Penjumlahan dengan nilai negatif = mengurangi Total Pembelian.
         $pembelianBersih = [
             'lalu' => $vPembelian['lalu'] + $vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu'],
-            'ini' => $vPembelian['ini'] + $vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini'],
+            'ini' => $pembelianSdIni + $diskonSd + $returSd + $cashSd, // geser: pakai sd_ini lama
             'sd' => 0,
         ];
 
@@ -195,20 +198,18 @@ class KeuanganUtil
         };
 
         $hppSdLalu = 0;
-        for ($i = 1; $i <= $blnAkhir2; $i++) {
+        for ($i = 1; $i <= $blnAkhir; $i++) {
             $hppSdLalu += $kreditHppBln($i);
         }
-        $hppSdAkhir1 = 0;
-        for ($i = 1; $i <= $blnAkhir1; $i++) {
-            $hppSdAkhir1 += $kreditHppBln($i);
+        $hppSdIni = 0;
+        for ($i = 1; $i <= $bulanInt; $i++) {
+            $hppSdIni += $kreditHppBln($i);
         }
-        $hppBlnIni = $hppSdAkhir1 - $hppSdLalu;
-        $hppSdIni = 0; // saldo awal periode (bulan 0) diasumsikan 0 untuk HPP
 
         $hpp = [
-            'lalu' => $hppSdLalu,
-            'ini' => $hppBlnIni,
-            'sd' => $hppSdIni,
+            'lalu' => $hppSdLalu,         // s.d akhir bulanX-1 (lama, tetap)
+            'ini' => $hppSdIni,           // geser: kolom Bln Ini baru = sd_ini lama
+            'sd' => 0,                    // geser: kolom S/D Bln Ini baru = saldo bulan 0
         ];
 
         $group1_kode = [
