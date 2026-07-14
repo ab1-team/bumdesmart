@@ -120,36 +120,48 @@ class KeuanganUtil
                 ->sum('total_harga');
         };
 
-        // s.d bulan lalu = debit Jan..bulanLalu
-        // bulan ini     = debit bulan X saja
-        // s.d bulan ini = debit Jan..bulanX
-        $pembelianSdLalu = $debitPersediaan($bulanInt - 1);
-        $pembelianSdIni  = $debitPersediaan($bulanInt);
+        // Definisi kolom khusus untuk section Beban (group 2):
+        //   S/D Bln Lalu = saldo akhir bulan (bulanX - 2)  [mis. april -> akhir februari]
+        //   Bln Ini      = saldo akhir bulan (bulanX - 1)  [mis. april -> akhir maret]
+        //   S/D Bln Ini  = saldo bulan 0 (saldo awal tahun)
+        // Akun-akun di section ini non-kumulatif per-bulan di balances (kolom bulan berdiri sendiri),
+        // jadi langsung ambil nilainya per-bulan yang diminta.
+        $blnAkhir2 = max($bulanInt - 2, 0); // akhir bulan (bulanX-2)
+        $blnAkhir1 = max($bulanInt - 1, 1); // akhir bulan (bulanX-1)
+
+        // Pembelian dari tabel payments (rekening_debit = '1.1.03.01').
+        // Untuk section Beban dipakai: s.d Bln Lalu = total s.d akhir (bulanX-2),
+        // Bln Ini = total s.d akhir (bulanX-1) - total s.d akhir (bulanX-2)
+        // (yaitu hanya transaksi di bulan (bulanX-1)),
+        // S/D Bln Ini = saldo awal periode (bulan 0) -> Diasumsikan 0.
+        $pembelianSdLalu = $debitPersediaan($blnAkhir2);
+        $pembelianSdIni  = $debitPersediaan($blnAkhir1);
         $pembelianIni    = $pembelianSdIni - $pembelianSdLalu;
 
         // Persediaan Awal & Akhir dari saldo 1.1.03.01 di tabel balances.
-        // Karena akun ini saldo bulan ini = saldo s.d bulan ini (bukan kumulatif),
-        // sd_ini dihitung ulang sebagai sd_lalu + bulan_ini untuk konsistensi.
-        $saldoSdBulanLalu = $getS('1.1.03.01', $bulanInt - 1);
-        $saldoSdBulanIni  = $getS('1.1.03.01', $bulanInt);
-        $selisihBulanIni  = $saldoSdBulanIni - $saldoSdBulanLalu;
+        // Per definisi baru section Beban:
+        //   s.d Bln Lalu = saldo akhir (bulanX-2), Bln Ini = saldo akhir (bulanX-1), S/D Bln Ini = saldo awal (bulan 0)
+        $saldoAkhir2 = $getS('1.1.03.01', $blnAkhir2);
+        $saldoAkhir1 = $getS('1.1.03.01', $blnAkhir1);
+        $saldoAwalPersediaan = $getS('1.1.03.01', 0);
+        $selisihBulanIni = $saldoAkhir1 - $saldoAkhir2;
 
         $vPersediaanAwal = [
-            'lalu' => $saldoSdBulanLalu,
+            'lalu' => $saldoAkhir2,
             'ini'  => 0,
-            'sd'   => $saldoSdBulanLalu,
+            'sd'   => $saldoAkhir2,
         ];
 
         $vPersediaanAkhir = [
-            'lalu' => $saldoSdBulanLalu,
+            'lalu' => $saldoAkhir2,
             'ini'  => $selisihBulanIni,
-            'sd'   => $saldoSdBulanLalu + $selisihBulanIni,
+            'sd'   => $saldoAkhir1,
         ];
 
         $vPembelian = [
             'lalu' => $pembelianSdLalu,
             'ini'  => $pembelianIni,
-            'sd'   => $pembelianSdIni,
+            'sd'   => 0,
         ];
 
         $vDiskonPemb = $getV('5.1.01.02');
@@ -161,13 +173,13 @@ class KeuanganUtil
         $pembelianBersih = [
             'lalu' => $vPembelian['lalu'] + $vDiskonPemb['lalu'] + $vReturPemb['lalu'] + $vCashbackPemb['lalu'],
             'ini' => $vPembelian['ini'] + $vDiskonPemb['ini'] + $vReturPemb['ini'] + $vCashbackPemb['ini'],
-            'sd' => $vPembelian['sd'] + $vDiskonPemb['sd'] + $vReturPemb['sd'] + $vCashbackPemb['sd'],
+            'sd' => 0,
         ];
 
         $totalPersediaan = [
             'lalu' => $vPersediaanAwal['lalu'] + $pembelianBersih['lalu'],
             'ini' => $vPersediaanAwal['ini'] + $pembelianBersih['ini'],
-            'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
+            'sd' => $saldoAwalPersediaan,
         ];
 
         // HPP diambil dari saldo kredit akun 1.1.03.01 (Persediaan).
@@ -183,11 +195,15 @@ class KeuanganUtil
         };
 
         $hppSdLalu = 0;
-        for ($i = 1; $i <= $bulanInt - 1; $i++) {
+        for ($i = 1; $i <= $blnAkhir2; $i++) {
             $hppSdLalu += $kreditHppBln($i);
         }
-        $hppBlnIni = $kreditHppBln($bulanInt);
-        $hppSdIni = $hppSdLalu + $hppBlnIni;
+        $hppSdAkhir1 = 0;
+        for ($i = 1; $i <= $blnAkhir1; $i++) {
+            $hppSdAkhir1 += $kreditHppBln($i);
+        }
+        $hppBlnIni = $hppSdAkhir1 - $hppSdLalu;
+        $hppSdIni = 0; // saldo awal periode (bulan 0) diasumsikan 0 untuk HPP
 
         $hpp = [
             'lalu' => $hppSdLalu,
