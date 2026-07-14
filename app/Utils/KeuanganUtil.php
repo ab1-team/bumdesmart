@@ -120,47 +120,38 @@ class KeuanganUtil
                 ->sum('total_harga');
         };
 
-        // Khusus section Beban: laporan April menampilkan Februari, Maret, lalu saldo awal (bulan 0).
-        $bulanSdLalu = max($bulanInt - 2, 0);
-        $bulanIni = max($bulanInt - 1, 0);
+        $pembelianSdLalu = $debitPersediaan($bulanInt - 1);
+        $pembelianSdIni = $debitPersediaan($bulanInt);
+        $pembelianIni = $pembelianSdIni - $pembelianSdLalu;
 
-        $pembelianSdLalu = $debitPersediaan($bulanSdLalu);
-        $pembelianBulanIni = $debitPersediaan($bulanIni) - $pembelianSdLalu;
-
-        $saldoSdLalu = $getS('1.1.03.01', $bulanSdLalu);
-        $saldoBulanIni = $getS('1.1.03.01', $bulanIni);
+        $saldoSdBulanLalu = $getS('1.1.03.01', $bulanInt - 1);
+        $saldoSdBulanIni = $getS('1.1.03.01', $bulanInt);
         $saldoAwal = $getS('1.1.03.01', 0);
 
         $vPersediaanAwal = [
-            'lalu' => $saldoSdLalu,
-            'ini'  => $saldoSdLalu,
-            'sd'   => $saldoAwal,
+            'lalu' => $saldoSdBulanLalu,
+            'ini' => 0,
+            'sd' => $saldoAwal,
         ];
 
         $vPersediaanAkhir = [
-            'lalu' => $saldoSdLalu,
-            'ini'  => $saldoBulanIni - $saldoSdLalu,
-            'sd'   => $saldoAwal,
+            'lalu' => $saldoSdBulanLalu,
+            'ini' => $saldoSdBulanIni - $saldoSdBulanLalu,
+            'sd' => $saldoAwal,
         ];
 
         $vPembelian = [
             'lalu' => $pembelianSdLalu,
-            'ini'  => $pembelianBulanIni,
-            'sd'   => 0,
+            'ini' => $pembelianIni,
+            'sd' => 0,
         ];
 
-        $getBebanV = function ($kode) use ($getS, $bulanSdLalu, $bulanIni) {
-            $lalu = $getS($kode, $bulanSdLalu);
-            return [
-                'lalu' => $lalu,
-                'ini' => $getS($kode, $bulanIni) - $lalu,
-                'sd' => $getS($kode, 0),
-            ];
-        };
-
-        $vDiskonPemb = $getBebanV('5.1.01.02');
-        $vReturPemb = $getBebanV('5.1.01.03');
-        $vCashbackPemb = $getBebanV('5.1.01.06');
+        $vDiskonPemb = $getV('5.1.01.02');
+        $vReturPemb = $getV('5.1.01.03');
+        $vCashbackPemb = $getV('5.1.01.06');
+        $vDiskonPemb['sd'] = $getS('5.1.01.02', 0);
+        $vReturPemb['sd'] = $getS('5.1.01.03', 0);
+        $vCashbackPemb['sd'] = $getS('5.1.01.06', 0);
 
         // Diskon/Retur/Cashback Pembelian disimpan sebagai beban (nilai negatif di balances).
         $pembelianBersih = [
@@ -186,13 +177,13 @@ class KeuanganUtil
         };
 
         $hppSdLalu = 0;
-        for ($i = 1; $i <= $bulanSdLalu; $i++) {
+        for ($i = 1; $i <= $bulanInt - 1; $i++) {
             $hppSdLalu += $kreditHppBln($i);
         }
 
         $hpp = [
             'lalu' => $hppSdLalu,
-            'ini' => $bulanIni > 0 ? $kreditHppBln($bulanIni) : 0,
+            'ini' => $kreditHppBln($bulanInt),
             'sd' => $kreditHppBln(0),
         ];
 
