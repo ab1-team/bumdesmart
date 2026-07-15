@@ -129,29 +129,26 @@ class KeuanganUtil
         $saldoAwal = $getS('1.1.03.01', 0);
 
         $vPersediaanAwal = [
-            'lalu' => $saldoSdBulanLalu,
-            'ini' => 0,
+            'lalu' => $saldoAwal,
+            'ini' => $saldoSdBulanLalu,
             'sd' => $saldoAwal,
         ];
 
         $vPersediaanAkhir = [
             'lalu' => $saldoSdBulanLalu,
-            'ini' => $saldoSdBulanIni - $saldoSdBulanLalu,
-            'sd' => $saldoAwal,
+            'ini' => $saldoSdBulanIni,
+            'sd' => $saldoSdBulanIni,
         ];
 
         $vPembelian = [
             'lalu' => $pembelianSdLalu,
             'ini' => $pembelianIni,
-            'sd' => 0,
+            'sd' => $pembelianSdIni,
         ];
 
         $vDiskonPemb = $getV('5.1.01.02');
         $vReturPemb = $getV('5.1.01.03');
         $vCashbackPemb = $getV('5.1.01.06');
-        $vDiskonPemb['sd'] = $getS('5.1.01.02', 0);
-        $vReturPemb['sd'] = $getS('5.1.01.03', 0);
-        $vCashbackPemb['sd'] = $getS('5.1.01.06', 0);
 
         // Diskon/Retur/Cashback Pembelian disimpan sebagai beban (nilai negatif di balances).
         $pembelianBersih = [
@@ -166,25 +163,10 @@ class KeuanganUtil
             'sd' => $vPersediaanAwal['sd'] + $pembelianBersih['sd'],
         ];
 
-        // HPP diambil dari saldo kredit akun 1.1.03.01 (Persediaan).
-        $kreditHppBln = function ($bulan) use ($business_id, $tahun) {
-            if ($bulan < 0 || $bulan > 12) return 0;
-            $col = 'kredit_' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
-            return (float) \App\Models\Balance::where('kode_akun', '1.1.03.01')
-                ->where('tahun', $tahun)
-                ->where('business_id', $business_id)
-                ->sum($col);
-        };
-
-        $hppSdLalu = 0;
-        for ($i = 1; $i <= $bulanInt - 1; $i++) {
-            $hppSdLalu += $kreditHppBln($i);
-        }
-
         $hpp = [
-            'lalu' => $hppSdLalu,
-            'ini' => $kreditHppBln($bulanInt),
-            'sd' => $kreditHppBln(0),
+            'lalu' => $totalPersediaan['lalu'] - $vPersediaanAkhir['lalu'],
+            'ini' => $totalPersediaan['ini'] - $vPersediaanAkhir['ini'],
+            'sd' => $totalPersediaan['sd'] - $vPersediaanAkhir['sd'],
         ];
 
         $group1_kode = [
