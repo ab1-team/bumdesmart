@@ -393,7 +393,7 @@ class TambahPembelian extends Component
                 foreach ($data['products'] as $item) {
                     $productId = $item['id'];
                     $newQty = $item['jumlah_beli'];
-                    $newPrice = $this->parseNumber($item['harga_beli']);
+                    $newPrice = \App\Utils\NumberUtil::parse($item['harga_beli']);
 
                     if (isset($existingDetails[$productId])) {
                         // UPDATE Existing Detail
