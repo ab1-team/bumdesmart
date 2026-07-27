@@ -358,14 +358,14 @@ class TambahPembelian extends Component
                 \App\Models\BatchMovement::whereIn('stock_movement_id', $stockMovementIds)->delete();
                 \App\Models\StockMovement::whereIn('id', $stockMovementIds)->delete();
 
-                // Delete Payments (Safe to recreate) — scope by transaction_id AND by PO number (old + new, to catch renames)
+                // Delete Payments (Safe to recreate) — scope by transaction_id AND any PO number already used on another purchase (UNIQUE collisions)
                 \App\Models\Payment::where('transaction_id', $purchase->id)
                     ->where('jenis_transaksi', 'purchase')
                     ->delete();
-                $poNumbers = array_unique(array_filter([
+                $poNumbers = Purchase::whereIn('no_pembelian', array_unique(array_filter([
                     $purchase->no_pembelian,
                     $data['nomorPembelian'] ?? null,
-                ]));
+                ])))->pluck('no_pembelian')->all();
                 $poSuffixes = ['', '-CR', '-DISC', '-CSHBK'];
                 $noPembayaranVariants = [];
                 foreach ($poNumbers as $no) {
