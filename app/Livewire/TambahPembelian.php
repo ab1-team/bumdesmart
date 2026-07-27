@@ -358,11 +358,11 @@ class TambahPembelian extends Component
                 \App\Models\BatchMovement::whereIn('stock_movement_id', $stockMovementIds)->delete();
                 \App\Models\StockMovement::whereIn('id', $stockMovementIds)->delete();
 
-                // Delete Payments (Safe to recreate) — scope by transaction_id AND any PO number already used on another purchase (UNIQUE collisions)
+                // Delete Payments (Safe to recreate) — forceDelete to bypass SoftDeletes (UNIQUE on no_pembayaran)
                 \App\Models\Payment::where('transaction_id', $purchase->id)
                     ->where('jenis_transaksi', 'purchase')
-                    ->delete();
-                $poNumbers = Purchase::whereIn('no_pembelian', array_unique(array_filter([
+                    ->forceDelete();
+                $poNumbers = Purchase::withTrashed()->whereIn('no_pembelian', array_unique(array_filter([
                     $purchase->no_pembelian,
                     $data['nomorPembelian'] ?? null,
                 ])))->pluck('no_pembelian')->all();
@@ -374,7 +374,7 @@ class TambahPembelian extends Component
                     }
                 }
                 if (! empty($noPembayaranVariants)) {
-                    \App\Models\Payment::whereIn('no_pembayaran', $noPembayaranVariants)->delete();
+                    \App\Models\Payment::withTrashed()->whereIn('no_pembayaran', $noPembayaranVariants)->forceDelete();
                 }
 
                 // 3. Update Purchase Header
