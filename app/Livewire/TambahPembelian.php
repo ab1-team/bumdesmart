@@ -358,16 +358,24 @@ class TambahPembelian extends Component
                 \App\Models\BatchMovement::whereIn('stock_movement_id', $stockMovementIds)->delete();
                 \App\Models\StockMovement::whereIn('id', $stockMovementIds)->delete();
 
-                // Delete Payments (Safe to recreate) — scope by transaction_id AND any leftover rows tied to this PO number
+                // Delete Payments (Safe to recreate) — scope by transaction_id AND by PO number (old + new, to catch renames)
                 \App\Models\Payment::where('transaction_id', $purchase->id)
                     ->where('jenis_transaksi', 'purchase')
                     ->delete();
-                \App\Models\Payment::whereIn('no_pembayaran', [
+                $poNumbers = array_unique(array_filter([
                     $purchase->no_pembelian,
-                    $purchase->no_pembelian.'-CR',
-                    $purchase->no_pembelian.'-DISC',
-                    $purchase->no_pembelian.'-CSHBK',
-                ])->delete();
+                    $data['nomorPembelian'] ?? null,
+                ]));
+                $poSuffixes = ['', '-CR', '-DISC', '-CSHBK'];
+                $noPembayaranVariants = [];
+                foreach ($poNumbers as $no) {
+                    foreach ($poSuffixes as $suffix) {
+                        $noPembayaranVariants[] = $no.$suffix;
+                    }
+                }
+                if (! empty($noPembayaranVariants)) {
+                    \App\Models\Payment::whereIn('no_pembayaran', $noPembayaranVariants)->delete();
+                }
 
                 // 3. Update Purchase Header
                 $purchase->update([
