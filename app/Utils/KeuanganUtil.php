@@ -52,8 +52,8 @@ class KeuanganUtil
     public static function saldoLabaRugi($tahun, $bulan = '00'): string
     {
         $labaRugi = self::labaRugi($tahun, $bulan);
-        if (isset($labaRugi['groups']) && isset($labaRugi['groups'][3]['total'])) {
-            return (string) $labaRugi['groups'][3]['total'];
+        if (isset($labaRugi['groups'][3]['total_sd_ini'])) {
+            return (string) $labaRugi['groups'][3]['total_sd_ini'];
         }
 
         return '0';
