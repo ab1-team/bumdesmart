@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\AkunLevel1;
 use App\Models\ArusKas;
 use App\Models\Payment;
+use Illuminate\Support\Facades\DB;
 
 class KeuanganUtil
 {
@@ -346,8 +347,10 @@ class KeuanganUtil
                 ->whereRaw("{$cases} IS NOT NULL", $bindings)
                 ->whereBetween('tanggal_pembayaran', [$tanggalMulai, $tanggalAkhir]);
 
-            $totals = Payment::selectRaw('arus_kas_id, SUM(total_harga) as total')
+            // DB::query — Payment model inject soft-delete `payments.deleted_at` on outer even after fromSub
+            $totals = DB::query()
                 ->fromSub($innerQuery, 'grouped')
+                ->selectRaw('arus_kas_id, SUM(total_harga) as total')
                 ->groupBy('arus_kas_id')
                 ->pluck('total', 'arus_kas_id');
 
