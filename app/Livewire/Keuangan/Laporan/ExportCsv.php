@@ -635,40 +635,78 @@ class ExportCsv extends Controller
     {
         $tahun = $data['tahun'] ?? date('Y');
         $bulan = $data['bulan'] ?? date('m');
+        $bulanLalu = max((int) $bulan - 1, 0);
 
         $arusKas = KeuanganUtil::arusKas($tahun, $bulan);
-        $saldoKas = (float) KeuanganUtil::saldoKas($tahun, max((int) $bulan - 1, 0));
+        $saldoKas = (float) KeuanganUtil::saldoKas($tahun, $bulanLalu);
 
         $headers = ['No', 'Nama Akun', 'Saldo'];
         $rows = [];
-        $no = 0;
-        foreach ($arusKas as $root) {
-            $no++;
-            if (! empty($root['children'])) {
-                foreach ($root['children'] as $child) {
-                    $rows[] = [
-                        $no,
-                        ($child['nama'] ?? '') . ' (dari ' . ($root['nama'] ?? '') . ')',
-                        $this->fmt((float) $child['total']),
-                    ];
+        $totalArusKas = 0;
+
+        foreach ($arusKas as $index => $ak) {
+            if ($ak['header']) {
+                $rows[] = [
+                    $index + 1,
+                    $ak['header']->nama_akun ?? '-',
+                    $index == 0 ? $this->fmt($saldoKas) : '',
+                ];
+            }
+
+            $grandTotal = [];
+            foreach ($ak['groups'] as $indexGroup => $group) {
+                if ($group['subheader']) {
+                    $rows[] = ['', $group['subheader']->nama_akun ?? '', ''];
+                }
+
+                $total = 0;
+                foreach ($group['items'] as $item) {
+                    $rows[] = ['', $item->nama_akun ?? '-', $this->fmt((float) $item->total)];
+                    $total += (float) $item->total;
+                }
+
+                $titleJumlah = $ak['header']->nama_akun ?? '';
+                if ($group['subheader']) {
+                    $titleJumlah = $group['subheader']->nama_akun ?? '';
+                }
+
+                if (strtolower($titleJumlah) != 'pengeluaran') {
+                    $grandTotal[$indexGroup] = $total;
+                    $rows[] = ['', 'Jumlah '.$titleJumlah, $this->fmt($total)];
                 }
             }
-            $rows[] = [
-                $no,
-                'Kas Bersih aktivitas ' . ($root['nama'] ?? ''),
-                $this->fmt((float) ($root['total'] ?? 0)),
-            ];
-        }
-        $rows[] = ['', 'Kenaikan (Penurunan) Kas', ''];
-        $rows[] = ['', 'SALDO AKHIR KAS SETARA KAS', $this->fmt($saldoKas)];
 
-        return $this->streamCsv(
-            'laporan-arus-kas.pdf',
-            'Laporan Arus Kas',
-            $this->periodeSubtitle($tahun, $bulan),
-            null,
-            [['title' => null, 'headers' => $headers, 'rows' => $rows, 'footer' => null]]
-        );
+            if ($index > 0) {
+                $totalBawah = 0;
+                foreach ($grandTotal as $indexGrandTotal => $jumlahBawah) {
+                    $totalBawah += $indexGrandTotal == 0 ? $jumlahBawah : -$jumlahBawah;
+                }
+                $totalArusKas += $totalBawah;
+
+                $label = match ((int) $index) {
+                    1 => 'Kas Bersih yang diperoleh dari aktivitas Operasi (A-B-C)',
+                    2 => 'Kas Bersih yang diperoleh dari aktivitas Investasi (A-B)',
+                    3 => 'Kas Bersih yang diperoleh dari aktivitas Pendanaan (A-B)',
+                    default => '',
+                };
+                if ($label !== '') {
+                    $rows[] = ['', $label, $this->fmt($totalBawah)];
+                }
+            }
+        }
+
+        $rows[] = ['', 'Kenaikan (Penurunan) Kas', $this->fmt($totalArusKas)];
+        $rows[] = ['', 'SALDO AKHIR KAS SETARA KAS', $this->fmt($totalArusKas + $saldoKas)];
+
+        return [
+            'title' => 'Laporan Arus Kas',
+            'subtitle' => $this->periodeSubtitle($tahun, $bulan),
+            'headers' => $headers,
+            'rows' => $rows,
+            'totals' => [],
+            'numberCols' => [3],
+            'filename' => 'laporan-arus-kas.csv',
+        ];
     }
 
     // ============================================================

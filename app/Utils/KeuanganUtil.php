@@ -104,10 +104,12 @@ class KeuanganUtil
         $vReturPenj = $getV('4.1.01.03');
         $vCashbackPenj = $getV('4.1.01.06');
 
+        // Diskon/Retur/Cashback Penjualan: akun kredit, diposting di sisi debit → sumSaldo sudah negatif.
+        // Pakai penjumlahan (bukan pengurangan) agar tidak double-flip tanda.
         $penjualanBersih = [
-            'lalu' => $vPenjualan['lalu'] - $vDiskonPenj['lalu'] - $vReturPenj['lalu'] - $vCashbackPenj['lalu'],
-            'ini' => $vPenjualan['ini'] - $vDiskonPenj['ini'] - $vReturPenj['ini'] - $vCashbackPenj['ini'],
-            'sd' => $vPenjualan['sd'] - $vDiskonPenj['sd'] - $vReturPenj['sd'] - $vCashbackPenj['sd'],
+            'lalu' => $vPenjualan['lalu'] + $vDiskonPenj['lalu'] + $vReturPenj['lalu'] + $vCashbackPenj['lalu'],
+            'ini' => $vPenjualan['ini'] + $vDiskonPenj['ini'] + $vReturPenj['ini'] + $vCashbackPenj['ini'],
+            'sd' => $vPenjualan['sd'] + $vDiskonPenj['sd'] + $vReturPenj['sd'] + $vCashbackPenj['sd'],
         ];
 
         // Hitung pembelian dari tabel payments (rekening_debit = '1.1.03.01')
@@ -242,21 +244,23 @@ class KeuanganUtil
                 'saldo_sd_ini' => $vals['sd'],
             ];
 
-            if ($kode1 == '4') { // Other Income
-                 $group['1']['kode'][] = $saldoData;
-                 $group['1']['saldo_sd_lalu'] += $vals['lalu'];
-                 $group['1']['saldo_bulan_ini'] += $vals['ini'];
-                 $group['1']['saldo_sd_ini'] += $vals['sd'];
-            } elseif (in_array($kode1, ['5', '6', '7']) && ($kode1 != '7' || $kode2 != '4')) { // Other Expenses
-                 $group['3']['kode'][] = $saldoData;
-                 $group['3']['saldo_sd_lalu'] -= $vals['lalu'];
-                 $group['3']['saldo_bulan_ini'] -= $vals['ini'];
-                 $group['3']['saldo_sd_ini'] -= $vals['sd'];
-            } elseif ($kode1 == '7' && $kode2 == '4') { // Tax
+            // Klasifikasi by jenis_mutasi: kredit = pendapatan, debit = beban.
+            // 7.1 (Pendapatan Bunga) kredit → income; 7.2/7.3 beban → expense; 7.4 pajak.
+            if ($kode1 == '7' && $kode2 == '4') { // Tax
                  $group['4']['kode'][] = $saldoData;
                  $group['4']['saldo_sd_lalu'] -= $vals['lalu'];
                  $group['4']['saldo_bulan_ini'] -= $vals['ini'];
                  $group['4']['saldo_sd_ini'] -= $vals['sd'];
+            } elseif ($kode1 == '4' || ($kode1 == '7' && $account->jenis_mutasi == 'kredit')) { // Income
+                 $group['1']['kode'][] = $saldoData;
+                 $group['1']['saldo_sd_lalu'] += $vals['lalu'];
+                 $group['1']['saldo_bulan_ini'] += $vals['ini'];
+                 $group['1']['saldo_sd_ini'] += $vals['sd'];
+            } elseif (in_array($kode1, ['5', '6', '7'])) { // Expenses
+                 $group['3']['kode'][] = $saldoData;
+                 $group['3']['saldo_sd_lalu'] -= $vals['lalu'];
+                 $group['3']['saldo_bulan_ini'] -= $vals['ini'];
+                 $group['3']['saldo_sd_ini'] -= $vals['sd'];
             }
         }
 
@@ -308,62 +312,111 @@ class KeuanganUtil
         ];
     }
 
-    public static function arusKas($tahun, $bulan): array
+    public static function arusKas($tahun, $bulan)
     {
-        $bulanInt = intval($bulan);
+        $bulanPad = str_pad(intval($bulan), 2, '0', STR_PAD_LEFT);
+        $tanggalMulai = $tahun.'-'.$bulanPad.'-01';
+        $tanggalAkhir = date('Y-m-t', strtotime($tanggalMulai));
         $business_id = auth()->user()->business_id;
 
-        $rootNodes = ArusKas::whereNull('parent_id')->with('children.rekenings')->get();
+        $semuaArusKas = ArusKas::with('rekenings')->orderBy('id')->get()->keyBy('id');
 
-        $data = [];
-        foreach ($rootNodes as $root) {
-            $totalRoot = 0;
-            $childrenData = [];
+        $leafNodes = $semuaArusKas->filter(fn ($a) => $a->rekenings->isNotEmpty());
+        $semuaArusKas->each(fn ($a) => $a->total = 0);
 
-            foreach ($root->children as $child) {
-                $totalChild = 0;
-                $leafNodes = $child->children->count() > 0 ? $child->children : collect([$child]);
+        if ($leafNodes->isNotEmpty()) {
+            $cases = 'CASE ';
+            $bindings = [];
 
-                foreach ($leafNodes as $arusKas) {
-                    $saldo = 0;
-                    foreach ($arusKas->rekenings as $rek) {
-                        $payments = Payment::where('business_id', $business_id)
-                            ->whereYear('tanggal', $tahun)
-                            ->whereMonth('tanggal', $bulan)
-                            ->where(function ($q) use ($rek) {
-                                $q->where([
-                                    ['rekening_debit', 'LIKE', $rek->rekening_debit],
-                                    ['rekening_kredit', 'LIKE', $rek->rekening_kredit],
-                                ])->orWhere([
-                                    ['rekening_debit', 'LIKE', $rek->rekening_kredit],
-                                    ['rekening_kredit', 'LIKE', $rek->rekening_debit],
-                                ]);
-                            })->get();
+            foreach ($leafNodes as $arusKas) {
+                $whens = $arusKas->rekenings->map(function ($r) use (&$bindings) {
+                    $bindings[] = $r->rekening_debit;
+                    $bindings[] = $r->rekening_kredit;
 
-                        foreach ($payments as $p) {
-                            if (str_starts_with($p->rekening_debit, explode('%', $rek->rekening_debit)[0])) {
-                                $saldo += $p->nominal;
-                            } else {
-                                $saldo -= $p->nominal;
-                            }
-                        }
-                    }
-                    $totalChild += $saldo;
-                }
-                $totalRoot += $totalChild;
-                $childrenData[] = [
-                    'nama' => $child->nama,
-                    'total' => $totalChild,
-                ];
+                    return '(rekening_debit LIKE ? AND rekening_kredit LIKE ?)';
+                })->implode(' OR ');
+
+                $cases .= "WHEN {$whens} THEN {$arusKas->id} ";
             }
 
-            $data[] = [
-                'nama' => $root->nama,
-                'total' => $totalRoot,
-                'children' => $childrenData,
-            ];
+            $cases .= 'END';
+
+            $innerQuery = Payment::selectRaw("{$cases} as arus_kas_id, total_harga", $bindings)
+                ->where('business_id', $business_id)
+                ->whereRaw("{$cases} IS NOT NULL", $bindings)
+                ->whereBetween('tanggal_pembayaran', [$tanggalMulai, $tanggalAkhir]);
+
+            $totals = Payment::selectRaw('arus_kas_id, SUM(total_harga) as total')
+                ->fromSub($innerQuery, 'grouped')
+                ->groupBy('arus_kas_id')
+                ->pluck('total', 'arus_kas_id');
+
+            foreach ($leafNodes as $id => $arusKas) {
+                $arusKas->total = (float) ($totals->get($id) ?? 0);
+            }
         }
 
-        return $data;
+        $visited = [];
+
+        $aggregate = function ($node) use (&$aggregate, $semuaArusKas, &$visited) {
+            if (isset($visited[$node->id])) {
+                return;
+            }
+            $visited[$node->id] = true;
+
+            $children = $semuaArusKas->filter(
+                fn ($n) => $n->sub == $node->id || $n->super_sub == $node->id
+            );
+
+            foreach ($children as $child) {
+                $aggregate($child);
+                $node->total += $child->total;
+            }
+        };
+
+        $semuaArusKas->each(fn ($node) => $aggregate($node));
+
+        $result = collect();
+        $curSection = null;
+        $curGroup = null;
+
+        foreach ($semuaArusKas->sortBy('id') as $node) {
+            $isHeader = $node->sub == 0 && $node->super_sub != 0;
+            $isSubHeader = $node->sub == 0 && $node->rekenings->isEmpty() && ! $isHeader;
+            $isLeaf = ! $isHeader && ! $isSubHeader;
+
+            if ($isHeader) {
+                if ($curGroup !== null) {
+                    $curSection['groups']->push($curGroup);
+                    $curGroup = null;
+                }
+                if ($curSection !== null) {
+                    $result->push($curSection);
+                }
+                $curSection = ['header' => $node, 'groups' => collect()];
+            } elseif ($isSubHeader) {
+                if ($curGroup !== null && $curSection !== null) {
+                    $curSection['groups']->push($curGroup);
+                }
+                if ($curSection === null) {
+                    $curSection = ['header' => null, 'groups' => collect()];
+                }
+                $curGroup = ['subheader' => $node, 'items' => collect()];
+            } elseif ($isLeaf) {
+                if ($curGroup === null) {
+                    $curGroup = ['subheader' => null, 'items' => collect()];
+                }
+                $curGroup['items']->push($node);
+            }
+        }
+
+        if ($curGroup !== null && $curSection !== null) {
+            $curSection['groups']->push($curGroup);
+        }
+        if ($curSection !== null) {
+            $result->push($curSection);
+        }
+
+        return $result;
     }
 }
