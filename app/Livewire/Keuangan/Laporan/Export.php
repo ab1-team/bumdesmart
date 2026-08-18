@@ -792,6 +792,7 @@ class Export extends Controller
 
         $headers = ['', 'Nama Akun', 'Saldo'];
         $excelGroups = [];
+        $totalArusKas = 0;
 
         foreach ($arusKas as $index => $ak) {
             $rows = [];
@@ -822,10 +823,8 @@ class Export extends Controller
                     $titleJumlah = $group['subheader']->nama_akun ?? '';
                 }
 
-                if (strtolower($titleJumlah) != 'pengeluaran') {
-                    $grandTotal[$indexGroup] = $total;
-                    $rows[] = ['', 'Jumlah '.$titleJumlah, $this->rupiah($total)];
-                }
+                $grandTotal[$indexGroup] = $total;
+                $rows[] = ['', 'Jumlah '.$titleJumlah, $this->rupiah($total)];
             }
 
             if ($index > 0) {
@@ -838,9 +837,11 @@ class Export extends Controller
                     }
                 }
 
+                $totalArusKas += $totalBawah;
+
                 $label = '';
                 if ($index == 1) {
-                    $label = 'Kas Bersih yang diperoleh dari aktivitas Operasi (A-B-C)';
+                    $label = 'Kas Bersih yang diperoleh dari aktivitas Operasi (A-B)';
                 } elseif ($index == 2) {
                     $label = 'Kas Bersih yang diperoleh dari aktivitas Investasi (A-B)';
                 } elseif ($index == 3) {
@@ -857,22 +858,13 @@ class Export extends Controller
             ];
         }
 
-        $totalArusKas = 0;
-        foreach ($excelGroups as $g) {
-            foreach ($g['subtotals'] as $st) {
-                if (is_numeric($st[2])) {
-                    $totalArusKas += (float) $st[2];
-                }
-            }
-        }
-
         $finalGroup = [
             'title' => '',
             'headers' => $headers,
             'rows' => [],
             'subtotals' => [
-                ['', 'Kenaikan (Penurunan) Kas', $this->rupiah($totalArusKas)],
-                ['', 'SALDO AKHIR KAS SETARA KAS', $this->rupiah($totalArusKas + $saldoKas)],
+                ['', 'II.  Kenaikan/(Penurunan) Kas dan Setara Kas (Nilai 1C + 2C + 3C)', $this->rupiah($totalArusKas)],
+                ['', 'SALDO AKHIR KAS SETARA KAS (Nilai I + II)', $this->rupiah($totalArusKas + $saldoKas)],
             ],
         ];
         $excelGroups[] = $finalGroup;
@@ -2124,3 +2116,4 @@ class Export extends Controller
         );
     }
 }
+

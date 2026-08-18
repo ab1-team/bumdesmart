@@ -59,22 +59,18 @@
                 @endforeach
 
                 @php
-                    $titleJumlah = $ak['header']->nama_akun;
+                    $titleJumlah = $ak['header']->nama_akun ?? '';
                     if ($group['subheader']) {
                         $titleJumlah = $group['subheader']->nama_akun;
                     }
+                    $grandTotal[$indexGroup] = $total;
                 @endphp
 
-                @if (strtolower($titleJumlah) != 'pengeluaran')
-                    @php
-                        $grandTotal[$indexGroup] = $total;
-                    @endphp
-                    <tr>
-                        <td></td>
-                        <td>Jumlah {{ $titleJumlah }}</td>
-                        <td>{{ number_format($total, 2, '.', ',') }}</td>
-                    </tr>
-                @endif
+                <tr>
+                    <td></td>
+                    <td>Jumlah {{ $titleJumlah }}</td>
+                    <td>{{ number_format($total, 2, '.', ',') }}</td>
+                </tr>
             @endforeach
 
             @if ($index > 0)
@@ -95,7 +91,7 @@
                     <td></td>
                     <td>
                         @if ($index == 1)
-                            Kas Bersih yang diperoleh dari aktivitas Operasi (A-B-C)
+                            Kas Bersih yang diperoleh dari aktivitas Operasi (A-B)
                         @elseif ($index == 2)
                             Kas Bersih yang diperoleh dari aktivitas Investasi (A-B)
                         @elseif ($index == 3)
@@ -113,12 +109,12 @@
 
         <tr>
             <td></td>
-            <td>Kenaikan (Penurunan) Kas</td>
+            <td>II.  Kenaikan/(Penurunan) Kas dan Setara Kas (Nilai 1C + 2C + 3C)</td>
             <td>{{ number_format($totalArusKas, 2, '.', ',') }}</td>
         </tr>
         <tr>
             <td></td>
-            <td>SALDO AKHIR KAS SETARA KAS</td>
+            <td>SALDO AKHIR KAS SETARA KAS (Nilai I + II)</td>
             <td>{{ number_format($totalArusKas + $saldoKas, 2, '.', ',') }}</td>
         </tr>
     </table>

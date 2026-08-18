@@ -105,7 +105,7 @@ class KeuanganUtil
         $vReturPenj = $getV('4.1.01.03');
         $vCashbackPenj = $getV('4.1.01.06');
 
-        // Diskon/Retur/Cashback Penjualan: akun kredit, diposting di sisi debit → sumSaldo sudah negatif.
+        // Diskon/Retur/Cashback Penjualan: akun kredit, diposting di sisi debit â†’ sumSaldo sudah negatif.
         // Pakai penjumlahan (bukan pengurangan) agar tidak double-flip tanda.
         $penjualanBersih = [
             'lalu' => $vPenjualan['lalu'] + $vDiskonPenj['lalu'] + $vReturPenj['lalu'] + $vCashbackPenj['lalu'],
@@ -246,7 +246,7 @@ class KeuanganUtil
             ];
 
             // Klasifikasi by jenis_mutasi: kredit = pendapatan, debit = beban.
-            // 7.1 (Pendapatan Bunga) kredit → income; 7.2/7.3 beban → expense; 7.4 pajak.
+            // 7.1 (Pendapatan Bunga) kredit â†’ income; 7.2/7.3 beban â†’ expense; 7.4 pajak.
             if ($kode1 == '7' && $kode2 == '4') { // Tax
                  $group['4']['kode'][] = $saldoData;
                  $group['4']['saldo_sd_lalu'] -= $vals['lalu'];
@@ -347,7 +347,7 @@ class KeuanganUtil
                 ->whereRaw("{$cases} IS NOT NULL", $bindings)
                 ->whereBetween('tanggal_pembayaran', [$tanggalMulai, $tanggalAkhir]);
 
-            // DB::query — Payment model inject soft-delete `payments.deleted_at` on outer even after fromSub
+            // DB::query â€” Payment model inject soft-delete `payments.deleted_at` on outer even after fromSub
             $totals = DB::query()
                 ->fromSub($innerQuery, 'grouped')
                 ->selectRaw('arus_kas_id, SUM(total_harga) as total')
@@ -368,7 +368,7 @@ class KeuanganUtil
             $visited[$node->id] = true;
 
             $children = $semuaArusKas->filter(
-                fn ($n) => $n->sub == $node->id || $n->super_sub == $node->id
+                fn ($n) => $n->sub == $node->id || ($node->super_sub > 0 && $n->sub == $node->super_sub)
             );
 
             foreach ($children as $child) {
@@ -384,12 +384,15 @@ class KeuanganUtil
         $curGroup = null;
 
         foreach ($semuaArusKas->sortBy('id') as $node) {
-            $isHeader = $node->sub == 0 && $node->super_sub != 0;
-            $isSubHeader = $node->sub == 0 && $node->rekenings->isEmpty() && ! $isHeader;
-            $isLeaf = ! $isHeader && ! $isSubHeader;
+            // Main headers: Node 1 (Saldo Awal), Node 2 (Operasi), Node 47 (Investasi), Node 60 (Pendanaan)
+            $isHeader = $node->sub == 0 && in_array((int) $node->super_sub, [1, 2, 5, 8]);
+            // Subheaders: Group headers like Penerimaan Operasi (3), Pengeluaran Operasi (4), etc.
+            $isSubHeader = $node->sub == 0 && in_array((int) $node->super_sub, [3, 4, 6, 7, 9, 10]);
+            // Leaf items: Items under a subheader
+            $isLeaf = $node->sub > 0 || $node->rekenings->isNotEmpty();
 
             if ($isHeader) {
-                if ($curGroup !== null) {
+                if ($curGroup !== null && $curSection !== null) {
                     $curSection['groups']->push($curGroup);
                     $curGroup = null;
                 }
@@ -423,3 +426,4 @@ class KeuanganUtil
         return $result;
     }
 }
+

@@ -670,10 +670,8 @@ class ExportCsv extends Controller
                     $titleJumlah = $group['subheader']->nama_akun ?? '';
                 }
 
-                if (strtolower($titleJumlah) != 'pengeluaran') {
-                    $grandTotal[$indexGroup] = $total;
-                    $rows[] = ['', 'Jumlah '.$titleJumlah, $this->fmt($total)];
-                }
+                $grandTotal[$indexGroup] = $total;
+                $rows[] = ['', 'Jumlah '.$titleJumlah, $this->fmt($total)];
             }
 
             if ($index > 0) {
@@ -684,7 +682,7 @@ class ExportCsv extends Controller
                 $totalArusKas += $totalBawah;
 
                 $label = match ((int) $index) {
-                    1 => 'Kas Bersih yang diperoleh dari aktivitas Operasi (A-B-C)',
+                    1 => 'Kas Bersih yang diperoleh dari aktivitas Operasi (A-B)',
                     2 => 'Kas Bersih yang diperoleh dari aktivitas Investasi (A-B)',
                     3 => 'Kas Bersih yang diperoleh dari aktivitas Pendanaan (A-B)',
                     default => '',
@@ -695,8 +693,8 @@ class ExportCsv extends Controller
             }
         }
 
-        $rows[] = ['', 'Kenaikan (Penurunan) Kas', $this->fmt($totalArusKas)];
-        $rows[] = ['', 'SALDO AKHIR KAS SETARA KAS', $this->fmt($totalArusKas + $saldoKas)];
+        $rows[] = ['', 'II.  Kenaikan/(Penurunan) Kas dan Setara Kas (Nilai 1C + 2C + 3C)', $this->fmt($totalArusKas)];
+        $rows[] = ['', 'SALDO AKHIR KAS SETARA KAS (Nilai I + II)', $this->fmt($totalArusKas + $saldoKas)];
 
         return [
             'title' => 'Laporan Arus Kas',
@@ -1689,3 +1687,4 @@ class ExportCsv extends Controller
         );
     }
 }
+
