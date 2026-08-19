@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('invoices')) {
+            return;
+        }
+
         Schema::create('invoices', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('business_id')->constrained('businesses');
