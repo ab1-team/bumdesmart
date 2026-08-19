@@ -36,6 +36,9 @@ class KeuanganUtil
         $accounts = Account::where([
             ['business_id', auth()->user()->business_id],
             ['kode', 'LIKE', '1.1.01.%'],
+        ])->orWhere([
+            ['business_id', auth()->user()->business_id],
+            ['kode', 'LIKE', '1.1.02.%'],
         ])->with([
             'balance' => function ($query) use ($tahun) {
                 $query->where('tahun', $tahun);
@@ -368,7 +371,7 @@ class KeuanganUtil
             $visited[$node->id] = true;
 
             $children = $semuaArusKas->filter(
-                fn ($n) => $n->sub == $node->id || ($node->super_sub > 0 && $n->sub == $node->super_sub)
+                fn ($n) => $n->sub == $node->id
             );
 
             foreach ($children as $child) {
