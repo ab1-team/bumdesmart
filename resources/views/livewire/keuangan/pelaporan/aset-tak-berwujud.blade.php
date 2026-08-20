@@ -127,20 +127,20 @@
                         if ($umur >= $inv->umur_ekonomis) {
                             $harga = $inv->harga_satuan * $inv->jumlah;
                             $_susut = $satuan_susut * ($inv->umur_ekonomis - 1);
-                            $satuan_susut = $harga - $_susut - 1;
+                            $satuan_susut = $harga - $_susut;
                         }
 
                         $susut = $satuan_susut * $umur;
                         if ($umur >= $inv->umur_ekonomis && $inv->harga_satuan * $inv->jumlah > 0) {
                             $akum_umur = $inv->umur_ekonomis;
                             $_akum_susut = $inv->harga_satuan * $inv->jumlah;
-                            $akum_susut = $_akum_susut - 1;
-                            $nilai_buku = 1;
+                            $akum_susut = $_akum_susut;
+                            $nilai_buku = 0;
                         } else {
                             $akum_umur = $umur;
                             $akum_susut = $susut;
-                            if ($nilai_buku < 0) {
-                                $nilai_buku = 1;
+                            if ($nilai_buku <= 0) {
+                                $nilai_buku = 0;
                             }
                         }
 
@@ -155,8 +155,8 @@
                         }
 
                         if (strtolower($inv->status) == 'rusak' && $tgl_kondisi >= $inv->tanggal_validasi) {
-                            $akum_susut = $inv->harga_satuan * $inv->jumlah - 1;
-                            $nilai_buku = 1;
+                            $akum_susut = $inv->harga_satuan * $inv->jumlah;
+                            $nilai_buku = 0;
                             $penyusutan = 0;
                             $umur_pakai = 0;
                         }
