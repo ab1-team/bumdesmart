@@ -782,6 +782,156 @@ class ExportCsv extends Controller
     }
 
     // ============================================================
+    // 9b. ASET TAK BERWUJUD
+    // ============================================================
+    public function asetTakBerwujud(array $data)
+    {
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+        $tgl_kondisi = Carbon::createFromDate((int) $tahun, $bulan == '-' ? 12 : (int) $bulan, 1)->endOfMonth()->format('Y-m-d');
+
+        // Ambil Inventaris dengan rekening_debit pada akun 1.2.03.xx (Aset Tak Berwujud)
+        $inventarisGroups = Inventory::with('payment')
+            ->whereHas('payment', function ($q) {
+                $q->where('rekening_debit', 'LIKE', '1.2.03.%');
+            })
+            ->where([
+                ['status', '!=', '0'],
+                ['tanggal_beli', '<=', $tgl_kondisi],
+            ])
+            ->whereNotNull('tanggal_beli')
+            ->orderBy('tanggal_beli', 'ASC')
+            ->get()
+            ->groupBy(function ($item) {
+                $digits = explode('.', optional($item->payment)->rekening_debit ?? '');
+                return isset($digits[3]) ? (int) $digits[3] : 0;
+            });
+
+        // Pemetaan digit ke-4 rekening_debit ke nama akun COA
+        $accountNaman = Account::where('kode', 'LIKE', '1.2.03.%')
+            ->orderBy('kode', 'ASC')
+            ->get(['kode', 'nama'])
+            ->keyBy(function ($a) {
+                $digits = explode('.', $a->kode);
+                return isset($digits[3]) ? (int) $digits[3] : 0;
+            })
+            ->map(function ($a) {
+                return $a->nama;
+            })
+            ->all();
+
+        $headers = [
+            'No', 'Tgl Beli', 'Nama Barang', 'Id', 'Kondisi', 'Unit',
+            'Harga Satuan', 'Harga Perolehan', 'Umur Eko.', 'Amortisasi',
+            'Tahun Ini - Umur', 'Tahun Ini - Biaya',
+            's.d. Tahun Ini - Umur', 's.d. Tahun Ini - Biaya',
+            'Nilai Buku',
+        ];
+
+        $sections = [];
+        $no = 0;
+        foreach ($inventarisGroups as $digit => $items) {
+            $namaAkun = $accountNaman[$digit] ?? ('Aset Tak Berwujud '.$digit);
+            $kodeAkun = '1.2.03.'.str_pad($digit, 2, '0', STR_PAD_LEFT);
+            $rows = [];
+            $subtotal = 0;
+            foreach ($items as $inv) {
+                $no++;
+
+                $statusListInvalid = ['dijual', 'jual', 'hilang', 'dihapus', 'hapus'];
+                $is_status_invalid = in_array(strtolower($inv->status), $statusListInvalid);
+
+                // Hitung amortisasi mengikuti pola aset tetap inventaris
+                $satuan_susut = $inv->harga_satuan <= 0 ? 0 : round(($inv->harga_satuan * $inv->jumlah) / $inv->umur_ekonomis, 2);
+                $pakai_lalu = InventarisUtil::bulan($inv->tanggal_beli, ($tahun - 1).'-12-31');
+                $nilai_buku = InventarisUtil::nilaiBuku($tgl_kondisi, $inv);
+
+                if (strtolower($inv->status) != 'baik' && $tgl_kondisi >= $inv->tanggal_validasi) {
+                    $umur = InventarisUtil::bulan($inv->tanggal_beli, $inv->tanggal_validasi);
+                } else {
+                    $umur = InventarisUtil::bulan($inv->tanggal_beli, $tgl_kondisi);
+                }
+
+                $_satuan_susut = $satuan_susut;
+                if ($umur >= $inv->umur_ekonomis) {
+                    $harga = $inv->harga_satuan * $inv->jumlah;
+                    $_susut = $satuan_susut * ($inv->umur_ekonomis - 1);
+                    $satuan_susut = $harga - $_susut - 1;
+                }
+
+                $susut = $satuan_susut * $umur;
+                if ($umur >= $inv->umur_ekonomis && $inv->harga_satuan * $inv->jumlah > 0) {
+                    $akum_umur = $inv->umur_ekonomis;
+                    $akum_susut = $inv->harga_satuan * $inv->jumlah - 1;
+                    $nilai_buku = 1;
+                } else {
+                    $akum_umur = $umur;
+                    $akum_susut = $susut;
+                    if ($nilai_buku < 0) $nilai_buku = 1;
+                }
+
+                $umur_pakai = $akum_umur - $pakai_lalu;
+                $penyusutan = $satuan_susut * $umur_pakai;
+
+                if ($is_status_invalid && $tgl_kondisi >= $inv->tanggal_validasi) {
+                    $akum_susut = $inv->harga_satuan * $inv->jumlah;
+                    $nilai_buku = 0;
+                    $penyusutan = 0;
+                    $umur_pakai = 0;
+                }
+                if (strtolower($inv->status) == 'rusak' && $tgl_kondisi >= $inv->tanggal_validasi) {
+                    $akum_susut = $inv->harga_satuan * $inv->jumlah - 1;
+                    $nilai_buku = 1;
+                    $penyusutan = 0;
+                    $umur_pakai = 0;
+                }
+                if (! ($umur_pakai >= 0 && $inv->harga_satuan * $inv->jumlah > 0)) {
+                    $umur_pakai = 0;
+                    $penyusutan = 0;
+                }
+                if ($akum_umur == $inv->umur_ekonomis && $umur_pakai > 0) {
+                    $penyusutan = $_satuan_susut * ($umur_pakai - 1) + $satuan_susut;
+                }
+
+                $rows[] = [
+                    $no,
+                    $inv->tanggal_beli ? Carbon::parse($inv->tanggal_beli)->format('d/m/Y') : '-',
+                    $inv->nama_barang,
+                    $inv->id,
+                    ucfirst($inv->status),
+                    $inv->jumlah ?? 1,
+                    $this->fmt((float) $inv->harga_satuan),
+                    $this->fmt((float) $inv->harga_satuan * (int) ($inv->jumlah ?? 1)),
+                    $inv->umur_ekonomis ?? '',
+                    $this->fmt($_satuan_susut),
+                    $umur_pakai,
+                    $this->fmt($penyusutan),
+                    $akum_umur,
+                    $this->fmt($akum_susut),
+                    $this->fmt($nilai_buku),
+                ];
+                $subtotal += $nilai_buku;
+            }
+            $rows[] = ['', '', '', '', '', '', '', 'Jumlah '.$namaAkun.' ('.$kodeAkun.')', '', '', '', '', '', '', $this->fmt($subtotal)];
+
+            $sections[] = [
+                'title' => $namaAkun.' ('.$kodeAkun.')',
+                'headers' => $headers,
+                'rows' => $rows,
+                'footer' => null,
+            ];
+        }
+
+        return $this->streamCsv(
+            'laporan-aset-tak-berwujud.csv',
+            'Daftar Aset Tak Berwujud',
+            $this->periodeSubtitle($tahun, $bulan),
+            null,
+            $sections
+        );
+    }
+
+    // ============================================================
     // 10. PENJUALAN PRODUK
     // ============================================================
     public function penjualanProduk(array $data)

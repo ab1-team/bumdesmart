@@ -362,6 +362,47 @@ class Cetak extends Controller
         return $this->streamPdf($html, 'laporan-aset-tetap-inventaris.pdf', 'landscape');
     }
 
+    public function asetTakBerwujud(array $data)
+    {
+        $tahun = $data['tahun'] ?? date('Y');
+        $bulan = $data['bulan'] ?? '-';
+
+        // Batas tanggal amortisasi (akhir bulan kondisi)
+        $tgl_kondisi = Carbon::createFromDate($tahun, $bulan == '-' ? 12 : $bulan)->endOfMonth()->format('Y-m-d');
+
+        // Ambil Inventaris yang dibukukan pada akun 1.2.03.xx (Aset Tak Berwujud).
+        // Filter berbasis rekening_debit pada tabel payments agar konsisten
+        // dengan jurnal pembukuan (bukan sekadar kategori).
+        $inventarisGroups = \App\Models\Inventory::with('payment')
+            ->whereHas('payment', function ($q) {
+                $q->where('rekening_debit', 'LIKE', '1.2.03.%');
+            })
+            ->where([
+                ['status', '!=', '0'],
+                ['tanggal_beli', '<=', $tgl_kondisi],
+            ])
+            ->whereNotNull('tanggal_beli')
+            ->orderBy('tanggal_beli', 'ASC')
+            ->get()
+            ->groupBy(function ($item) {
+                // Kelompokkan berdasarkan digit ke-4 rekening_debit (1.2.03.NN)
+                $digits = explode('.', optional($item->payment)->rekening_debit ?? '');
+                return isset($digits[3]) ? (int) $digits[3] : 0;
+            });
+
+        $title = 'Daftar Aset Tak Berwujud';
+        $periodeParts = [];
+        if ($bulan != '-') {
+            $periodeParts[] = Carbon::createFromDate($tahun, $bulan, 1)->isoFormat('MMMM');
+        }
+        $periodeParts[] = $tahun;
+        $subtitle = 'Periode: '.implode(' ', $periodeParts);
+
+        $html = view('livewire.keuangan.pelaporan.aset-tak-berwujud', compact('title', 'subtitle', 'inventarisGroups', 'tgl_kondisi', 'tahun', 'bulan'))->render();
+
+        return $this->streamPdf($html, 'laporan-aset-tak-berwujud.pdf', 'landscape');
+    }
+
     public function penjualanProduk(array $data)
     {
         $business = view()->shared('business');

@@ -29,4 +29,14 @@ class Inventory extends Model
     {
         return $this->hasOne(Payment::class, 'transaction_id', 'id');
     }
+
+    /**
+     * Relasi ke Payment berdasarkan payment_id (Foreign Key langsung).
+     * Digunakan untuk validasi rekening_debit / rekening_kredit
+     * sehingga bisa membedakan Aset Tetap (1.2.01.x) vs Aset Tak Berwujud (1.2.03.x).
+     */
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class, 'payment_id', 'id');
+    }
 }

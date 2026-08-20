@@ -66,6 +66,7 @@
                                 <option value="labaRugi">Laporan Laba Rugi</option>
                                 <option value="arusKas">Laporan Arus Kas</option>
                                 <option value="asetTetapInventaris">Aset Tetap dan Inventaris</option>
+                                <option value="asetTakBerwujud">Aset Tak Berwujud</option>
                                 <option value="pembelian">Laporan Pembelian</option>
                                 <option value="piutang">Laporan Piutang (Customer)</option>
                                 <option value="hutang">Laporan Hutang (Supplier)</option>
