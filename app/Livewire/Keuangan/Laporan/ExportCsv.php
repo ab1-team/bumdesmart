@@ -525,7 +525,7 @@ class ExportCsv extends Controller
                 foreach ($a2->akunLevel3 as $a3) {
                     foreach ($a3->accounts as $acc) {
                         $saldo = (float) KeuanganUtil::sumSaldo($acc, (int) $bulan);
-                        if ($acc->kode === '3.2.02.01' && method_exists(KeuanganUtil::class, 'saldoLabaRugi')) {
+                        if ($acc->kode === '3.2.01.02' && method_exists(KeuanganUtil::class, 'saldoLabaRugi')) {
                             $saldo = (float) KeuanganUtil::saldoLabaRugi($tahun, $bulan);
                         }
                         $sectionRows[] = [$acc->kode, '    ' . $acc->nama, $this->fmt($saldo)];

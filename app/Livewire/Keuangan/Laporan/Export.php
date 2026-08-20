@@ -562,7 +562,7 @@ class Export extends Controller
                     $saldoAkun = 0;
                     foreach ($akunLevel3->accounts as $account) {
                         $saldo = KeuanganUtil::sumSaldo($account, (int) $bulan);
-                        if ($account->kode == '3.2.02.01') {
+                        if ($account->kode == '3.2.01.02') {
                             $saldo = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
                         }
                         $saldoAkun += $saldo;
@@ -641,7 +641,7 @@ class Export extends Controller
                     $saldoLevel3 = 0;
                     foreach ($akunLevel3->accounts as $account) {
                         $saldo = KeuanganUtil::sumSaldo($account, (int) $bulan);
-                        if ($account->kode == '3.2.02.01') {
+                        if ($account->kode == '3.2.01.02') {
                             $saldo = KeuanganUtil::saldoLabaRugi($tahun, $bulan);
                         }
                         $saldoLevel3 += $saldo;
