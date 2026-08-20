@@ -1,16 +1,12 @@
 @php
     $saldoAwalDebit = $akun->balance->debit_00 ?? 0;
     $saldoAwalKredit = $akun->balance->kredit_00 ?? 0;
-    
-    if ($akun->jenis_mutasi == 'debit') {
-        $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
-    } else {
-        $saldoAwal = $saldoAwalKredit - $saldoAwalDebit;
-    }
+
+    $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
 
     $saldoBulanLaluDebit = 0;
     $saldoBulanLaluKredit = 0;
-    
+
     // Loop dari bulan 1 sampai bulan - 1 untuk mendapatkan komulatif transaksi s/d bulan lalu
     for ($i = 1; $i < $bulan; $i++) {
         $colDebit = 'debit_' . str_pad($i, 2, '0', STR_PAD_LEFT);
@@ -19,11 +15,7 @@
         $saldoBulanLaluKredit += $akun->balance->$colKredit ?? 0;
     }
 
-    if ($akun->jenis_mutasi == 'debit') {
-        $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
-    } else {
-        $saldoBulanLalu = $saldoBulanLaluKredit - $saldoBulanLaluDebit;
-    }
+    $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
 
     $totalDebit = 0;
     $totalKredit = 0;
@@ -93,11 +85,7 @@
                     $kredit = $payment->total_harga;
                 }
 
-                if ($akun->jenis_mutasi == 'debit') {
-                    $saldo = $debit - $kredit;
-                } else {
-                    $saldo = $kredit - $debit;
-                }
+                $saldo = $debit - $kredit;
 
                 $totalDebit += $debit;
                 $totalKredit += $kredit;

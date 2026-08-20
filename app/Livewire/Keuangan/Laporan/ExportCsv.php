@@ -373,12 +373,7 @@ class ExportCsv extends Controller
         $headers = ['No', 'Tanggal', 'Ref', 'Keterangan', 'Debit', 'Kredit', 'Saldo', 'P'];
         $rows = [];
 
-        $saldo = 0;
-        if ($akun && property_exists($akun, 'jenis_mutasi') && $akun->jenis_mutasi === 'debit') {
-            $saldo = $saldoAwalDebit - $saldoAwalKredit;
-        } else {
-            $saldo = $saldoAwalKredit - $saldoAwalDebit;
-        }
+        $saldo = $saldoAwalDebit - $saldoAwalKredit;
 
         $rows[] = [
             '',

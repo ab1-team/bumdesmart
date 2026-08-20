@@ -396,11 +396,7 @@ class Export extends Controller
         $saldoAwalDebit = $akun->balance->debit_00 ?? 0;
         $saldoAwalKredit = $akun->balance->kredit_00 ?? 0;
 
-        if ($akun->jenis_mutasi == 'debit') {
-            $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
-        } else {
-            $saldoAwal = $saldoAwalKredit - $saldoAwalDebit;
-        }
+        $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
 
         $saldoBulanLaluDebit = 0;
         $saldoBulanLaluKredit = 0;
@@ -411,11 +407,7 @@ class Export extends Controller
             $saldoBulanLaluKredit += $akun->balance->$colKredit ?? 0;
         }
 
-        if ($akun->jenis_mutasi == 'debit') {
-            $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
-        } else {
-            $saldoBulanLalu = $saldoBulanLaluKredit - $saldoBulanLaluDebit;
-        }
+        $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
 
         $totalDebit = 0;
         $totalKredit = 0;
@@ -459,11 +451,7 @@ class Export extends Controller
                 $kredit = (float) $payment->total_harga;
             }
 
-            if ($akun->jenis_mutasi == 'debit') {
-                $saldo = $debit - $kredit;
-            } else {
-                $saldo = $kredit - $debit;
-            }
+            $saldo = $debit - $kredit;
 
             $totalDebit += $debit;
             $totalKredit += $kredit;
