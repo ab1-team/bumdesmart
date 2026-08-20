@@ -3,8 +3,7 @@
     use App\Utils\Tanggal;
     use App\Utils\InventarisUtil;
 
-    // Pemetaan digit ke-4 rekening_debit (1.2.03.NN) ke nama akun COA.
-    // Disimpan ke view ini agar konsisten dengan seed pada AccountUtil.
+    // Pemetaan kategori (1..4) ke nama akun COA 1.2.03.NN.
     $accountNaman = Account::where('kode', 'LIKE', '1.2.03.%')
         ->orderBy('kode', 'ASC')
         ->get(['kode', 'nama'])

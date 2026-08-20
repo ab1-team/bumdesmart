@@ -370,25 +370,19 @@ class Cetak extends Controller
         // Batas tanggal amortisasi (akhir bulan kondisi)
         $tgl_kondisi = Carbon::createFromDate($tahun, $bulan == '-' ? 12 : $bulan)->endOfMonth()->format('Y-m-d');
 
-        // Ambil Inventaris yang dibukukan pada akun 1.2.03.xx (Aset Tak Berwujud).
-        // Filter berbasis rekening_debit pada tabel payments agar konsisten
-        // dengan jurnal pembukuan (bukan sekadar kategori).
-        $inventarisGroups = \App\Models\Inventory::with('payment')
-            ->whereHas('payment', function ($q) {
-                $q->where('rekening_debit', 'LIKE', '1.2.03.%');
-            })
-            ->where([
-                ['status', '!=', '0'],
-                ['tanggal_beli', '<=', $tgl_kondisi],
-            ])
+        // Ambil Inventaris Aset Tak Berwujud (jenis = 3, kategori = 1 s.d 4)
+        $inventarisGroups = \App\Models\Inventory::where([
+            ['jenis', '3'],
+            ['status', '!=', '0'],
+            ['tanggal_beli', '<=', $tgl_kondisi],
+            ['harga_satuan', '>', '0'],
+        ])
             ->whereNotNull('tanggal_beli')
+            ->whereIn('kategori', [1, 2, 3, 4])
+            ->orderBy('kategori', 'ASC')
             ->orderBy('tanggal_beli', 'ASC')
             ->get()
-            ->groupBy(function ($item) {
-                // Kelompokkan berdasarkan digit ke-4 rekening_debit (1.2.03.NN)
-                $digits = explode('.', optional($item->payment)->rekening_debit ?? '');
-                return isset($digits[3]) ? (int) $digits[3] : 0;
-            });
+            ->groupBy('kategori');
 
         $title = 'Daftar Aset Tak Berwujud';
         $periodeParts = [];

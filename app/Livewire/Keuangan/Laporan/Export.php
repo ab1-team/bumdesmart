@@ -1060,22 +1060,19 @@ class Export extends Controller
         $bulan = $data['bulan'] ?? '-';
         $tgl_kondisi = Carbon::createFromDate((int) $tahun, $bulan == '-' ? 12 : (int) $bulan, 1)->endOfMonth()->format('Y-m-d');
 
-        // Ambil Inventaris dengan rekening_debit pada akun 1.2.03.xx (Aset Tak Berwujud)
-        $inventarisGroups = Inventory::with('payment')
-            ->whereHas('payment', function ($q) {
-                $q->where('rekening_debit', 'LIKE', '1.2.03.%');
-            })
-            ->where([
-                ['status', '!=', '0'],
-                ['tanggal_beli', '<=', $tgl_kondisi],
-            ])
+        // Ambil Inventaris Aset Tak Berwujud (jenis = 3, kategori = 1 s.d 4)
+        $inventarisGroups = Inventory::where([
+            ['jenis', '3'],
+            ['status', '!=', '0'],
+            ['tanggal_beli', '<=', $tgl_kondisi],
+            ['harga_satuan', '>', '0'],
+        ])
             ->whereNotNull('tanggal_beli')
+            ->whereIn('kategori', [1, 2, 3, 4])
+            ->orderBy('kategori', 'ASC')
             ->orderBy('tanggal_beli', 'ASC')
             ->get()
-            ->groupBy(function ($item) {
-                $digits = explode('.', optional($item->payment)->rekening_debit ?? '');
-                return isset($digits[3]) ? (int) $digits[3] : 0;
-            });
+            ->groupBy('kategori');
 
         // Pemetaan digit ke-4 rekening_debit ke nama akun COA
         $accountNaman = Account::where('kode', 'LIKE', '1.2.03.%')
