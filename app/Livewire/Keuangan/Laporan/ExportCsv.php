@@ -373,7 +373,12 @@ class ExportCsv extends Controller
         $headers = ['No', 'Tanggal', 'Ref', 'Keterangan', 'Debit', 'Kredit', 'Saldo', 'P'];
         $rows = [];
 
-        $saldo = $saldoAwalDebit - $saldoAwalKredit;
+        $saldo = 0;
+        if ($akun && property_exists($akun, 'jenis_mutasi') && $akun->jenis_mutasi === 'debit') {
+            $saldo = $saldoAwalDebit - $saldoAwalKredit;
+        } else {
+            $saldo = $saldoAwalKredit - $saldoAwalDebit;
+        }
 
         $rows[] = [
             '',
@@ -397,16 +402,22 @@ class ExportCsv extends Controller
         ];
 
         $sumDebit = 0; $sumKredit = 0;
+        $isDebitMutasi = ($akun && property_exists($akun, 'jenis_mutasi') && $akun->jenis_mutasi === 'debit');
         foreach ($payments as $i => $p) {
             $debit = 0; $kredit = 0;
             $isDebit = ($p->rekening_debit === $kodeAkun);
             if ($isDebit) {
                 $debit = (float) $p->total_harga;
-                $saldo += $debit;
             } else {
                 $kredit = (float) $p->total_harga;
-                $saldo -= $kredit;
             }
+
+            if ($isDebitMutasi) {
+                $saldo += ($debit - $kredit);
+            } else {
+                $saldo += ($kredit - $debit);
+            }
+
             $sumDebit += $debit; $sumKredit += $kredit;
             $rows[] = [
                 $i + 1,
@@ -421,7 +432,11 @@ class ExportCsv extends Controller
         }
 
         $saldoAkhir = $saldo;
-        $saldoSdBulanIni = $saldoAwalDebit - $saldoAwalKredit + $sumDebit - $sumKredit;
+        if ($isDebitMutasi) {
+            $saldoSdBulanIni = $saldoAwalDebit - $saldoAwalKredit + $sumDebit - $sumKredit;
+        } else {
+            $saldoSdBulanIni = $saldoAwalKredit - $saldoAwalDebit + $sumKredit - $sumDebit;
+        }
 
         return $this->streamCsv(
             'laporan-buku-besar.pdf',

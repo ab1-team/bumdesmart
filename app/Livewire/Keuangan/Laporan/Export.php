@@ -28,7 +28,11 @@ class Export extends Controller
 {
     private function rupiah($amount): string
     {
-        return number_format((float) $amount, 2, '.', ',');
+        $value = (float) $amount;
+        if ($value < 0) {
+            return '(' . number_format($value * -1, 2, '.', ',') . ')';
+        }
+        return number_format($value, 2, '.', ',');
     }
 
     public function __invoke(Request $request)
@@ -396,7 +400,11 @@ class Export extends Controller
         $saldoAwalDebit = $akun->balance->debit_00 ?? 0;
         $saldoAwalKredit = $akun->balance->kredit_00 ?? 0;
 
-        $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
+        if ($akun->jenis_mutasi == 'debit') {
+            $saldoAwal = $saldoAwalDebit - $saldoAwalKredit;
+        } else {
+            $saldoAwal = $saldoAwalKredit - $saldoAwalDebit;
+        }
 
         $saldoBulanLaluDebit = 0;
         $saldoBulanLaluKredit = 0;
@@ -407,7 +415,11 @@ class Export extends Controller
             $saldoBulanLaluKredit += $akun->balance->$colKredit ?? 0;
         }
 
-        $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
+        if ($akun->jenis_mutasi == 'debit') {
+            $saldoBulanLalu = $saldoBulanLaluDebit - $saldoBulanLaluKredit;
+        } else {
+            $saldoBulanLalu = $saldoBulanLaluKredit - $saldoBulanLaluDebit;
+        }
 
         $totalDebit = 0;
         $totalKredit = 0;
@@ -451,7 +463,11 @@ class Export extends Controller
                 $kredit = (float) $payment->total_harga;
             }
 
-            $saldo = $debit - $kredit;
+            if ($akun->jenis_mutasi == 'debit') {
+                $saldo = $debit - $kredit;
+            } else {
+                $saldo = $kredit - $debit;
+            }
 
             $totalDebit += $debit;
             $totalKredit += $kredit;
