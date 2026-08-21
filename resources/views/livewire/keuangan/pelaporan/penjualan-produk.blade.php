@@ -26,7 +26,7 @@
                     <td>{{ $row->sale->customer->nama_pelanggan ?? 'Guest' }}</td>
                     <td class="text-center">{{ $row->sale->no_invoice ?? '-' }}</td>
                     <td class="text-center">{{ \Carbon\Carbon::parse($row->sale->tanggal_transaksi)->format('d/m/Y H:i') }}</td>
-                    <td class="text-center">{{ number_format($row->jumlah, 2, '.', ',') }}</td>
+                    <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($row->jumlah) }}</td>
                     <td class="text-right">{{ number_format($row->harga_satuan, 2, '.', ',') }}</td>
                     <td class="text-right">{{ number_format($row->subtotal, 2, '.', ',') }}</td>
                 </tr>

@@ -32,10 +32,10 @@
                     <td>{{ $p->category->nama_kategori ?? '-' }}</td>
                     <td style="text-align: center;">{{ $p->unit->nama_satuan ?? '-' }}</td>
                     <td style="text-align: center;">{{ $p->shelf->nama_rak ?? '-' }}</td>
-                    <td style="text-align: center;">{{ $p->stok_awal_periode }}</td>
-                    <td style="text-align: center; color: green;">{{ $p->stok_masuk }}</td>
-                    <td style="text-align: center; color: red;">{{ $p->stok_keluar }}</td>
-                    <td style="text-align: center; font-weight: bold;">{{ $p->stok_akhir }}</td>
+                    <td style="text-align: center;">{{ \App\Utils\NumberUtil::formatQty($p->stok_awal_periode) }}</td>
+                    <td style="text-align: center; color: green;">{{ \App\Utils\NumberUtil::formatQty($p->stok_masuk) }}</td>
+                    <td style="text-align: center; color: red;">{{ \App\Utils\NumberUtil::formatQty($p->stok_keluar) }}</td>
+                    <td style="text-align: center; font-weight: bold;">{{ \App\Utils\NumberUtil::formatQty($p->stok_akhir) }}</td>
                     <td style="text-align: right;">{{ number_format($p->biaya_rata_rata, 2, '.', ',') }}</td>
                     <td style="text-align: right;">{{ number_format($p->nilai_stok, 2, '.', ',') }}</td>
                 </tr>
@@ -44,7 +44,7 @@
         <tfoot>
             <tr>
                 <th colspan="9" style="text-align: right;">Total</th>
-                <th style="text-align: center;">{{ $summary['total_stok_akhir'] }}</th>
+                <th style="text-align: center;">{{ \App\Utils\NumberUtil::formatQty($summary['total_stok_akhir']) }}</th>
                 <th></th>
                 <th style="text-align: right;">{{ number_format($summary['total_nilai_stok'], 2, '.', ',') }}</th>
             </tr>

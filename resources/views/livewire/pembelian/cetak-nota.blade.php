@@ -222,7 +222,7 @@
                         <td>{{ $item->product->barcode ?? $item->product->sku ?? '-' }}</td>
                         <td>{{ $item->product->nama_produk ?? 'Produk' }}</td>
                         <td class="text-right">{{ number_format($item->harga_satuan, 2, ',','.') }}</td>
-                        <td class="text-center">{{ number_format($item->jumlah, 2, ',','.') }}</td>
+                        <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($item->jumlah) }}</td>
                         <td class="text-right">{{ number_format($item->subtotal, 2, ',','.') }}</td>
                     </tr>
                 @endforeach

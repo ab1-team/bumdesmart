@@ -64,17 +64,17 @@
                                     <td class="text-center">{{ $loop->iteration }}</td>
                                     <td>{{ $purchaseDetail->product->nama_produk }}</td>
                                     <td class="text-end">{{ number_format($purchaseDetail->harga_satuan, 2, ',','.') }}</td>
-                                    <td class="text-center">{{ $purchaseDetail->jumlah }}</td>
+                                    <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($purchaseDetail->jumlah) }}</td>
                                     <td class="text-end">
                                         @if ($purchaseDetail->jenis_diskon == 'persen')
-                                            {{ $purchaseDetail->jumlah_diskon }}%
+                                            {{ \App\Utils\NumberUtil::formatQty($purchaseDetail->jumlah_diskon) }}%
                                         @else
                                             {{ number_format($purchaseDetail->jumlah_diskon, 2, ',','.') }}
                                         @endif
                                     </td>
                                     <td class="text-end">
                                         @if ($purchaseDetail->jenis_cashback == 'persen')
-                                            {{ $purchaseDetail->jumlah_cashback }}%
+                                            {{ \App\Utils\NumberUtil::formatQty($purchaseDetail->jumlah_cashback) }}%
                                         @else
                                             {{ number_format($purchaseDetail->jumlah_cashback, 2, ',','.') }}
                                         @endif
@@ -92,7 +92,7 @@
                                 <td colspan="6" class="text-end fw-bold">Diskon</td>
                                 <td class="text-end fw-bold">
                                     @if ($detailPurchase->jenis_diskon == 'persen')
-                                        {{ $detailPurchase->jumlah_diskon }}%
+                                        {{ \App\Utils\NumberUtil::formatQty($detailPurchase->jumlah_diskon) }}%
                                     @else
                                         {{ number_format($detailPurchase->jumlah_diskon, 2, ',','.') }}
                                     @endif
@@ -102,7 +102,7 @@
                                 <td colspan="6" class="text-end fw-bold">Cashback</td>
                                 <td class="text-end fw-bold">
                                     @if ($detailPurchase->jenis_cashback == 'persen')
-                                        {{ $detailPurchase->jumlah_cashback }}%
+                                        {{ \App\Utils\NumberUtil::formatQty($detailPurchase->jumlah_cashback) }}%
                                     @else
                                         {{ number_format($detailPurchase->jumlah_cashback, 2, ',','.') }}
                                     @endif

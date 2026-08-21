@@ -115,7 +115,7 @@ class TambahPenjualan extends Component
                 // We don't store individual cashback in details structure usually for frontend input unless we map it back
                 'subtotal' => (string) $detail->subtotal,
                 'promo_label' => $promoLabel,
-                'batch_info' => 'Stok: '.\App\Utils\NumberUtil::format($currentStockInDb), // Just info
+                'batch_info' => 'Stok: '.\App\Utils\NumberUtil::formatQty($currentStockInDb), // Just info
             ];
         }
 
@@ -207,11 +207,11 @@ class TambahPenjualan extends Component
                 } elseif ($customerGroup->diskon_persen > 0) {
                     $discAmount = ($p->harga_jual * $customerGroup->diskon_persen) / 100;
                     $finalPrice = max(0, $p->harga_jual - $discAmount);
-                    $promoLabel = 'Diskon Member '.\App\Utils\NumberUtil::format($customerGroup->diskon_persen).'%';
+                    $promoLabel = 'Diskon Member '.\App\Utils\NumberUtil::formatQty($customerGroup->diskon_persen).'%';
                 }
             }
 
-            $stockInfo = 'Stok: '.\App\Utils\NumberUtil::format($p->stok_aktual);
+            $stockInfo = 'Stok: '.\App\Utils\NumberUtil::formatQty($p->stok_aktual);
 
             $results[] = [
                 'id' => $p->id,
@@ -405,7 +405,7 @@ class TambahPenjualan extends Component
 
             // If Validating for NEW Sale
             if ($item['jumlah_jual'] > $product->stok_aktual) {
-                return "Stok {$product->nama_produk} tidak mencukupi! Tersedia: ".\App\Utils\NumberUtil::format($product->stok_aktual);
+                return "Stok {$product->nama_produk} tidak mencukupi! Tersedia: ".\App\Utils\NumberUtil::formatQty($product->stok_aktual);
             }
         }
 

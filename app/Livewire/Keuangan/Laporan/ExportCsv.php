@@ -1386,7 +1386,7 @@ class ExportCsv extends Controller
         $i = 0;
         foreach ($products as $p) {
             $i++;
-            $stokFmt = class_exists(NumberUtil::class) ? NumberUtil::format($p->stok_aktual) : (string) $p->stok_aktual;
+            $stokFmt = class_exists(NumberUtil::class) ? NumberUtil::formatQty($p->stok_aktual) : (string) $p->stok_aktual;
             $rows[] = [
                 $i,
                 $p->sku ?? ($p->kode_produk ?? '-'),

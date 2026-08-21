@@ -28,11 +28,11 @@
                     <tr>
                         <td class="text-center">{{ $loop->iteration }}</td>
                         <td>{{ $detail->product->nama_produk ?? '-' }}</td>
-                        <td class="text-center">{{ $detail->stok_sistem }}</td>
-                        <td class="text-center">{{ $detail->stok_fisik }}</td>
+                        <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($detail->stok_sistem) }}</td>
+                        <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($detail->stok_fisik) }}</td>
                         <td class="text-center"
                             style="color: {{ $detail->selisih < 0 ? 'red' : ($detail->selisih > 0 ? 'green' : 'black') }}; font-weight: bold;">
-                            {{ $detail->selisih > 0 ? '+' : '' }}{{ $detail->selisih }}
+                            {{ $detail->selisih > 0 ? '+' : '' }}{{ \App\Utils\NumberUtil::formatQty($detail->selisih) }}
                         </td>
                         <td>{{ $detail->jenis_selisih }}</td>
                         <td class="text-right">Rp {{ number_format($detail->total_harga, 2, '.', ',') }}</td>

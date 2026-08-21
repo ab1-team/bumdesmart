@@ -175,7 +175,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td style="width: 30%">{{ $item->jumlah }} x</td>
+                    <td style="width: 30%">{{ \App\Utils\NumberUtil::formatQty($item->jumlah) }} x</td>
                     <td style="width: 35%" class="text-right">{{ number_format($item->harga_satuan, 2, ',','.') }}
                     </td>
                     <td style="width: 35%" class="text-right">{{ number_format($item->subtotal, 2, ',','.') }}</td>

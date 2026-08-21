@@ -61,7 +61,7 @@
                                     <td class="text-center">{{ $loop->iteration }}</td>
                                     <td>{{ $purchasesReturnDetails->product->nama_produk }}</td>
                                     <td class="text-end">{{ number_format($purchasesReturnDetails->harga_satuan, 2, ',', '.') }}</td>
-                                    <td class="text-center">{{ $purchasesReturnDetails->jumlah }}</td>
+                                    <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($purchasesReturnDetails->jumlah) }}</td>
                                     <td class="text-end">{{ number_format($purchasesReturnDetails->sub_total, 2, ',', '.') }}</td>
                                 </tr>
                             @endforeach

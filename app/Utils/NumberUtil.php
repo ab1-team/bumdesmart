@@ -5,11 +5,12 @@ namespace App\Utils;
 class NumberUtil
 {
     /**
-     * Format a number with maximum decimal places, removing unnecessary trailing zeros.
+     * Format a nominal/currency number with 2 decimal places.
      * Use Indonesian format (dot for thousands, comma for decimals).
      *
      * @param mixed $value
      * @param int $maxDecimals
+     * @param bool $trimZeros
      * @return string
      */
     public static function format($value, $maxDecimals = 2, $trimZeros = false)
@@ -32,6 +33,30 @@ class NumberUtil
         }
         
         return $formatted;
+    }
+
+    /**
+     * Format quantity / stock / count / percentage (non-nominal numbers).
+     * If integer, displays without decimals (e.g. 5, 1.000).
+     * If decimal, limits to max decimals without trailing zeros (e.g. 2,5).
+     *
+     * @param mixed $value
+     * @param int $maxDecimals
+     * @return string
+     */
+    public static function formatQty($value, $maxDecimals = 2)
+    {
+        if ($value === null || $value === '') {
+            return '0';
+        }
+
+        $val = (float) $value;
+        if (floor($val) == $val) {
+            return number_format($val, 0, ',', '.');
+        }
+
+        $formatted = number_format(round($val, $maxDecimals), $maxDecimals, ',', '.');
+        return rtrim(rtrim($formatted, '0'), ',');
     }
 
     /**

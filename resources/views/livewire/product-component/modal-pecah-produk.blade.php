@@ -20,7 +20,7 @@
                                 <div>
                                     <h4 class="alert-title mb-1">Informasi Produk Asal (Bulk)</h4>
                                     <div class="text-secondary">
-                                        Stok Saat Ini: <strong>{{ \App\Utils\NumberUtil::format($detailProduk->stok_aktual) }} {{ $detailProduk->unit->nama_satuan }}</strong><br>
+                                        Stok Saat Ini: <strong>{{ \App\Utils\NumberUtil::formatQty($detailProduk->stok_aktual) }} {{ $detailProduk->unit->nama_satuan }}</strong><br>
                                         Harga Beli: <strong>Rp {{ \App\Utils\NumberUtil::format($detailProduk->harga_beli) }}</strong>
                                     </div>
                                 </div>
@@ -75,7 +75,7 @@
                                     <input type="number" step="any" class="form-control text-center" wire:model.live="retailJumlahPecahBulk">
                                     <span class="input-group-text">{{ $detailProduk->unit->nama_satuan }}</span>
                                 </div>
-                                <small class="text-muted">Maks: {{ \App\Utils\NumberUtil::format($detailProduk->stok_aktual) }}</small>
+                                <small class="text-muted">Maks: {{ \App\Utils\NumberUtil::formatQty($detailProduk->stok_aktual) }}</small>
                                 @error('retailJumlahPecahBulk') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
 
@@ -105,7 +105,7 @@
                                 <div class="row text-center">
                                     <div class="col-6 border-end">
                                         <div class="text-uppercase text-secondary small fw-bold">Total Stok Baru</div>
-                                        <div class="fs-2 fw-bold text-primary">{{ \App\Utils\NumberUtil::format($retailHasilPecah * (float)$retailJumlahPecahBulk) }}</div>
+                                        <div class="fs-2 fw-bold text-primary">{{ \App\Utils\NumberUtil::formatQty($retailHasilPecah * (float)$retailJumlahPecahBulk) }}</div>
                                     </div>
                                     <div class="col-6">
                                         <div class="text-uppercase text-secondary small fw-bold">Harga Beli Baru</div>

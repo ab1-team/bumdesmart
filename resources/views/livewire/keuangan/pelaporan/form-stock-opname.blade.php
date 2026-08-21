@@ -35,7 +35,7 @@
                     <td style="border: 1px solid #000; padding: 8px;">{{ $product->sku ?? $product->kode_produk }}</td>
                     <td style="border: 1px solid #000; padding: 8px;">{{ $product->nama_produk }}</td>
                     <td style="border: 1px solid #000; padding: 8px; text-align: center; color: #777;">
-                        {{ \App\Utils\NumberUtil::format($product->stok_aktual) }}
+                        {{ \App\Utils\NumberUtil::formatQty($product->stok_aktual) }}
                     </td>
                     <td style="border: 1px solid #000; padding: 8px;"></td>
                     <td style="border: 1px solid #000; padding: 8px;"></td>

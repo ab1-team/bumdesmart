@@ -24,10 +24,10 @@
                     <td style="text-align: center;">{{ $index + 1 }}</td>
                     <td>{{ $product->sku ?? ($product->product_code ?? '-') }}</td>
                     <td>{{ $product->nama_produk ?? $product->product_name }}</td>
-                    <td style="text-align: center;">{{ $product->stok_aktual }}</td>
-                    <td style="text-align: center;">{{ $product->stok_minimal }}</td>
-                    <td style="text-align: center; color: red; font-weight: bold;">{{ $product->kekurangan }}</td>
-                    <td style="text-align: center; color: blue;">{{ $product->suggested_order }}</td>
+                    <td style="text-align: center;">{{ \App\Utils\NumberUtil::formatQty($product->stok_aktual) }}</td>
+                    <td style="text-align: center;">{{ \App\Utils\NumberUtil::formatQty($product->stok_minimal) }}</td>
+                    <td style="text-align: center; color: red; font-weight: bold;">{{ \App\Utils\NumberUtil::formatQty($product->kekurangan) }}</td>
+                    <td style="text-align: center; color: blue;">{{ \App\Utils\NumberUtil::formatQty($product->suggested_order) }}</td>
                 </tr>
             @endforeach
         </tbody>
