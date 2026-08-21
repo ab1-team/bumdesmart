@@ -985,9 +985,10 @@
                     searchField: ['nama_produk', 'sku'], // Added barcode field if logical
                     render: {
                         option: function(data, escape) {
+                            const imgStyle = data.gambar ? `background-image: url(${'/storage/' + escape(data.gambar)})` : 'background-color: #e9ecef;';
                             return `<div class="d-flex align-items-center py-2 border-bottom">
                                     <div class="col-auto">
-                                        <span class="avatar avatar-1" style="background-image: url(${'/storage/' + data.gambar})"></span>
+                                        <span class="avatar avatar-1" style="${imgStyle}"></span>
                                     </div>
                                   <div class="flex-grow-1 ps-2">
                                     <div class="fw-bold">${escape(data.nama_produk)}</div>

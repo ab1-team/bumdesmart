@@ -1,4 +1,4 @@
-<div class="modal fade" id="cashbackModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
+﻿<div class="modal fade" id="cashbackModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg">
             <div class="modal-header">
@@ -12,7 +12,14 @@
                 <div class="list-group-item mb-3">
                     <div class="row">
                         <div class="col-auto">
+                            <template x-if="modalProduct && modalProduct.gambar">
                             <img :src="'/storage/' + modalProduct.gambar" alt="Gambar Produk" class="avatar avatar-1">
+                        </template>
+                        <template x-if="!modalProduct || !modalProduct.gambar">
+                            <span class="avatar avatar-1 bg-secondary-lt">
+                                <span class="material-symbols-outlined">inventory_2</span>
+                            </span>
+                        </template>
                         </div>
                         <div class="col text-truncate">
                             <a href="#" class="text-body fw-bold d-block" x-text="modalProduct.nama_produk"></a>
