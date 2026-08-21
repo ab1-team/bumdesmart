@@ -1,4 +1,4 @@
-<div>
+﻿<div>
     <div class="col-12">
         <div class="card" x-data="stockOpname()">
             <div class="card-header">
@@ -196,6 +196,13 @@
                         formatDecimal(val) {
                             if (val === null || val === undefined || val === '') return '0';
                             let number = (typeof val === 'string') ? this.parseNumber(val) : val;
+                            if (isNaN(number)) return '0';
+                            if (Math.abs(number % 1) < 0.0001) {
+                                return new Intl.NumberFormat('id-ID', {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0
+                                }).format(number);
+                            }
                             return new Intl.NumberFormat('id-ID', {
                                 maximumFractionDigits: 2,
                                 minimumFractionDigits: 2
@@ -203,22 +210,35 @@
                         },
 
                         parseNumber(val) {
-                            if (typeof val === 'number') return val;
+                            if (typeof val === 'number') return isNaN(val) ? 0 : val;
                             if (!val) return 0;
-                            let str = String(val).trim();
+                            let str = String(val).replace(/Rp|rp|IDR|\s/g, '').trim();
+
                             if (str.includes('.') && str.includes(',')) {
-                                return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                                let lastDot = str.lastIndexOf('.');
+                                let lastComma = str.lastIndexOf(',');
+                                if (lastComma > lastDot) {
+                                    return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                                } else {
+                                    return parseFloat(str.replace(/,/g, '')) || 0;
+                                }
                             }
+
                             if (str.includes(',')) {
+                                let parts = str.split(',');
+                                if (parts.length > 2) return parseFloat(str.replace(/,/g, '')) || 0;
                                 return parseFloat(str.replace(/,/g, '.')) || 0;
                             }
+
                             if (str.includes('.')) {
                                 let parts = str.split('.');
-                                if (parts[parts.length - 1].length !== 3) {
-                                    return parseFloat(str) || 0;
-                                }
-                                return parseFloat(str.replace(/\./g, '')) || 0;
+                                if (parts.length > 2) return parseFloat(str.replace(/\./g, '')) || 0;
+                                let lastDotIdx = str.lastIndexOf('.');
+                                let remaining = str.length - lastDotIdx - 1;
+                                if (remaining === 3) return parseFloat(str.replace(/\./g, '')) || 0;
+                                return parseFloat(str) || 0;
                             }
+
                             return parseFloat(str) || 0;
                         },
 

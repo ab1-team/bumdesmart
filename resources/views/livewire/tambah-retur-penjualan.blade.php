@@ -1,4 +1,4 @@
-<div wire:ignore x-data="returPenjualanHandler()" x-init="initData(@js($sale))" @reset-form.window="resetForm">
+﻿<div wire:ignore x-data="returPenjualanHandler()" x-init="initData(@js($sale))" @reset-form.window="resetForm">
     <div class="card mb-3">
         <div class="card-body">
             <ul class="list-group ">
@@ -212,6 +212,13 @@
                 formatRupiah(num) {
                     if (num === null || num === undefined || num === '') return '0';
                     let val = (typeof num === 'string') ? this.parseFormatted(num) : num;
+                    if (isNaN(val)) return '0';
+                    if (Math.abs(val % 1) < 0.0001) {
+                        return new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(val);
+                    }
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2
@@ -219,31 +226,46 @@
                 },
 
                 parseFormatted(val) {
-                    if (typeof val === 'number') return val;
+                    if (typeof val === 'number') return isNaN(val) ? 0 : val;
                     if (!val) return 0;
-                    let str = String(val).trim();
-                    
-                    // If the string has both dot and comma (e.g., 1.234,56)
+                    let str = String(val).replace(/Rp|rp|IDR|\s/g, '').trim();
+
+                    // If contains both dot and comma
                     if (str.includes('.') && str.includes(',')) {
-                        return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        let lastDot = str.lastIndexOf('.');
+                        let lastComma = str.lastIndexOf(',');
+                        if (lastComma > lastDot) {
+                            // Indonesian: 1.234,56
+                            return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        } else {
+                            // US: 1,234.56
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                     }
-                    
-                    // If it only has a comma, it's definitely a decimal separator in ID format
+
+                    // If contains only comma
                     if (str.includes(',')) {
+                        let parts = str.split(',');
+                        if (parts.length > 2) {
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                         return parseFloat(str.replace(/,/g, '.')) || 0;
                     }
-                    
-                    // If it only has a dot:
+
+                    // If contains only dot
                     if (str.includes('.')) {
                         let parts = str.split('.');
-                        // If it looks like a decimal (e.g., 2800.00 from DB), keep the dot
-                        if (parts[parts.length - 1].length !== 3) {
-                            return parseFloat(str) || 0;
+                        if (parts.length > 2) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
                         }
-                        // Otherwise, treat as thousands and remove
-                        return parseFloat(str.replace(/\./g, '')) || 0;
+                        let lastDotIdx = str.lastIndexOf('.');
+                        let remaining = str.length - lastDotIdx - 1;
+                        if (remaining === 3) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
+                        }
+                        return parseFloat(str) || 0;
                     }
-                    
+
                     return parseFloat(str) || 0;
                 },
             }))

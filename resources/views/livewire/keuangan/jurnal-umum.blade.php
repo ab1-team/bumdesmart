@@ -1,4 +1,4 @@
-<div wire:ignore x-data="jurnalUmum()" x-init="initData(@js($jurnalUmum))">
+﻿<div wire:ignore x-data="jurnalUmum()" x-init="initData(@js($jurnalUmum))">
     <div class="row">
         <div class="col-md-9">
             <div class="card">
@@ -138,10 +138,19 @@
 
                 formatHarga() {
                     let nilai = this.parseNumber(this.harga_satuan);
-                    this.harga_satuan = new Intl.NumberFormat('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(nilai);
+                    if (isNaN(nilai)) {
+                        this.harga_satuan = '0';
+                    } else if (Math.abs(nilai % 1) < 0.0001) {
+                        this.harga_satuan = new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(nilai);
+                    } else {
+                        this.harga_satuan = new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(nilai);
+                    }
                     this.hitung();
                 },
 
@@ -150,10 +159,19 @@
                     let jumlah = parseFloat(this.jumlah) || 0;
                     let total = harga * jumlah;
 
-                    this.harga_perolehan = new Intl.NumberFormat('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(total);
+                    if (isNaN(total)) {
+                        this.harga_perolehan = '0';
+                    } else if (Math.abs(total % 1) < 0.0001) {
+                        this.harga_perolehan = new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(total);
+                    } else {
+                        this.harga_perolehan = new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(total);
+                    }
 
                     Livewire.dispatch('setHargaPerolehan', {
                         total: total

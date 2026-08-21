@@ -1,4 +1,4 @@
-<div class="row main-row" x-data="posSystem()" @sale-stored.window="cart = []" @keydown.window="handleShortcuts($event)">
+﻿<div class="row main-row" x-data="posSystem()" @sale-stored.window="cart = []" @keydown.window="handleShortcuts($event)">
     @if (!$cashDrawer)
         <div class="position-absolute d-flex flex-column align-items-center justify-content-center"
             style="z-index: 100; background: rgba(255,255,255,0.7); backdrop-filter: blur(5px); top: 0; left: 0; right: 0; bottom: 0;">
@@ -1167,6 +1167,13 @@
                 formatRupiah(num) {
                     if (num === null || num === undefined || num === '') return '0';
                     let val = (typeof num === 'string') ? this.parseNumber(num) : num;
+                    if (isNaN(val)) return '0';
+                    if (Math.abs(val % 1) < 0.0001) {
+                        return new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(val);
+                    }
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2

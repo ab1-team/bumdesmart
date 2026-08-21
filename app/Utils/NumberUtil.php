@@ -24,15 +24,15 @@ class NumberUtil
         // Round to max decimals
         $rounded = round($value, $maxDecimals);
         
-        // Format with separators
-        $formatted = number_format($rounded, $maxDecimals, ',', '.');
-        
-        // Remove trailing zeros and possible decimal separator if requested
-        if ($trimZeros && strpos($formatted, ',') !== false) {
-            $formatted = rtrim(rtrim($formatted, '0'), ',');
+        if ($trimZeros) {
+            if (floor($rounded) == $rounded) {
+                return number_format($rounded, 0, ',', '.');
+            }
+            return number_format($rounded, $maxDecimals, ',', '.');
         }
         
-        return $formatted;
+        // Format with separators
+        return number_format($rounded, $maxDecimals, ',', '.');
     }
 
     /**

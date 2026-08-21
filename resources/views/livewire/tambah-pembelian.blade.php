@@ -1,4 +1,4 @@
-<div wire:ignore x-data="pembelianHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
+﻿<div wire:ignore x-data="pembelianHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
     <div class="card">
         <div class="card-body">
             <!-- Header Form -->
@@ -642,6 +642,13 @@
                 formatRupiah(num) {
                     if (num === null || num === undefined || num === '') return '0';
                     let val = (typeof num === 'string') ? this.parseFormatted(num) : num;
+                    if (isNaN(val)) return '0';
+                    if (Math.abs(val % 1) < 0.0001) {
+                        return new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(val);
+                    }
                     return new Intl.NumberFormat('id-ID', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2
