@@ -96,7 +96,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Limit Hutang</label>
-                                <input type="text" class="form-control" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                <input type="text" class="form-control" x-mask:dynamic="$money($input, '.', ',', 2)"
                                     x-on:focus="$el.select()"
                                     wire:model="limitHutang" placeholder="Limit Hutang" />
                                 @error('limitHutang')

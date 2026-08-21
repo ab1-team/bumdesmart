@@ -53,7 +53,7 @@
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Tagihan <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" wire:model="tagihan"
-                                    x-mask:dynamic="$money($input, ',', '.', 0)" placeholder="0" />
+                                    x-mask:dynamic="$money($input, '.', ',', 0)" placeholder="0" />
                                 @error('tagihan')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror

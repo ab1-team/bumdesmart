@@ -18,6 +18,15 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        'cross-app-bus.event.invoice.paid' => [
+            [\App\Listeners\HandleBusEvent::class, 'handleInvoicePaid'],
+        ],
+        'cross-app-bus.event.invoice.overdue' => [
+            [\App\Listeners\HandleBusEvent::class, 'handleInvoiceOverdue'],
+        ],
+        'cross-app-bus.event.tenant.suspend_requested' => [
+            [\App\Listeners\HandleBusEvent::class, 'handleTenantSuspendRequested'],
+        ],
     ];
 
     /**

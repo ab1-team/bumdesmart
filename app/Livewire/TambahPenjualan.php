@@ -504,6 +504,10 @@ class TambahPenjualan extends Component
 
                 // Calculate Cost: Use batch cost if > 0, otherwise fallback to master product harga_beli
                 $costPerUnit = (float) $batch->harga_satuan > 0 ? (float) $batch->harga_satuan : $fallbackCost;
+                $itemSellingPrice = \App\Utils\NumberUtil::parse($item['harga_jual']);
+                if ($itemSellingPrice > 0 && $costPerUnit > $itemSellingPrice * 2.5 && $fallbackCost > 0 && $fallbackCost <= $itemSellingPrice) {
+                    $costPerUnit = $fallbackCost;
+                }
                 $totalHpp += ($take * $costPerUnit);
 
                 // Store batch movement data (will be linked after detail creation)

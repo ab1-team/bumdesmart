@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "17d3139778525a0a0869debd44383ac2",
+    "content-hash": "6f3a066f8365502edfc81d35afa43992",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -816,6 +816,56 @@
                 }
             ],
             "time": "2025-03-06T22:45:56+00:00"
+        },
+        {
+            "name": "enpii/cross-app-bus",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../master/packages/cross-app-bus",
+                "reference": "1a31f9db9480706e7c7a17b8d6463b47a3be063b"
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0",
+                "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/queue": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/routing": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^10.0|^11.0|^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Enpii\\CrossAppBus\\CrossAppBusServiceProvider"
+                    ],
+                    "aliases": {
+                        "CrossAppBus": "Enpii\\CrossAppBus\\Facades\\CrossAppBus"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Enpii\\CrossAppBus\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Enpii\\CrossAppBus\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Internal Laravel package for bidirectional event bus between Master App and subsidiaries.",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "facade/ignition-contracts",
@@ -9548,7 +9598,7 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
@@ -9559,5 +9609,5 @@
     "platform-overrides": {
         "php": "8.2.31"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }

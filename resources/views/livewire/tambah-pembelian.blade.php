@@ -68,7 +68,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_beli"
-                                        x-on:input="updateRow(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                        x-on:input="updateRow(product.id)" x-mask:dynamic="$money($input, '.', ',', 2)"
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -96,7 +96,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_bersih"
-                                        x-on:input="updateHargaBersih(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                        x-on:input="updateHargaBersih(product.id)" x-mask:dynamic="$money($input, '.', ',', 2)"
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -108,7 +108,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_jual"
-                                        x-on:input="updateHargaJual(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                        x-on:input="updateHargaJual(product.id)" x-mask:dynamic="$money($input, '.', ',', 2)"
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -185,7 +185,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
+                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
                                                     x-model="globalDiskon.jumlah">
                                             </div>
                                         </div>
@@ -211,7 +211,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
+                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
                                                     x-model="globalCashback.jumlah">
                                             </div>
                                         </div>
@@ -269,7 +269,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Nominal Bayar</label>
                                     <input type="text" class="form-control fs-3" placeholder="Bayar"
-                                        x-mask:dynamic="$money($input, ',', '.', 2)" x-model="bayar"
+                                        x-mask:dynamic="$money($input, '.', ',', 2)" x-model="bayar"
                                         x-on:keyup="calculateKembalian">
                                 </div>
 
@@ -687,6 +687,11 @@
                     if (str.includes('.')) {
                         let parts = str.split('.');
                         if (parts.length > 2) {
+                            let lastPart = parts[parts.length - 1];
+                            if (lastPart.length <= 2) {
+                                let whole = parts.slice(0, -1).join('');
+                                return parseFloat(whole + '.' + lastPart) || 0;
+                            }
                             return parseFloat(str.replace(/\./g, '')) || 0;
                         }
                         let lastDotIdx = str.lastIndexOf('.');

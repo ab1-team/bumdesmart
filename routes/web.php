@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HealthController;
 use App\Livewire\DaftarPembelian;
 use App\Livewire\DaftarPenjualan;
 use App\Livewire\DaftarReturPembelian;
@@ -78,3 +79,5 @@ Route::get('/dashboard', function() {
 Route::group(['middleware' => 'auth'], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+Route::get('/health', [HealthController::class, 'check']);

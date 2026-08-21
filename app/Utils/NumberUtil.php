@@ -109,11 +109,17 @@ class NumberUtil
             return (float) str_replace(',', '.', $str);
         }
 
-        // Case 3: Contains ONLY dot (e.g. 1.234.567 or 1.234 or 1234.56)
+        // Case 3: Contains ONLY dot (e.g. 1.234.567 or 1.234 or 1234.56 or 18.657.705.27)
         if (strpos($str, '.') !== false) {
             $lastDotIdx = strrpos($str, '.');
             $parts = explode('.', $str);
             if (count($parts) > 2) {
+                $lastPart = end($parts);
+                // If last segment is decimal (1 or 2 digits, or not 3 digits)
+                if (strlen($lastPart) <= 2) {
+                    array_pop($parts);
+                    return (float) (implode('', $parts) . '.' . $lastPart);
+                }
                 // Multiple dots -> thousands separator in Indonesian format
                 return (float) str_replace('.', '', $str);
             }

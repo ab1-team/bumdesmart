@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'is_master'     => \App\Http\Middleware\IsMaster::class,
         'is_not_master' => \App\Http\Middleware\IsNotMaster::class,
         'debug_tenancy' => \App\Http\Middleware\DebugTenancyMiddleware::class,
+        'verify.master.signature' => \App\Http\Middleware\VerifyMasterSignature::class,
     ];
 }

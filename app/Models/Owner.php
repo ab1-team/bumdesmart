@@ -38,6 +38,9 @@ class Owner extends BaseTenant implements TenantWithDatabase
             'nama_usaha',
             'tanggal_penggunaan',
             'logo',
+            'master_synced_at',
+            'is_locked_by_master',
+            'master_status',
         ];
     }
 }

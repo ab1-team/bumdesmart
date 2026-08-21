@@ -301,7 +301,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="openingBalance"
-                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
                             </div>
                             @error('openingBalance')
                                 <span class="text-danger small">{{ $message }}</span>
@@ -333,7 +333,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="closingBalanceManual"
-                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -1206,6 +1206,11 @@
                     if (str.includes('.')) {
                         let parts = str.split('.');
                         if (parts.length > 2) {
+                            let lastPart = parts[parts.length - 1];
+                            if (lastPart.length <= 2) {
+                                let whole = parts.slice(0, -1).join('');
+                                return parseFloat(whole + '.' + lastPart) || 0;
+                            }
                             return parseFloat(str.replace(/\./g, '')) || 0;
                         }
                         let lastDotIdx = str.lastIndexOf('.');

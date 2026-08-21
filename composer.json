@@ -8,6 +8,7 @@
         "php": "^8.1",
         "barryvdh/laravel-snappy": "^1.0",
         "dompdf/dompdf": "^3.1",
+        "enpii/cross-app-bus": "*",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.2",
@@ -77,6 +78,12 @@
             "block-insecure": false
         }
     },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": {
+        "cross-app-bus": {
+            "type": "path",
+            "url": "../master/packages/cross-app-bus"
+        }
+    }
 }

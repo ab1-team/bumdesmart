@@ -425,13 +425,21 @@ class TambahPembelian extends Component
 
                 foreach ($data['products'] as $item) {
                     $productId = $item['id'];
-                    $newQty = $item['jumlah_beli'];
+                    $newQty = (float) $item['jumlah_beli'];
                     $newPrice = \App\Utils\NumberUtil::parse($item['harga_beli']);
                     $diskonNominal = \App\Utils\NumberUtil::parse($item['diskon']['nominal'] ?? ($item['diskon']['jumlah'] ?? 0));
+                    $itemSubtotal = \App\Utils\NumberUtil::parse($item['subtotal'] ?? 0);
+                    $expectedSubtotal = ($newPrice * $newQty) - $diskonNominal;
+                    if ($newQty > 0 && $itemSubtotal > 0 && abs($itemSubtotal - $expectedSubtotal) > 1.0 && $newPrice > ($itemSubtotal / $newQty) * 1.5) {
+                        $newPrice = round(($itemSubtotal + $diskonNominal) / $newQty, 2);
+                    }
                     $qtyBeli = $newQty > 0 ? $newQty : 1;
                     $hargaBersihPerUnit = isset($item['harga_bersih']) && \App\Utils\NumberUtil::parse($item['harga_bersih']) > 0
                         ? \App\Utils\NumberUtil::parse($item['harga_bersih'])
                         : max(0, $newPrice - ($diskonNominal / $qtyBeli));
+                    if ($hargaBersihPerUnit > $newPrice * 1.5 || $hargaBersihPerUnit <= 0) {
+                        $hargaBersihPerUnit = max(0, $newPrice - ($diskonNominal / $qtyBeli));
+                    }
                     $batchCostPerUnit = $hargaBersihPerUnit > 0 ? $hargaBersihPerUnit : $newPrice;
 
                     if (isset($existingDetails[$productId])) {
@@ -579,12 +587,20 @@ class TambahPembelian extends Component
 
                 foreach ($data['products'] as $item) {
                     $itemHargaBeli = \App\Utils\NumberUtil::parse($item['harga_beli']);
-                    $itemQty = $item['jumlah_beli'];
+                    $itemQty = (float) $item['jumlah_beli'];
                     $itemDiskon = \App\Utils\NumberUtil::parse($item['diskon']['nominal'] ?? ($item['diskon']['jumlah'] ?? 0));
+                    $itemSubtotal = \App\Utils\NumberUtil::parse($item['subtotal'] ?? 0);
+                    $expectedSubtotal = ($itemHargaBeli * $itemQty) - $itemDiskon;
+                    if ($itemQty > 0 && $itemSubtotal > 0 && abs($itemSubtotal - $expectedSubtotal) > 1.0 && $itemHargaBeli > ($itemSubtotal / $itemQty) * 1.5) {
+                        $itemHargaBeli = round(($itemSubtotal + $itemDiskon) / $itemQty, 2);
+                    }
                     $itemQtyBeli = $itemQty > 0 ? $itemQty : 1;
                     $itemHargaBersih = isset($item['harga_bersih']) && \App\Utils\NumberUtil::parse($item['harga_bersih']) > 0
                         ? \App\Utils\NumberUtil::parse($item['harga_bersih'])
                         : max(0, $itemHargaBeli - ($itemDiskon / $itemQtyBeli));
+                    if ($itemHargaBersih > $itemHargaBeli * 1.5 || $itemHargaBersih <= 0) {
+                        $itemHargaBersih = max(0, $itemHargaBeli - ($itemDiskon / $itemQtyBeli));
+                    }
                     $itemBatchCost = $itemHargaBersih > 0 ? $itemHargaBersih : $itemHargaBeli;
 
                     // 1. Create Purchase Detail (We need ID for the batch linkage)

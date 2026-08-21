@@ -322,6 +322,10 @@ class SalePos extends Component
                 $batch->save();
 
                 $costPerUnit = (float) $batch->harga_satuan > 0 ? (float) $batch->harga_satuan : $fallbackCost;
+                $itemSellingPrice = \App\Utils\NumberUtil::parse($item['price']);
+                if ($itemSellingPrice > 0 && $costPerUnit > $itemSellingPrice * 2.5 && $fallbackCost > 0 && $fallbackCost <= $itemSellingPrice) {
+                    $costPerUnit = $fallbackCost;
+                }
                 $totalHpp += ($take * $costPerUnit);
                 $currentProductBatchMovements[] = [
                     'batch_id' => $batch->id,
@@ -434,23 +438,47 @@ class SalePos extends Component
         $payments = [];
         $timestamp = now();
 
-        // 1. Revenue Entry (Gross Amount)
-        $payments[] = [
-            'business_id' => $this->businessId,
-            'user_id' => $user->id,
-            'no_pembayaran' => $nomorPenjualan,
-            'tanggal_pembayaran' => $tgl,
-            'jenis_transaksi' => 'sale',
-            'transaction_id' => $sale->id,
-            'total_harga' => $totalGrossAll,
-            'metode_pembayaran' => $metodeBayar,
-            'no_referensi' => $data['no_rekening'] ?? null,
-            'catatan' => 'Penjualan POS '.$nomorPenjualan,
-            'rekening_debit' => $kodeRekening['sales']['rekening_debit'],
-            'rekening_kredit' => $kodeRekening['sales']['rekening_kredit'],
-            'created_at' => $timestamp,
-            'updated_at' => $timestamp,
-        ];
+        // 1a. Revenue Entry - Cash Part
+        $cashAmount = ($pay >= $grandTotal) ? $grandTotal : $pay;
+        if ($cashAmount > 0) {
+            $payments[] = [
+                'business_id' => $this->businessId,
+                'user_id' => $user->id,
+                'no_pembayaran' => $nomorPenjualan,
+                'tanggal_pembayaran' => $tgl,
+                'jenis_transaksi' => 'sale',
+                'transaction_id' => $sale->id,
+                'total_harga' => $cashAmount,
+                'metode_pembayaran' => $metodeBayar,
+                'no_referensi' => $data['no_rekening'] ?? null,
+                'catatan' => 'Penjualan POS '.$nomorPenjualan,
+                'rekening_debit' => $kodeRekening['sales']['rekening_debit'],
+                'rekening_kredit' => $kodeRekening['sales']['rekening_kredit'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
+
+        // 1b. Revenue Entry - Credit Part (Piutang)
+        $creditAmount = $grandTotal - $cashAmount;
+        if ($creditAmount > 0) {
+            $payments[] = [
+                'business_id' => $this->businessId,
+                'user_id' => $user->id,
+                'no_pembayaran' => $nomorPenjualan.'-CR',
+                'tanggal_pembayaran' => $tgl,
+                'jenis_transaksi' => 'sale',
+                'transaction_id' => $sale->id,
+                'total_harga' => $creditAmount,
+                'metode_pembayaran' => 'piutang',
+                'no_referensi' => null,
+                'catatan' => 'Piutang Penjualan POS '.$nomorPenjualan,
+                'rekening_debit' => '1.1.04.01',
+                'rekening_kredit' => $kodeRekening['sales']['rekening_kredit'],
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
 
         // 2. COGS Entry (HPP)
         if ($totalHppAll > 0) {
@@ -462,7 +490,7 @@ class SalePos extends Component
                 'jenis_transaksi' => 'sale',
                 'transaction_id' => $sale->id,
                 'total_harga' => $totalHppAll,
-                'metode_pembayaran' => 'system',
+                'metode_pembayaran' => 'hpp',
                 'no_referensi' => null,
                 'catatan' => 'HPP Penjualan POS '.$nomorPenjualan,
                 'rekening_debit' => $kodeRekening['hpp']['rekening_debit'],
