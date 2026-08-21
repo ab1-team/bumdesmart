@@ -119,6 +119,7 @@ class JurnalUmum extends Component
 
             $sumber = $data['sumber_dana'] ?? '';
             $simpan = $data['disimpan_ke'] ?? '';
+            $nominal = \App\Utils\NumberUtil::parse($data['nominal'] ?? 0);
 
             $noPembayaran = 'PAY-'.date('Ymd').'-'.
                 str_pad(Payment::withTrashed()->whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
@@ -414,7 +415,7 @@ class JurnalUmum extends Component
                     'tanggal_pembayaran' => $data['tanggal_pembayaran'],
                     'jenis_transaksi' => 'inventaris',
                     'transaction_id' => null,
-                    'total_harga' => $data['nominal'] ?? 0,
+                    'total_harga' => $nominal,
                     'metode_pembayaran' => 'tunai',
                     'no_referensi' => null,
                     'catatan' => $data['keterangan'] ?? 'Pembelian Inventaris',
@@ -451,7 +452,7 @@ class JurnalUmum extends Component
                     'tanggal' => $data['tanggal_pembayaran'],
                     'keterangan' => $data['keterangan'] ?? '',
                     'relasi' => $data['relasi'] ?? '',
-                    'jumlah' => $data['nominal'] ?? 0,
+                    'jumlah' => $nominal,
                     'urutan' => $noJurnal ?? 0,
                     'user_id' => auth()->id(),
                 ]);
@@ -463,7 +464,7 @@ class JurnalUmum extends Component
                     'tanggal_pembayaran' => $data['tanggal_pembayaran'],
                     'jenis_transaksi' => 'jurnal_umum',
                     'transaction_id' => $jurnal->id,
-                    'total_harga' => $data['nominal'] ?? 0,
+                    'total_harga' => $nominal,
                     'metode_pembayaran' => 'tunai',
                     'no_referensi' => null,
                     'catatan' => $data['keterangan'] ?? 'Transaksi Jurnal Umum',

@@ -60,7 +60,9 @@
                         <div class="col-12 my-3">
                             <label class="form-label">Nominal Rp.</label>
                             <input type="text" class="form-control" x-model="nominalFormatted"
-                                x-on:input="formatNominal">
+                                x-mask:dynamic="$money($input, ',', '.', 2)"
+                                x-on:input="formatNominal"
+                                placeholder="0.00">
                         </div>
                     </div>
 
@@ -384,10 +386,20 @@
                 hapusData: null,
                 mode: 'normal',
 
+                parseNumber(val) {
+                    if (typeof val === 'number') return val;
+                    if (!val) return 0;
+                    let str = val.toString().replace(/Rp|\s/g, '');
+                    if (str.includes(',') && str.includes('.')) {
+                        str = str.replace(/,/g, '');
+                    } else if (str.includes(',')) {
+                        str = str.replace(/,/g, '');
+                    }
+                    return parseFloat(str) || 0;
+                },
+
                 formatNominal() {
-                    let angka = this.nominalFormatted.replace(/\D/g, '');
-                    this.nominal = angka ? parseInt(angka) : 0;
-                    this.nominalFormatted = new Intl.NumberFormat('id-ID').format(this.nominal);
+                    this.nominal = this.parseNumber(this.nominalFormatted);
                 },
 
                 init() {
@@ -757,7 +769,7 @@
                                 0].value : null,
                             keterangan: this.inputKeterangan.length > 1 ? this
                                 .inputKeterangan[1].value : null,
-                            nominal: String(this.nominal).replace(/\D/g, ''),
+                            nominal: this.nominalFormatted ? this.parseNumber(this.nominalFormatted) : (this.nominal || 0),
                             inventaris: this.showFormInventaris ? this.inventarisData : null,
                             hapus_inventaris: this.mode === 'hapus' ? this.hapusData : null
                         };

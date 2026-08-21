@@ -12,7 +12,7 @@
 
     <div class="col-sm-4 mb-3">
         <label>Harga Satuan</label>
-        <input type="text" x-model="harga_satuan" @input="formatHarga()" class="form-control">
+        <input type="text" x-model="harga_satuan" x-mask:dynamic="$money($input, ',', '.', 2)" @input="hitungTotal()" class="form-control" placeholder="0.00">
     </div>
 
     <div class="col-sm-4 mb-3">
