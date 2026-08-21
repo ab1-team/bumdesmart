@@ -98,7 +98,7 @@ class DaftarPembelian extends Component
         $totalPurchase = \App\Models\Purchase::where('id', $purchaseId)->value('total');
         $newUtang = $totalPurchase - $sisaBayar;
 
-        $status = $sisaBayar >= $totalPurchase ? 'completed' : ($sisaBayar > 0 ? 'partial' : 'pending');
+        $status = $sisaBayar >= $totalPurchase ? 'completed' : 'utang';
 
         \App\Models\Purchase::where('id', $purchaseId)->update([
             'dibayar' => $sisaBayar,
@@ -180,7 +180,7 @@ class DaftarPembelian extends Component
             ->whereNotIn('metode_pembayaran', ['piutang', 'diskon', 'cashback'])
             ->get();
         $totalDibayar = $this->sudahDibayar + $jumlahBayar;
-        $status = 'partial';
+        $status = 'utang';
         if ($totalDibayar >= $this->detailPurchase->total) {
             $status = 'completed';
         }

@@ -815,7 +815,7 @@
                             this.jenisPembayaran = 'credit';
                             this.syncTomSelect('jenisPembayaran', 'credit');
                         }
-                        this.status = 'partial';
+                        this.status = 'utang';
                     } else {
                         if (this.jenisPembayaran === 'credit') {
                             this.jenisPembayaran = 'cash';

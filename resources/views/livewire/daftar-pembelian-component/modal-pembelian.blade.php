@@ -21,12 +21,12 @@
                         <li class="list-group-item border-0 p-2 ps-0 pt-0">
                             <strong>Status :</strong>
                             <span>
-                                @if ($detailPurchase->status == 'completed')
+                                @if (in_array(strtolower($detailPurchase->status), ['completed', 'lunas', 'paid']))
                                     <span class="badge text-light bg-success">Selesai</span>
-                                @elseif ($detailPurchase->status == 'partial')
-                                    <span class="badge text-light bg-warning">Sebagian</span>
-                                @elseif ($detailPurchase->status == 'pending')
-                                    <span class="badge text-light bg-danger">Pending</span>
+                                @elseif (in_array(strtolower($detailPurchase->status), ['utang', 'hutang', 'partial', 'pending', 'sebagian']))
+                                    <span class="badge text-light bg-warning">Utang</span>
+                                @else
+                                    <span class="badge text-light bg-secondary">{{ ucfirst($detailPurchase->status) }}</span>
                                 @endif
                             </span>
                         </li>

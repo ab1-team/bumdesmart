@@ -1443,7 +1443,7 @@ class ExportCsv extends Controller
                 ucfirst($purchase->jenis_pembayaran ?? '-'),
                 $this->rp((float) $purchase->total),
                 $this->rp((float) $purchase->jumlah_utang),
-                $purchase->status ?? '-',
+                in_array(strtolower($purchase->status ?? ''), ['utang', 'hutang', 'partial', 'pending', 'sebagian']) ? 'Utang' : (in_array(strtolower($purchase->status ?? ''), ['completed', 'lunas', 'paid']) ? 'Selesai' : ucfirst($purchase->status ?? '-')),
             ];
             $sumTotal += (float) $purchase->total;
             $sumHutang += (float) $purchase->jumlah_utang;

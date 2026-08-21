@@ -32,12 +32,12 @@
                         <td>{{ $purchase->tanggal_pembelian }}</td>
                         <td>{{ $purchase->supplier->nama_supplier }}</td>
                         <td>
-                            @if ($purchase->status == 'completed')
+                            @if (in_array(strtolower($purchase->status), ['completed', 'lunas', 'paid']))
                                 <span class="badge text-light bg-success">Selesai</span>
-                            @elseif ($purchase->status == 'partial')
-                                <span class="badge text-light bg-warning">Sebagian</span>
-                            @elseif ($purchase->status == 'pending')
-                                <span class="badge text-light bg-danger">Pending</span>
+                            @elseif (in_array(strtolower($purchase->status), ['utang', 'hutang', 'partial', 'pending', 'sebagian']))
+                                <span class="badge text-light bg-warning">Utang</span>
+                            @else
+                                <span class="badge text-light bg-secondary">{{ ucfirst($purchase->status) }}</span>
                             @endif
                         </td>
                         <td>{{ \App\Utils\NumberUtil::format($purchase->total) }}</td>

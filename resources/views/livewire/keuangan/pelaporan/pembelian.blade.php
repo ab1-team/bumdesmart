@@ -46,7 +46,7 @@
                     <td class="text-right" style="color: {{ $purchase->jumlah_utang > 0 ? 'red' : 'green' }};">
                         Rp {{ number_format($purchase->jumlah_utang, 2, '.', ',') }}
                     </td>
-                    <td class="text-center">{{ $purchase->status }}</td>
+                    <td class="text-center">{{ in_array(strtolower($purchase->status ?? ''), ['utang', 'hutang', 'partial', 'pending', 'sebagian']) ? 'Utang' : (in_array(strtolower($purchase->status ?? ''), ['completed', 'lunas', 'paid']) ? 'Selesai' : ucfirst($purchase->status ?? '-')) }}</td>
                 </tr>
             @endforeach
         </tbody>

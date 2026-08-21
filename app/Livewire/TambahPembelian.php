@@ -292,7 +292,7 @@ class TambahPembelian extends Component
             if ($jenisPembayaran !== 'preorder') {
                 $jenisPembayaran = 'credit';
             }
-            $status = 'partial';
+            $status = 'utang';
         } else {
             // If fully paid, force cash if it was credit
             if ($jenisPembayaran === 'credit') {
