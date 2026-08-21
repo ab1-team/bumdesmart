@@ -58,7 +58,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="(product, index) in Object.values(products)" :key="index">
+                        <template x-for="(product, index) in Object.values(products)" :key="product.id">
                             <tr>
                                 <td x-text="index + 1"></td>
                                 <td>
@@ -71,11 +71,9 @@
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
-                                    <div class="input-group">
-                                        <input type="number" :step="product.allow_decimal ? 'any' : '1'"
-                                            class="form-control" x-model="product.jumlah_beli"
-                                            x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
-                                    </div>
+                                    <input type="number" :step="product.allow_decimal ? 'any' : '1'"
+                                        class="form-control text-center" x-model="product.jumlah_beli"
+                                        x-on:input="updateRow(product.id)" x-on:focus="$el.select()">
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.tanggal_kadaluarsa"
