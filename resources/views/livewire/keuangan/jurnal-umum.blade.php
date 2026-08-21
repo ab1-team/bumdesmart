@@ -60,9 +60,9 @@
                         <div class="col-12 my-3">
                             <label class="form-label">Nominal Rp.</label>
                             <input type="text" class="form-control" x-model="nominalFormatted"
-                                x-mask:dynamic="$money($input, ',', '.', 2)"
+                                x-mask:dynamic="$money($input, '.', ',', 2)"
                                 x-on:input="formatNominal"
-                                placeholder="0.00">
+                                placeholder="0,00">
                         </div>
                     </div>
 
@@ -103,19 +103,57 @@
                     });
                 },
 
+                parseNumber(val) {
+                    if (typeof val === 'number') return val;
+                    if (!val) return 0;
+                    let str = String(val).replace(/Rp|rp|IDR|\s/g, '').trim();
+
+                    if (str.includes('.') && str.includes(',')) {
+                        let lastDot = str.lastIndexOf('.');
+                        let lastComma = str.lastIndexOf(',');
+                        if (lastComma > lastDot) {
+                            return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        } else {
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
+                    }
+
+                    if (str.includes(',')) {
+                        let parts = str.split(',');
+                        if (parts.length > 2) return parseFloat(str.replace(/,/g, '')) || 0;
+                        return parseFloat(str.replace(/,/g, '.')) || 0;
+                    }
+
+                    if (str.includes('.')) {
+                        let parts = str.split('.');
+                        if (parts.length > 2) return parseFloat(str.replace(/\./g, '')) || 0;
+                        let lastDotIdx = str.lastIndexOf('.');
+                        let remaining = str.length - lastDotIdx - 1;
+                        if (remaining === 3) return parseFloat(str.replace(/\./g, '')) || 0;
+                        return parseFloat(str) || 0;
+                    }
+
+                    return parseFloat(str) || 0;
+                },
+
                 formatHarga() {
-                    let angka = this.harga_satuan.replace(/\D/g, '');
-                    let nilai = angka ? parseInt(angka) : 0;
-                    this.harga_satuan = new Intl.NumberFormat('id-ID').format(nilai);
+                    let nilai = this.parseNumber(this.harga_satuan);
+                    this.harga_satuan = new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(nilai);
                     this.hitung();
                 },
 
                 hitung() {
-                    let harga = this.harga_satuan.replace(/\D/g, '');
-                    let jumlah = parseInt(this.jumlah) || 0;
-                    let total = (parseInt(harga) || 0) * jumlah;
+                    let harga = this.parseNumber(this.harga_satuan);
+                    let jumlah = parseFloat(this.jumlah) || 0;
+                    let total = harga * jumlah;
 
-                    this.harga_perolehan = new Intl.NumberFormat('id-ID').format(total);
+                    this.harga_perolehan = new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(total);
 
                     Livewire.dispatch('setHargaPerolehan', {
                         total: total
@@ -127,8 +165,8 @@
                         nama_barang: this.nama_barang,
                         umur_ekonomis: this.umur_ekonomis,
                         jumlah: this.jumlah,
-                        harga_satuan: this.harga_satuan.replace(/\D/g, ''),
-                        harga_perolehan: this.harga_perolehan.replace(/\D/g, '')
+                        harga_satuan: this.parseNumber(this.harga_satuan),
+                        harga_perolehan: this.parseNumber(this.harga_perolehan)
                     };
 
                     window.dispatchEvent(new CustomEvent('inventarisUpdated', {
@@ -389,12 +427,33 @@
                 parseNumber(val) {
                     if (typeof val === 'number') return val;
                     if (!val) return 0;
-                    let str = val.toString().replace(/Rp|\s/g, '');
-                    if (str.includes(',') && str.includes('.')) {
-                        str = str.replace(/,/g, '');
-                    } else if (str.includes(',')) {
-                        str = str.replace(/,/g, '');
+                    let str = String(val).replace(/Rp|rp|IDR|\s/g, '').trim();
+
+                    if (str.includes('.') && str.includes(',')) {
+                        let lastDot = str.lastIndexOf('.');
+                        let lastComma = str.lastIndexOf(',');
+                        if (lastComma > lastDot) {
+                            return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        } else {
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                     }
+
+                    if (str.includes(',')) {
+                        let parts = str.split(',');
+                        if (parts.length > 2) return parseFloat(str.replace(/,/g, '')) || 0;
+                        return parseFloat(str.replace(/,/g, '.')) || 0;
+                    }
+
+                    if (str.includes('.')) {
+                        let parts = str.split('.');
+                        if (parts.length > 2) return parseFloat(str.replace(/\./g, '')) || 0;
+                        let lastDotIdx = str.lastIndexOf('.');
+                        let remaining = str.length - lastDotIdx - 1;
+                        if (remaining === 3) return parseFloat(str.replace(/\./g, '')) || 0;
+                        return parseFloat(str) || 0;
+                    }
+
                     return parseFloat(str) || 0;
                 },
 

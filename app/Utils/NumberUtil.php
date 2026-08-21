@@ -60,8 +60,9 @@ class NumberUtil
     }
 
     /**
-     * Parse an Indonesian formatted number string into a float.
-     * Removes dots (thousands separator) and replaces commas with dots (decimal separator).
+     * Parse a formatted number string into a float.
+     * Supports both Indonesian standard (1.234,56) and US standard (1,234.56),
+     * as well as standard unformatted floats (1234.56).
      *
      * @param mixed $value
      * @return float
@@ -78,29 +79,50 @@ class NumberUtil
 
         $str = trim((string) $value);
         
-        // Remove common currency symbols and spaces
-        $str = str_replace(['Rp', 'rp', ' ', 'IDR'], '', $str);
+        // Remove common currency symbols, NBSP and spaces
+        $str = str_replace(['Rp', 'rp', ' ', 'IDR', "\xC2\xA0"], '', $str);
 
-        // If it contains a comma, it's definitely Indonesian format or has decimals
-        if (strpos($str, ',') !== false) {
-            $clean = str_replace('.', '', $str); // Remove thousands
-            $clean = str_replace(',', '.', $clean); // Change decimal to dot
-
-            return (float) $clean;
+        // Case 1: Contains BOTH dot and comma (e.g. 1.234,56 or 1,234.56)
+        if (strpos($str, '.') !== false && strpos($str, ',') !== false) {
+            $lastDot = strrpos($str, '.');
+            $lastComma = strrpos($str, ',');
+            if ($lastComma > $lastDot) {
+                // Indonesian format: 1.234,56 -> 1234.56
+                $clean = str_replace('.', '', $str);
+                $clean = str_replace(',', '.', $clean);
+                return (float) $clean;
+            } else {
+                // US format: 1,234.56 -> 1234.56
+                $clean = str_replace(',', '', $str);
+                return (float) $clean;
+            }
         }
 
-        // If it only contains a dot:
+        // Case 2: Contains ONLY comma (e.g. 1234,56 or 1,234,567)
+        if (strpos($str, ',') !== false) {
+            $parts = explode(',', $str);
+            if (count($parts) > 2) {
+                // Multiple commas -> thousands separator
+                return (float) str_replace(',', '', $str);
+            }
+            // Single comma -> decimal in Indonesian format
+            return (float) str_replace(',', '.', $str);
+        }
+
+        // Case 3: Contains ONLY dot (e.g. 1.234.567 or 1.234 or 1234.56)
         if (strpos($str, '.') !== false) {
             $lastDotIdx = strrpos($str, '.');
-            $remainingLength = strlen($str) - $lastDotIdx - 1;
-
-            // In Indonesian, thousands dots are followed by exactly 3 digits.
-            // If there's another dot, it's definitely thousands (e.g. 1.000.000)
-            if ($remainingLength === 3 || strpos($str, '.') !== $lastDotIdx) {
+            $parts = explode('.', $str);
+            if (count($parts) > 2) {
+                // Multiple dots -> thousands separator in Indonesian format
                 return (float) str_replace('.', '', $str);
             }
-
-            // Otherwise treat as decimal (e.g. 1.5)
+            $remainingLength = strlen($str) - $lastDotIdx - 1;
+            // Indonesian thousands separator has exactly 3 digits after dot
+            if ($remainingLength === 3) {
+                return (float) str_replace('.', '', $str);
+            }
+            // Standard decimal float (e.g. 12.5, 1234.56)
             return (float) $str;
         }
 

@@ -29,13 +29,13 @@
                     <td>{{ $row->customer->nama_pelanggan ?? 'Guest' }}</td>
                     <td class="text-center">{{ $row->user->initial ?? '-' }}</td>
                     <td class="text-center">{{ (int) $row->total_item }}</td>
-                    <td class="text-right">Rp {{ number_format((float) $row->total_penjualan, 2, '.', ',') }}</td>
-                    <td class="text-right">Rp {{ number_format((float) $row->sum_hpp, 2, '.', ',') }}</td>
+                    <td class="text-right">Rp {{ number_format((float) $row->total_penjualan, 2, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format((float) $row->sum_hpp, 2, ',', '.') }}</td>
                     <td class="text-right" style="color: {{ $sumUntung >= 0 ? 'green' : 'inherit' }};">
-                        Rp {{ number_format($sumUntung, 2, '.', ',') }}
+                        Rp {{ number_format($sumUntung, 2, ',', '.') }}
                     </td>
                     <td class="text-right" style="color: {{ $sumRugi > 0 ? 'red' : 'inherit' }};">
-                        Rp {{ number_format($sumRugi, 2, '.', ',') }}
+                        Rp {{ number_format($sumRugi, 2, ',', '.') }}
                     </td>
                 </tr>
             @empty
@@ -47,10 +47,10 @@
         <tfoot>
             <tr>
                 <th colspan="6" class="text-right">Total</th>
-                <th class="text-right">Rp {{ number_format($totals['total_penjualan'], 2, '.', ',') }}</th>
-                <th class="text-right">Rp {{ number_format($totals['sum_hpp'], 2, '.', ',') }}</th>
-                <th class="text-right">Rp {{ number_format($totals['sum_untung'], 2, '.', ',') }}</th>
-                <th class="text-right">Rp {{ number_format($totals['sum_rugi'], 2, '.', ',') }}</th>
+                <th class="text-right">Rp {{ number_format($totals['total_penjualan'], 2, ',', '.') }}</th>
+                <th class="text-right">Rp {{ number_format($totals['sum_hpp'], 2, ',', '.') }}</th>
+                <th class="text-right">Rp {{ number_format($totals['sum_untung'], 2, ',', '.') }}</th>
+                <th class="text-right">Rp {{ number_format($totals['sum_rugi'], 2, ',', '.') }}</th>
             </tr>
         </tfoot>
     </table>

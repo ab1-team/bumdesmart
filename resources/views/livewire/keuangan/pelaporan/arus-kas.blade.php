@@ -21,7 +21,7 @@
                     <td>{{ $ak['header']->nama_akun }}</td>
                     <td>
                         @if ($index == 0)
-                            {{ number_format($saldoKas, 2, '.', ',') }}
+                            {{ number_format($saldoKas, 2, ',', '.') }}
                         @endif
                     </td>
                 </tr>
@@ -50,7 +50,7 @@
                     <tr>
                         <td></td>
                         <td>{{ $item->nama_akun }}</td>
-                        <td>{{ number_format($item->total, 2, '.', ',') }}</td>
+                        <td>{{ number_format($item->total, 2, ',', '.') }}</td>
                     </tr>
 
                     @php
@@ -69,7 +69,7 @@
                 <tr>
                     <td></td>
                     <td>Jumlah {{ $titleJumlah }}</td>
-                    <td>{{ number_format($total, 2, '.', ',') }}</td>
+                    <td>{{ number_format($total, 2, ',', '.') }}</td>
                 </tr>
             @endforeach
 
@@ -98,7 +98,7 @@
                             Kas Bersih yang diperoleh dari aktivitas Pendanaan (A-B)
                         @endif
                     </td>
-                    <td>{{ number_format($totalBawah, 2, '.', ',') }}</td>
+                    <td>{{ number_format($totalBawah, 2, ',', '.') }}</td>
                 </tr>
             @endif
 
@@ -110,12 +110,12 @@
         <tr>
             <td></td>
             <td>II.  Kenaikan/(Penurunan) Kas dan Setara Kas (Nilai 1C + 2C + 3C)</td>
-            <td>{{ number_format($totalArusKas, 2, '.', ',') }}</td>
+            <td>{{ number_format($totalArusKas, 2, ',', '.') }}</td>
         </tr>
         <tr>
             <td></td>
             <td>SALDO AKHIR KAS SETARA KAS (Nilai I + II)</td>
-            <td>{{ number_format($totalArusKas + $saldoKas, 2, '.', ',') }}</td>
+            <td>{{ number_format($totalArusKas + $saldoKas, 2, ',', '.') }}</td>
         </tr>
     </table>
 @endsection

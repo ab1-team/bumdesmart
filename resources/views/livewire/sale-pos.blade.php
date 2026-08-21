@@ -301,7 +301,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="openingBalance"
-                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
                             </div>
                             @error('openingBalance')
                                 <span class="text-danger small">{{ $message }}</span>
@@ -333,7 +333,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="closingBalanceManual"
-                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -1176,29 +1176,39 @@
                 parseNumber(val) {
                     if (typeof val === 'number') return val;
                     if (!val) return 0;
-                    let str = String(val).trim();
-                    
-                    // If the string has both dot and comma (e.g., 1.234,56)
+                    let str = String(val).replace(/Rp|rp|IDR|\s/g, '').trim();
+
                     if (str.includes('.') && str.includes(',')) {
-                        return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        let lastDot = str.lastIndexOf('.');
+                        let lastComma = str.lastIndexOf(',');
+                        if (lastComma > lastDot) {
+                            return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        } else {
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                     }
-                    
-                    // If it only has a comma, it's definitely a decimal separator in ID format
+
                     if (str.includes(',')) {
+                        let parts = str.split(',');
+                        if (parts.length > 2) {
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                         return parseFloat(str.replace(/,/g, '.')) || 0;
                     }
-                    
-                    // If it only has a dot:
+
                     if (str.includes('.')) {
                         let parts = str.split('.');
-                        // If it looks like a decimal (e.g., 2800.00 from DB), keep the dot
-                        if (parts[parts.length - 1].length !== 3) {
-                            return parseFloat(str) || 0;
+                        if (parts.length > 2) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
                         }
-                        // Otherwise, treat as thousands and remove
-                        return parseFloat(str.replace(/\./g, '')) || 0;
+                        let lastDotIdx = str.lastIndexOf('.');
+                        let remaining = str.length - lastDotIdx - 1;
+                        if (remaining === 3) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
+                        }
+                        return parseFloat(str) || 0;
                     }
-                    
+
                     return parseFloat(str) || 0;
                 },
 

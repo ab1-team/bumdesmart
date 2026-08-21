@@ -27,8 +27,8 @@
                     <td class="text-center">{{ $row->purchase->no_pembelian ?? '-' }}</td>
                     <td class="text-center">{{ \Carbon\Carbon::parse($row->purchase->tanggal_pembelian)->format('d/m/Y H:i') }}</td>
                     <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($row->jumlah) }}</td>
-                    <td class="text-right">{{ number_format($row->harga_satuan, 2, '.', ',') }}</td>
-                    <td class="text-right">{{ number_format($row->subtotal, 2, '.', ',') }}</td>
+                    <td class="text-right">{{ number_format($row->harga_satuan, 2, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($row->subtotal, 2, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
@@ -39,7 +39,7 @@
         <tfoot>
             <tr>
                 <th colspan="9" class="text-right">Total:</th>
-                <th class="text-right">Rp {{ number_format($total, 2, '.', ',') }}</th>
+                <th class="text-right">Rp {{ number_format($total, 2, ',', '.') }}</th>
             </tr>
         </tfoot>
     </table>

@@ -56,7 +56,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_jual" readonly
-                                        x-mask:dynamic="$money($input, ',', '.', 2)">
+                                        x-mask:dynamic="$money($input, '.', ',', 2)">
                                 </td>
                                 <td>
                                     <div class="input-group">
@@ -154,7 +154,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
+                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
                                                     x-model="globalDiskon.jumlah">
                                             </div>
                                         </div>
@@ -180,7 +180,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
+                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
                                                     x-model="globalCashback.jumlah">
                                             </div>
                                         </div>
@@ -237,7 +237,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Nominal Bayar</label>
                                     <input type="text" class="form-control fs-3" placeholder="Bayar"
-                                        x-mask:dynamic="$money($input, ',', '.', 2)" x-model="bayar"
+                                        x-mask:dynamic="$money($input, '.', ',', 2)" x-model="bayar"
                                         x-on:keyup="calculateKembalian">
                                 </div>
 
@@ -477,7 +477,15 @@
                     }
 
                     if (data.products && Object.keys(data.products).length > 0) {
-                        this.products = JSON.parse(JSON.stringify(data.products));
+                        let parsedProducts = JSON.parse(JSON.stringify(data.products));
+                        Object.keys(parsedProducts).forEach(k => {
+                            let p = parsedProducts[k];
+                            p.harga_jual = this.formatRupiah(p.harga_jual);
+                            p.subtotal = this.formatRupiah(p.subtotal);
+                            if (p.diskon && p.diskon.nominal) p.diskon.nominal = this.formatRupiah(p.diskon.nominal);
+                            if (p.cashback && p.cashback.nominal) p.cashback.nominal = this.formatRupiah(p.cashback.nominal);
+                        });
+                        this.products = parsedProducts;
                     }
 
                     this.jenisPajak = data.jenisPajak || 'tidak ada';
@@ -532,31 +540,44 @@
                 parseFormatted(val) {
                     if (typeof val === 'number') return val;
                     if (!val) return 0;
-                    let str = String(val).trim();
-                    
-                    // If the string has both dot and comma (e.g., 1.234,56)
+                    let str = String(val).replace(/Rp|rp|IDR|\s/g, '').trim();
+
+                    // If contains both dot and comma
                     if (str.includes('.') && str.includes(',')) {
-                        return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        let lastDot = str.lastIndexOf('.');
+                        let lastComma = str.lastIndexOf(',');
+                        if (lastComma > lastDot) {
+                            // Indonesian: 1.234,56
+                            return parseFloat(str.replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        } else {
+                            // US: 1,234.56
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                     }
-                    
-                    // If it only has a comma, it's definitely a decimal separator in ID format
+
+                    // If contains only comma
                     if (str.includes(',')) {
+                        let parts = str.split(',');
+                        if (parts.length > 2) {
+                            return parseFloat(str.replace(/,/g, '')) || 0;
+                        }
                         return parseFloat(str.replace(/,/g, '.')) || 0;
                     }
-                    
-                    // If it only has a dot:
+
+                    // If contains only dot
                     if (str.includes('.')) {
                         let parts = str.split('.');
-                        // If it looks like a decimal (e.g., 2800.00 from DB), keep the dot
-                        // Usually DB decimals have 2 digits after dot. 
-                        // ID thousands always have 3 digits after dot.
-                        if (parts[parts.length - 1].length !== 3) {
-                            return parseFloat(str) || 0;
+                        if (parts.length > 2) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
                         }
-                        // Otherwise, treat as thousands and remove
-                        return parseFloat(str.replace(/\./g, '')) || 0;
+                        let lastDotIdx = str.lastIndexOf('.');
+                        let remaining = str.length - lastDotIdx - 1;
+                        if (remaining === 3) {
+                            return parseFloat(str.replace(/\./g, '')) || 0;
+                        }
+                        return parseFloat(str) || 0;
                     }
-                    
+
                     return parseFloat(str) || 0;
                 },
 
