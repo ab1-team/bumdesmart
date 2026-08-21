@@ -40,7 +40,7 @@
 
             <!-- Product Table -->
             <div class="table-responsive">
-                <table class="table table-vcenter table-striped">
+                <table class="table table-vcenter table-striped" style="min-width: 1200px;">
                     <thead>
                         <tr>
                             <th width="3%">No</th>
