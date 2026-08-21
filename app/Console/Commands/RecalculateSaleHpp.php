@@ -16,20 +16,18 @@ class RecalculateSaleHpp extends Command
     protected $signature = 'app:recalculate-sale-hpp 
                             {--tenant=* : Specific Tenant ID(s) to process} 
                             {--sale_id= : Specific Sale ID to recalculate} 
-                            {--force : Force recalculation even if hpp > 0}';
+                            {--force : Force recalculation for all records}';
 
-    protected $description = 'Recalculate HPP and Profit in sale_details for tenant(s) based on actual batch costs and product master harga_beli';
+    protected $description = 'Recalculate HPP and Profit for sale_details with missing/zero HPP';
 
     public function handle()
     {
-        $this->info('Starting HPP & Profit audit and recalculation on sale_details...');
+        $this->info('Starting HPP & Profit check on sale_details...');
 
-        // If tenancy is already initialized (e.g. called via tenants:run)
         if (function_exists('tenant') && tenant()) {
             return $this->processCurrentTenant();
         }
 
-        // Otherwise, iterate through tenants
         $tenantQuery = Owner::query();
         if ($tenantIds = $this->option('tenant')) {
             $tenantQuery->whereIn('id', $tenantIds);
@@ -41,13 +39,9 @@ class RecalculateSaleHpp extends Command
             return 0;
         }
 
-        $this->info("Found {$tenants->count()} tenant(s) to process.");
-
         foreach ($tenants as $tenant) {
             $this->line('');
-            $this->info("==========================================");
             $this->info("Processing Tenant: {$tenant->nama_usaha} (ID: {$tenant->id})");
-            $this->info("==========================================");
 
             try {
                 if (tenancy()->initialized) {
@@ -65,8 +59,6 @@ class RecalculateSaleHpp extends Command
             }
         }
 
-        $this->info('');
-        $this->info('All tenants processed successfully.');
         return 0;
     }
 
@@ -75,13 +67,22 @@ class RecalculateSaleHpp extends Command
         $saleId = $this->option('sale_id');
         $force = $this->option('force');
 
+        // By default, ONLY target records that have missing or zero HPP (or negative profit due to bugs)
         $query = SaleDetail::with(['product', 'sale']);
         if ($saleId) {
             $query->where('sale_id', $saleId);
         }
 
+        if (! $force) {
+            $query->where(function ($q) {
+                $q->where('hpp', '<=', 0)
+                  ->orWhereNull('hpp')
+                  ->orWhere('profit', '<', 0);
+            });
+        }
+
         $details = $query->get();
-        $this->line("Found {$details->count()} sale detail records in tenant database.");
+        $this->line("Found {$details->count()} records needing HPP inspection.");
 
         if ($details->isEmpty()) {
             return 0;
@@ -95,7 +96,6 @@ class RecalculateSaleHpp extends Command
             foreach ($details as $detail) {
                 $product = $detail->product;
                 if (! $product) {
-                    $this->warn("SaleDetail #{$detail->id} has no linked product (#{$detail->product_id}). Skipping.");
                     continue;
                 }
 
@@ -103,8 +103,7 @@ class RecalculateSaleHpp extends Command
                 $subtotal = (float) $detail->subtotal;
                 $masterHargaBeli = (float) ($product->harga_beli ?? 0);
 
-                // Calculate HPP:
-                // 1. Try to sum from linked batch movements
+                // Try to get from batch movements
                 $batchMovements = BatchMovement::where('transaction_detail_id', $detail->id)
                     ->where('jenis_transaksi', 'sale')
                     ->get();
@@ -124,31 +123,29 @@ class RecalculateSaleHpp extends Command
                     }
                 }
 
-                // If not all qty covered by batch movements, fallback remaining to master harga_beli
                 if ($coveredQty < $qty) {
                     $remainingQty = $qty - $coveredQty;
                     $calculatedHpp += ($remainingQty * $masterHargaBeli);
                 }
 
+                // Sanity check: If calculated HPP is excessively higher than subtotal (e.g. unit mismatch from bulk/box)
+                // and current HPP was already positive, do not overwrite unless forced
+                if ($calculatedHpp > $subtotal && (float) $detail->hpp > 0 && ! $force) {
+                    continue;
+                }
+
                 $calculatedProfit = $subtotal - $calculatedHpp;
 
-                // Check if update is needed
-                $currentHpp = (float) $detail->hpp;
-                $currentProfit = (float) $detail->profit;
+                $detail->update([
+                    'hpp' => $calculatedHpp,
+                    'profit' => $calculatedProfit,
+                ]);
 
-                if ($force || abs($currentHpp - $calculatedHpp) > 0.01 || abs($currentProfit - $calculatedProfit) > 0.01) {
-                    $detail->update([
-                        'hpp' => $calculatedHpp,
-                        'profit' => $calculatedProfit,
-                    ]);
-
-                    $this->line("  [UPDATED] Detail #{$detail->id} ({$product->nama_produk}): HPP {$currentHpp} -> {$calculatedHpp}, Profit {$currentProfit} -> {$calculatedProfit}");
-                    $updatedCount++;
-                    $affectedSales[$detail->sale_id] = true;
-                }
+                $this->line("  [FIXED] Detail #{$detail->id} ({$product->nama_produk}): HPP -> {$calculatedHpp}, Profit -> {$calculatedProfit}");
+                $updatedCount++;
+                $affectedSales[$detail->sale_id] = true;
             }
 
-            // Sync HPP payment entries for affected sales
             foreach (array_keys($affectedSales) as $sId) {
                 $totalSaleHpp = SaleDetail::where('sale_id', $sId)->sum('hpp');
                 $payment = Payment::where('transaction_id', $sId)
@@ -158,15 +155,14 @@ class RecalculateSaleHpp extends Command
 
                 if ($payment) {
                     $payment->update(['total_harga' => $totalSaleHpp]);
-                    $this->line("  [SYNCED] HPP Payment entry for Sale #{$sId} updated to {$totalSaleHpp}");
                 }
             }
 
             DB::commit();
-            $this->info("  --> Recalculated {$updatedCount} sale detail records.");
+            $this->info("  --> Fixed {$updatedCount} records.");
         } catch (\Throwable $e) {
             DB::rollBack();
-            $this->error("Error recalculating tenant HPP: " . $e->getMessage());
+            $this->error("Error: " . $e->getMessage());
             return 1;
         }
 
