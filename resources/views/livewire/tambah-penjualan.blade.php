@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <div wire:ignore x-data="penjualanHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
     <div class="card">
         <div class="card-body">
@@ -57,7 +57,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_jual" readonly
-                                        x-mask:dynamic="$money($input, '.', ',', 2)">
+                                        x-mask:dynamic="$money($input, ',', '.', 2)">
                                 </td>
                                 <td>
                                     <div class="input-group">
@@ -155,7 +155,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
+                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
                                                     x-model="globalDiskon.jumlah">
                                             </div>
                                         </div>
@@ -181,7 +181,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
+                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
                                                     x-model="globalCashback.jumlah">
                                             </div>
                                         </div>
@@ -238,7 +238,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Nominal Bayar</label>
                                     <input type="text" class="form-control fs-3" placeholder="Bayar"
-                                        x-mask:dynamic="$money($input, '.', ',', 2)" x-model="bayar"
+                                        x-mask:dynamic="$money($input, ',', '.', 2)" x-model="bayar"
                                         x-on:keyup="calculateKembalian">
                                 </div>
 

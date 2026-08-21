@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <div wire:ignore x-data="jurnalUmum()" x-init="initData(@js($jurnalUmum))">
     <div class="row">
         <div class="col-md-9">
@@ -61,7 +61,7 @@
                         <div class="col-12 my-3">
                             <label class="form-label">Nominal Rp.</label>
                             <input type="text" class="form-control" x-model="nominalFormatted"
-                                x-mask:dynamic="$money($input, '.', ',', 2)"
+                                x-mask:dynamic="$money($input, ',', '.', 2)"
                                 x-on:input="formatNominal"
                                 placeholder="0,00">
                         </div>

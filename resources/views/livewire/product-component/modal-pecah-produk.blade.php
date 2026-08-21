@@ -83,7 +83,7 @@
                                 <label class="form-label required">Harga Jual Eceran</label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="text" class="form-control" wire:model="retailHargaJual" x-mask:dynamic="$money($input, '.', ',', 2)" x-on:focus="$el.select()">
+                                    <input type="text" class="form-control" wire:model="retailHargaJual" x-mask:dynamic="$money($input, ',', '.', 2)" x-on:focus="$el.select()">
                                 </div>
                                 @error('retailHargaJual') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>

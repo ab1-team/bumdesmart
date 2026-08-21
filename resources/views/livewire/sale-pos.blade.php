@@ -1,4 +1,4 @@
-﻿<div class="row main-row" x-data="posSystem()" @sale-stored.window="cart = []" @keydown.window="handleShortcuts($event)">
+<div class="row main-row" x-data="posSystem()" @sale-stored.window="cart = []" @keydown.window="handleShortcuts($event)">
     @if (!$cashDrawer)
         <div class="position-absolute d-flex flex-column align-items-center justify-content-center"
             style="z-index: 100; background: rgba(255,255,255,0.7); backdrop-filter: blur(5px); top: 0; left: 0; right: 0; bottom: 0;">
@@ -301,7 +301,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="openingBalance"
-                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
                             </div>
                             @error('openingBalance')
                                 <span class="text-danger small">{{ $message }}</span>
@@ -333,7 +333,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="closingBalanceManual"
-                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
                             </div>
                         </div>
                         <div class="mb-3">

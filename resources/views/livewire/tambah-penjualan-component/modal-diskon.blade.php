@@ -1,4 +1,4 @@
-﻿<div class="modal fade" id="discountModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
+<div class="modal fade" id="discountModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg">
             <div class="modal-header">
@@ -48,7 +48,7 @@
                             </div>
                         </div>
                         <div class="col">
-                            <input type="text" class="form-control" x-mask:dynamic="$money($input, '.', ',', 2)"
+                            <input type="text" class="form-control" x-mask:dynamic="$money($input, ',', '.', 2)"
                                 x-model="modalProduct.diskon.jumlah">
                         </div>
                     </div>
