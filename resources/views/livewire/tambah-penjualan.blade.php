@@ -1,4 +1,5 @@
-﻿<div wire:ignore x-data="penjualanHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
+﻿<div>
+    <div wire:ignore x-data="penjualanHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
     <div class="card">
         <div class="card-body">
             <!-- Header Form -->

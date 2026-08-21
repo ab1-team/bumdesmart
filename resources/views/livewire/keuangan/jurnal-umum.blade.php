@@ -1,4 +1,5 @@
-﻿<div wire:ignore x-data="jurnalUmum()" x-init="initData(@js($jurnalUmum))">
+﻿<div>
+    <div wire:ignore x-data="jurnalUmum()" x-init="initData(@js($jurnalUmum))">
     <div class="row">
         <div class="col-md-9">
             <div class="card">
@@ -86,6 +87,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @section('script')
     <script>

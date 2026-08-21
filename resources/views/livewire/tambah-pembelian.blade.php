@@ -1,4 +1,5 @@
-﻿<div wire:ignore x-data="pembelianHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
+﻿<div>
+    <div wire:ignore x-data="pembelianHandler()" x-init="initData(@js($existingData))" @reset-form.window="resetForm">
     <div class="card">
         <div class="card-body">
             <!-- Header Form -->
@@ -354,6 +355,7 @@
         @include('livewire.common.scanner-modal')
 
     </div>
+</div>
 </div>
 
 @section('script')

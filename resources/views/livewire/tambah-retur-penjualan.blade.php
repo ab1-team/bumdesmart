@@ -1,4 +1,5 @@
-﻿<div wire:ignore x-data="returPenjualanHandler()" x-init="initData(@js($sale))" @reset-form.window="resetForm">
+﻿<div>
+    <div wire:ignore x-data="returPenjualanHandler()" x-init="initData(@js($sale))" @reset-form.window="resetForm">
     <div class="card mb-3">
         <div class="card-body">
             <ul class="list-group ">
@@ -115,6 +116,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 @section('script')
