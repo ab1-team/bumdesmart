@@ -345,16 +345,15 @@
                     </div>
                 </div>
             </div>
-
         </div>
-        <!-- Includes for Modals -->
-        @include('livewire.tambah-pembelian-component.modal-diskon')
-        @include('livewire.tambah-pembelian-component.modal-cashback')
-
-        <!-- Scanner Modal Shared -->
-        @include('livewire.common.scanner-modal')
-
     </div>
+
+    <!-- Includes for Modals -->
+    @include('livewire.tambah-pembelian-component.modal-diskon')
+    @include('livewire.tambah-pembelian-component.modal-cashback')
+
+    <!-- Scanner Modal Shared -->
+    @include('livewire.common.scanner-modal')
 </div>
 </div>
 
