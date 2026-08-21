@@ -43,15 +43,18 @@
                 <table class="table table-vcenter table-striped">
                     <thead>
                         <tr>
-                            <th width="5%">No</th>
-                            <th width="25%">Nama Produk</th>
-                            <th width="12%">Harga Satuan</th>
-                            <th width="12%">Qty</th>
-                            <th width="10%">Exp. Date</th>
-                            <th width="10%">Diskon</th>
-                            <th width="11%">Cashback</th>
-                            <th width="11%">Subtotal</th>
-                            <th width="4%"></th>
+                            <th width="3%">No</th>
+                            <th width="16%">Nama Produk</th>
+                            <th width="10%">Harga Satuan</th>
+                            <th width="6%">Qty</th>
+                            <th width="8%">Exp. Date</th>
+                            <th width="7%">Diskon</th>
+                            <th width="7%">Cashback</th>
+                            <th width="10%">Harga Bersih</th>
+                            <th width="9%">Total Baris</th>
+                            <th width="8%">Margin Laba %</th>
+                            <th width="10%">Harga Jual Satuan</th>
+                            <th width="3%"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,7 +96,21 @@
                                     </div>
                                 </td>
                                 <td>
+                                    <input type="text" class="form-control" x-model="product.harga_bersih"
+                                        x-on:input="updateHargaBersih(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                        x-on:focus="$el.select()">
+                                </td>
+                                <td>
                                     <div class="text-end fw-bold py-2" x-text="product.subtotal"></div>
+                                </td>
+                                <td>
+                                    <input type="number" step="any" class="form-control text-end" x-model="product.margin_laba"
+                                        x-on:input="updateMargin(product.id)" x-on:focus="$el.select()">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" x-model="product.harga_jual"
+                                        x-on:input="updateHargaJual(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
+                                        x-on:focus="$el.select()">
                                 </td>
                                 <td>
                                     <a href="#" class="text-danger"
@@ -104,7 +121,7 @@
                             </tr>
                         </template>
                         <tr x-show="Object.keys(products).length === 0">
-                            <td colspan="9" class="text-center text-muted py-4">
+                            <td colspan="12" class="text-center text-muted py-4">
                                 <i>Belum ada produk yang dipilih</i>
                             </td>
                         </tr>
@@ -116,8 +133,9 @@
                             <td></td>
                             <td x-text="formatRupiah(totalProducts.diskon)"></td>
                             <td x-text="formatRupiah(totalProducts.cashback || 0)"></td>
-                            <td x-text="totalProducts.subtotal"></td>
                             <td></td>
+                            <td class="text-end" x-text="totalProducts.subtotal"></td>
+                            <td colspan="3"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -735,12 +753,20 @@
                     if (this.products[id]) {
                         this.products[id].jumlah_beli++;
                     } else {
+                        let hargaBeli = this.parseFormatted(product.harga_beli || 0);
+                        let hargaJual = this.parseFormatted(product.harga_jual || 0);
+                        let hargaBersih = hargaBeli;
+                        let margin = (hargaBersih > 0 && hargaJual > 0) ? (((hargaJual - hargaBersih) / hargaBersih) * 100).toFixed(2) : '0';
+
                         this.products[id] = {
                             id: product.id,
                             nama_produk: product.nama_produk,
                             gambar: product.gambar,
                             sku: product.sku,
-                            harga_beli: this.formatRupiah(product.harga_beli),
+                            harga_beli: this.formatRupiah(hargaBeli),
+                            harga_bersih: this.formatRupiah(hargaBersih),
+                            margin_laba: margin,
+                            harga_jual: this.formatRupiah(hargaJual),
                             jumlah_beli: 1,
                             unit: product.unit,
                             allow_decimal: product.allow_decimal,
@@ -755,7 +781,7 @@
                                 jumlah: 0,
                                 nominal: 0
                             },
-                            subtotal: this.formatRupiah(product.harga_beli)
+                            subtotal: this.formatRupiah(hargaBeli)
                         };
                     }
                     this.updateRow(id);
@@ -780,7 +806,7 @@
                     if (!this.products[id]) return;
 
                     let p = this.products[id];
-                    let harga = this.parseFormatted(p.harga_beli);
+                    let hargaBeli = this.parseFormatted(p.harga_beli);
                     let qty = parseFloat(p.jumlah_beli) || 0;
 
                     // Cek jika produk tidak boleh desimal tapi diinput desimal
@@ -790,12 +816,71 @@
                     }
 
                     let diskon = this.parseFormatted(p.diskon.nominal);
+                    let diskonPerUnit = qty > 0 ? (diskon / qty) : 0;
+                    let hargaBersih = Math.max(0, hargaBeli - diskonPerUnit);
+                    p.harga_bersih = this.formatRupiah(hargaBersih);
 
-                    let sub = (harga * qty) - diskon;
+                    let sub = (hargaBeli * qty) - diskon;
                     if (sub < 0) sub = 0;
 
                     this.products[id].subtotal = this.formatRupiah(sub);
+
+                    let margin = parseFloat(p.margin_laba);
+                    if (!isNaN(margin) && margin !== null && p.margin_laba !== '' && p.margin_laba !== undefined) {
+                        let hj = hargaBersih * (1 + margin / 100);
+                        p.harga_jual = this.formatRupiah(hj);
+                    } else if (p.harga_jual) {
+                        let hj = this.parseFormatted(p.harga_jual);
+                        p.margin_laba = hargaBersih > 0 ? (((hj - hargaBersih) / hargaBersih) * 100).toFixed(2) : '0';
+                    }
+
                     this.updateTotals();
+                },
+
+                updateHargaBersih(id) {
+                    if (!this.products[id]) return;
+
+                    let p = this.products[id];
+                    let hargaBersih = this.parseFormatted(p.harga_bersih);
+                    let qty = parseFloat(p.jumlah_beli) || 0;
+                    let diskon = this.parseFormatted(p.diskon.nominal);
+                    let diskonPerUnit = qty > 0 ? (diskon / qty) : 0;
+
+                    p.harga_beli = this.formatRupiah(hargaBersih + diskonPerUnit);
+
+                    let sub = hargaBersih * qty;
+                    if (sub < 0) sub = 0;
+                    p.subtotal = this.formatRupiah(sub);
+
+                    let margin = parseFloat(p.margin_laba);
+                    if (!isNaN(margin) && margin !== null && p.margin_laba !== '' && p.margin_laba !== undefined) {
+                        let hj = hargaBersih * (1 + margin / 100);
+                        p.harga_jual = this.formatRupiah(hj);
+                    } else if (p.harga_jual) {
+                        let hj = this.parseFormatted(p.harga_jual);
+                        p.margin_laba = hargaBersih > 0 ? (((hj - hargaBersih) / hargaBersih) * 100).toFixed(2) : '0';
+                    }
+
+                    this.updateTotals();
+                },
+
+                updateMargin(id) {
+                    if (!this.products[id]) return;
+
+                    let p = this.products[id];
+                    let margin = parseFloat(p.margin_laba) || 0;
+                    let hargaBersih = this.parseFormatted(p.harga_bersih);
+                    let hj = hargaBersih * (1 + margin / 100);
+                    p.harga_jual = this.formatRupiah(hj);
+                },
+
+                updateHargaJual(id) {
+                    if (!this.products[id]) return;
+
+                    let p = this.products[id];
+                    let hj = this.parseFormatted(p.harga_jual);
+                    let hargaBersih = this.parseFormatted(p.harga_bersih);
+                    p.margin_laba = hargaBersih > 0 ? (((hj - hargaBersih) / hargaBersih) * 100).toFixed(2) : '0';
                 },
 
                 calculateKembalian() {
@@ -913,6 +998,9 @@
                             id: p.id,
                             jumlah_beli: p.jumlah_beli,
                             harga_beli: this.parseFormatted(p.harga_beli),
+                            harga_bersih: this.parseFormatted(p.harga_bersih),
+                            margin_laba: parseFloat(p.margin_laba) || 0,
+                            harga_jual: this.parseFormatted(p.harga_jual),
                             tanggal_kadaluarsa: p.tanggal_kadaluarsa || null,
                             diskon: {
                                 jenis: p.diskon.jenis,
@@ -1039,7 +1127,7 @@
                                     </div>
                                     <div class="d-flex justify-content-between small text-muted">
                                         <span>${escape(data.sku)}</span>
-                                        <span class="text-success fw-bold">Rp ${Number(data.harga_beli).toLocaleString('id-ID')} / ${escape(data.unit)}</span>
+                                        <span class="text-success fw-bold">Beli: Rp ${Number(data.harga_beli).toLocaleString('id-ID')} | Jual: Rp ${Number(data.harga_jual || 0).toLocaleString('id-ID')} / ${escape(data.unit)}</span>
                                     </div>
                                   </div>
                                 </div>`;

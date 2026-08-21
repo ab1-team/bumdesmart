@@ -72,6 +72,7 @@ class TambahPembelian extends Component
                     'category' => $product->category ? $product->category->nama_kategori : '-',
                     'brand' => $product->brand ? $product->brand->nama_merek : '-',
                     'allow_decimal' => $product->unit ? (bool) $product->unit->desimal : false,
+                    'harga_jual' => $product->harga_jual,
                 ],
             ];
         }
@@ -143,20 +144,32 @@ class TambahPembelian extends Component
         $products = [];
         foreach ($purchase->purchaseDetails as $detail) {
             $batch = $detail->productBatch;
+            $product = $detail->product;
+            $qty = $detail->jumlah;
+            $hargaBeli = (float) $detail->harga_satuan;
+            $diskonNominal = (float) $detail->jumlah_diskon;
+            $diskonPerUnit = $qty > 0 ? ($diskonNominal / $qty) : 0;
+            $hargaBersih = max(0, $hargaBeli - $diskonPerUnit);
+            $hargaJual = $product ? (float) $product->harga_jual : 0;
+            $marginLaba = ($hargaBersih > 0 && $hargaJual > 0) ? round((($hargaJual - $hargaBersih) / $hargaBersih) * 100, 2) : 0;
+
             $products[$detail->product_id] = [
                 'id' => $detail->product_id,
                 'nama_produk' => $detail->product->nama_produk,
                 'gambar' => $detail->product->gambar,
                 'sku' => $detail->product->sku,
-                'harga_beli' => (string) $detail->harga_satuan, // Pass as string for formatting
+                'harga_beli' => (string) $detail->harga_satuan,
+                'harga_bersih' => (string) $hargaBersih,
+                'margin_laba' => (string) $marginLaba,
+                'harga_jual' => (string) $hargaJual,
                 'jumlah_beli' => $detail->jumlah,
                 'unit' => $detail->product->unit ? $detail->product->unit->nama_satuan : '-',
                 'allow_decimal' => $detail->product->unit ? (bool) $detail->product->unit->desimal : false,
                 'tanggal_kadaluarsa' => $batch ? ($batch->tanggal_kadaluarsa ? $batch->tanggal_kadaluarsa->format('Y-m-d') : '') : '',
                 'diskon' => [
                     'jenis' => $detail->jenis_diskon,
-                    'jumlah' => $detail->jumlah_diskon, // This often stores the Rate or Nominal depending on logic
-                    'nominal' => $detail->jumlah_diskon, // Simplification: assuming nominal for display mainly
+                    'jumlah' => $detail->jumlah_diskon,
+                    'nominal' => $detail->jumlah_diskon,
                 ],
                 'cashback' => [
                     'jenis' => $detail->jenis_cashback,
@@ -262,6 +275,7 @@ class TambahPembelian extends Component
                 'category' => $product->category ? $product->category->nama_kategori : '-',
                 'brand' => $product->brand ? $product->brand->nama_merek : '-',
                 'allow_decimal' => $product->unit ? (bool) $product->unit->desimal : false,
+                'harga_jual' => $product->harga_jual,
             ];
         }
 
@@ -491,7 +505,15 @@ class TambahPembelian extends Component
                         'updated_at' => $timestamp,
                     ];
 
-                    // Increment Stock (We already decremented OLD stock at start, now we add NEW stock)
+                    // Increment Stock (We already decremented OLD stock at start, now we add NEW stock) and update prices
+                    $productUpdates = ['harga_beli' => $newPrice];
+                    if (! empty($item['harga_jual'])) {
+                        $newHargaJual = \App\Utils\NumberUtil::parse($item['harga_jual']);
+                        if ($newHargaJual > 0) {
+                            $productUpdates['harga_jual'] = $newHargaJual;
+                        }
+                    }
+                    Product::where('id', $item['id'])->update($productUpdates);
                     Product::where('id', $item['id'])->increment('stok_aktual', $newQty);
                 }
 
@@ -597,7 +619,15 @@ class TambahPembelian extends Component
                         'updated_at' => $timestamp,
                     ];
 
-                    // 5. Update Actual Stock
+                    // 5. Update Actual Stock & prices
+                    $productUpdates = ['harga_beli' => \App\Utils\NumberUtil::parse($item['harga_beli'])];
+                    if (! empty($item['harga_jual'])) {
+                        $newHargaJual = \App\Utils\NumberUtil::parse($item['harga_jual']);
+                        if ($newHargaJual > 0) {
+                            $productUpdates['harga_jual'] = $newHargaJual;
+                        }
+                    }
+                    Product::where('id', $item['id'])->update($productUpdates);
                     Product::where('id', $item['id'])->increment('stok_aktual', $item['jumlah_beli']);
                 }
             } // END ELSE (CREATE)
