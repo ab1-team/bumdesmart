@@ -485,6 +485,9 @@ class TambahPenjualan extends Component
                 ->lockForUpdate() // Prevent race conditions
                 ->get();
 
+            $productMaster = Product::find($productId);
+            $fallbackCost = (float) ($productMaster->harga_beli ?? 0);
+
             foreach ($batches as $batch) {
                 if ($needed <= 0) {
                     break;
@@ -499,14 +502,15 @@ class TambahPenjualan extends Component
                 }
                 $batch->save();
 
-                // Calculate Cost
-                $totalHpp += ($take * $batch->harga_satuan);
+                // Calculate Cost: Use batch cost if > 0, otherwise fallback to master product harga_beli
+                $costPerUnit = (float) $batch->harga_satuan > 0 ? (float) $batch->harga_satuan : $fallbackCost;
+                $totalHpp += ($take * $costPerUnit);
 
                 // Store batch movement data (will be linked after detail creation)
                 $currentProductBatchMovements[] = [
                     'batch_id' => $batch->id,
                     'qty_taken' => $take,
-                    'cost' => $batch->harga_satuan,
+                    'cost' => $costPerUnit,
                 ];
 
                 $needed -= $take;
@@ -515,8 +519,6 @@ class TambahPenjualan extends Component
             // Handle Overflow (If stock exists but no batch, or shortage)
             if ($needed > 0) {
                 // Fallback cost: Product's current 'harga_beli' (Master Data)
-                $productMaster = Product::find($productId);
-                $fallbackCost = $productMaster->harga_beli ?? 0;
                 $totalHpp += ($needed * $fallbackCost);
             }
 

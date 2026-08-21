@@ -306,6 +306,9 @@ class SalePos extends Component
                 ->lockForUpdate()
                 ->get();
 
+            $productMaster = Product::find($productId);
+            $fallbackCost = (float) ($productMaster->harga_beli ?? 0);
+
             foreach ($batches as $batch) {
                 if ($needed <= 0) {
                     break;
@@ -318,18 +321,17 @@ class SalePos extends Component
                 }
                 $batch->save();
 
-                $totalHpp += ($take * $batch->harga_satuan);
+                $costPerUnit = (float) $batch->harga_satuan > 0 ? (float) $batch->harga_satuan : $fallbackCost;
+                $totalHpp += ($take * $costPerUnit);
                 $currentProductBatchMovements[] = [
                     'batch_id' => $batch->id,
                     'qty_taken' => $take,
-                    'cost' => $batch->harga_satuan,
+                    'cost' => $costPerUnit,
                 ];
                 $needed -= $take;
             }
 
             if ($needed > 0) {
-                $productMaster = Product::find($productId);
-                $fallbackCost = $productMaster->harga_beli ?? 0;
                 $totalHpp += ($needed * $fallbackCost);
             }
 

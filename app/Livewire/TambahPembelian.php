@@ -427,6 +427,12 @@ class TambahPembelian extends Component
                     $productId = $item['id'];
                     $newQty = $item['jumlah_beli'];
                     $newPrice = \App\Utils\NumberUtil::parse($item['harga_beli']);
+                    $diskonNominal = \App\Utils\NumberUtil::parse($item['diskon']['nominal'] ?? ($item['diskon']['jumlah'] ?? 0));
+                    $qtyBeli = $newQty > 0 ? $newQty : 1;
+                    $hargaBersihPerUnit = isset($item['harga_bersih']) && \App\Utils\NumberUtil::parse($item['harga_bersih']) > 0
+                        ? \App\Utils\NumberUtil::parse($item['harga_bersih'])
+                        : max(0, $newPrice - ($diskonNominal / $qtyBeli));
+                    $batchCostPerUnit = $hargaBersihPerUnit > 0 ? $hargaBersihPerUnit : $newPrice;
 
                     if (isset($existingDetails[$productId])) {
                         // UPDATE Existing Detail
@@ -437,7 +443,7 @@ class TambahPembelian extends Component
                             'jumlah' => $newQty,
                             'harga_satuan' => $newPrice,
                             'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                            'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
+                            'jumlah_diskon' => $diskonNominal,
                             'jenis_cashback' => $item['cashback']['jenis'] ?? 'nominal',
                             'jumlah_cashback' => \App\Utils\NumberUtil::parse($item['cashback']['jumlah'] ?? 0),
                             'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
@@ -452,7 +458,7 @@ class TambahPembelian extends Component
                             $batch->update([
                                 'jumlah_awal' => $newQty,
                                 'jumlah_saat_ini' => $batch->jumlah_saat_ini + $qtyDiff, // Adjust current stock by delta
-                                'harga_satuan' => $newPrice,
+                                'harga_satuan' => $batchCostPerUnit,
                                 'tanggal_pembelian' => $data['tanggalPembelian'],
                                 'tanggal_kadaluarsa' => $item['tanggal_kadaluarsa'] ?? null,
                             ]);
@@ -465,7 +471,7 @@ class TambahPembelian extends Component
                             'jumlah' => $newQty,
                             'harga_satuan' => $newPrice,
                             'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                            'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
+                            'jumlah_diskon' => $diskonNominal,
                             'jenis_cashback' => $item['cashback']['jenis'] ?? 'nominal',
                             'jumlah_cashback' => \App\Utils\NumberUtil::parse($item['cashback']['jumlah'] ?? 0),
                             'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
@@ -477,7 +483,7 @@ class TambahPembelian extends Component
                             'purchase_detail_id' => $detail->id,
                             'no_batch' => 'BATCH-'.$purchase->id.'-'.time().'-'.$item['id'],
                             'tanggal_pembelian' => $data['tanggalPembelian'],
-                            'harga_satuan' => $newPrice,
+                            'harga_satuan' => $batchCostPerUnit,
                             'jumlah_awal' => $newQty,
                             'jumlah_saat_ini' => $newQty,
                             'tanggal_kadaluarsa' => $item['tanggal_kadaluarsa'] ?? null,
@@ -572,13 +578,22 @@ class TambahPembelian extends Component
                 $timestamp = now();
 
                 foreach ($data['products'] as $item) {
+                    $itemHargaBeli = \App\Utils\NumberUtil::parse($item['harga_beli']);
+                    $itemQty = $item['jumlah_beli'];
+                    $itemDiskon = \App\Utils\NumberUtil::parse($item['diskon']['nominal'] ?? ($item['diskon']['jumlah'] ?? 0));
+                    $itemQtyBeli = $itemQty > 0 ? $itemQty : 1;
+                    $itemHargaBersih = isset($item['harga_bersih']) && \App\Utils\NumberUtil::parse($item['harga_bersih']) > 0
+                        ? \App\Utils\NumberUtil::parse($item['harga_bersih'])
+                        : max(0, $itemHargaBeli - ($itemDiskon / $itemQtyBeli));
+                    $itemBatchCost = $itemHargaBersih > 0 ? $itemHargaBersih : $itemHargaBeli;
+
                     // 1. Create Purchase Detail (We need ID for the batch linkage)
                     $detail = $purchase->purchaseDetails()->create([
                         'product_id' => $item['id'],
-                        'jumlah' => $item['jumlah_beli'],
-                        'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
+                        'jumlah' => $itemQty,
+                        'harga_satuan' => $itemHargaBeli,
                         'jenis_diskon' => $item['diskon']['jenis'] ?? 'nominal',
-                        'jumlah_diskon' => \App\Utils\NumberUtil::parse($item['diskon']['jumlah'] ?? 0),
+                        'jumlah_diskon' => $itemDiskon,
                         'jenis_cashback' => $item['cashback']['jenis'] ?? 'nominal',
                         'jumlah_cashback' => \App\Utils\NumberUtil::parse($item['cashback']['jumlah'] ?? 0),
                         'subtotal' => \App\Utils\NumberUtil::parse($item['subtotal']),
@@ -591,9 +606,9 @@ class TambahPembelian extends Component
                         'purchase_detail_id' => $detail->id,
                         'no_batch' => 'BATCH-'.$purchase->id.'-'.time().'-'.$item['id'],
                         'tanggal_pembelian' => $data['tanggalPembelian'],
-                        'harga_satuan' => \App\Utils\NumberUtil::parse($item['harga_beli']),
-                        'jumlah_awal' => $item['jumlah_beli'],
-                        'jumlah_saat_ini' => $item['jumlah_beli'],
+                        'harga_satuan' => $itemBatchCost,
+                        'jumlah_awal' => $itemQty,
+                        'jumlah_saat_ini' => $itemQty,
                         'tanggal_kadaluarsa' => $item['tanggal_kadaluarsa'] ?? null,
                         'status' => 'ACTIVE',
                     ]);
