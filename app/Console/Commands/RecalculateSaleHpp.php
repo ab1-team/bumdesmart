@@ -2,23 +2,76 @@
 
 namespace App\Console\Commands;
 
+use App\Models\BatchMovement;
+use App\Models\Owner;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDetail;
-use App\Models\BatchMovement;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class RecalculateSaleHpp extends Command
 {
-    protected $signature = 'app:recalculate-sale-hpp {--sale_id= : Specific Sale ID to recalculate} {--force : Force recalculation even if hpp > 0}';
-    protected $description = 'Recalculate HPP and Profit in sale_details based on actual batch costs and product master harga_beli';
+    protected $signature = 'app:recalculate-sale-hpp 
+                            {--tenant=* : Specific Tenant ID(s) to process} 
+                            {--sale_id= : Specific Sale ID to recalculate} 
+                            {--force : Force recalculation even if hpp > 0}';
+
+    protected $description = 'Recalculate HPP and Profit in sale_details for tenant(s) based on actual batch costs and product master harga_beli';
 
     public function handle()
     {
         $this->info('Starting HPP & Profit audit and recalculation on sale_details...');
 
+        // If tenancy is already initialized (e.g. called via tenants:run)
+        if (function_exists('tenant') && tenant()) {
+            return $this->processCurrentTenant();
+        }
+
+        // Otherwise, iterate through tenants
+        $tenantQuery = Owner::query();
+        if ($tenantIds = $this->option('tenant')) {
+            $tenantQuery->whereIn('id', $tenantIds);
+        }
+
+        $tenants = $tenantQuery->get();
+        if ($tenants->isEmpty()) {
+            $this->warn('No tenants found.');
+            return 0;
+        }
+
+        $this->info("Found {$tenants->count()} tenant(s) to process.");
+
+        foreach ($tenants as $tenant) {
+            $this->line('');
+            $this->info("==========================================");
+            $this->info("Processing Tenant: {$tenant->nama_usaha} (ID: {$tenant->id})");
+            $this->info("==========================================");
+
+            try {
+                if (tenancy()->initialized) {
+                    tenancy()->end();
+                }
+
+                tenancy()->initialize($tenant);
+                $this->processCurrentTenant();
+            } catch (\Throwable $e) {
+                $this->error("Failed processing tenant {$tenant->id}: " . $e->getMessage());
+            } finally {
+                if (tenancy()->initialized) {
+                    tenancy()->end();
+                }
+            }
+        }
+
+        $this->info('');
+        $this->info('All tenants processed successfully.');
+        return 0;
+    }
+
+    protected function processCurrentTenant()
+    {
         $saleId = $this->option('sale_id');
         $force = $this->option('force');
 
@@ -28,7 +81,11 @@ class RecalculateSaleHpp extends Command
         }
 
         $details = $query->get();
-        $this->info("Found {$details->count()} sale detail records to process.");
+        $this->line("Found {$details->count()} sale detail records in tenant database.");
+
+        if ($details->isEmpty()) {
+            return 0;
+        }
 
         $updatedCount = 0;
         $affectedSales = [];
@@ -85,7 +142,7 @@ class RecalculateSaleHpp extends Command
                         'profit' => $calculatedProfit,
                     ]);
 
-                    $this->line("Updated Detail #{$detail->id} (Product: {$product->nama_produk}): HPP {$currentHpp} -> {$calculatedHpp}, Profit {$currentProfit} -> {$calculatedProfit}");
+                    $this->line("  [UPDATED] Detail #{$detail->id} ({$product->nama_produk}): HPP {$currentHpp} -> {$calculatedHpp}, Profit {$currentProfit} -> {$calculatedProfit}");
                     $updatedCount++;
                     $affectedSales[$detail->sale_id] = true;
                 }
@@ -101,15 +158,15 @@ class RecalculateSaleHpp extends Command
 
                 if ($payment) {
                     $payment->update(['total_harga' => $totalSaleHpp]);
-                    $this->info("Updated HPP Payment for Sale #{$sId} to {$totalSaleHpp}");
+                    $this->line("  [SYNCED] HPP Payment entry for Sale #{$sId} updated to {$totalSaleHpp}");
                 }
             }
 
             DB::commit();
-            $this->info("Successfully audited and recalculated {$updatedCount} sale detail records.");
+            $this->info("  --> Recalculated {$updatedCount} sale detail records.");
         } catch (\Throwable $e) {
             DB::rollBack();
-            $this->error("Error recalculating HPP: " . $e->getMessage());
+            $this->error("Error recalculating tenant HPP: " . $e->getMessage());
             return 1;
         }
 
