@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\Renderless;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\StockAdjustment;
@@ -22,6 +23,7 @@ class TambahStockAdjustment extends Component
         $this->businessId = auth()->user()->business_id;
     }
 
+    #[Renderless]
     public function loadProducts($page = 1, $search = '')
     {
         $query = Product::where('business_id', $this->businessId);
@@ -54,6 +56,7 @@ class TambahStockAdjustment extends Component
             'has_more' => $data->count() > 20,
         ];
     }
+    #[Renderless]
     public function saveAdjustment($data)
     {
         if (!is_array($data) || empty($data['items'])) {

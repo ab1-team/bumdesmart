@@ -12,6 +12,7 @@ use App\Models\StockMovement;
 use App\Utils\PaymentUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 class TambahPenjualan extends Component
@@ -155,6 +156,7 @@ class TambahPenjualan extends Component
         }
     }
 
+    #[Renderless]
     public function loadCustomers($query, $offset = 0)
     {
         $perPage = 20;
@@ -169,6 +171,7 @@ class TambahPenjualan extends Component
         return ['data' => $customers];
     }
 
+    #[Renderless]
     public function loadSearchProducts($query, $customerId = null)
     {
         // 1. Get Customer Group info if Customer selected
@@ -235,6 +238,7 @@ class TambahPenjualan extends Component
     }
 
     #[On('saveAll')]
+    #[Renderless]
     public function saveAll($data)
     {
         // Skip validation for now or adapt it.
@@ -761,6 +765,7 @@ class TambahPenjualan extends Component
         }
     }
 
+    #[Renderless]
     public function updateNomorPenjualan($date)
     {
         return \App\Utils\ReferenceUtil::generate(\App\Models\Sale::class, 'INV', 'no_invoice', 'tanggal_transaksi', $date);

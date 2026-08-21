@@ -10,6 +10,7 @@ use App\Models\Transaction_type;
 use App\Utils\InventarisUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\Attributes\Renderless;
 
 class JurnalUmum extends Component
 {
@@ -102,6 +103,7 @@ class JurnalUmum extends Component
 
     public $inventarisList = [];
 
+    #[Renderless]
     public function saveJurnalUmum($data)
     {
         if (! is_array($data)) {

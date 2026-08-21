@@ -14,6 +14,7 @@ use App\Utils\PaymentUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -122,6 +123,7 @@ class SalePos extends Component
         $this->dispatch('close-modal', id: 'closeCashierModal');
     }
 
+    #[Renderless]
     public function scanProduct($barcode)
     {
         $product = Product::where('business_id', $this->businessId)
@@ -152,6 +154,7 @@ class SalePos extends Component
         return ['success' => false, 'message' => 'Produk tidak ditemukan'];
     }
 
+    #[Renderless]
     public function loadCustomers($query, $offset = 0)
     {
         $perPage = 5;
@@ -166,6 +169,7 @@ class SalePos extends Component
         return ['data' => $customers];
     }
 
+    #[Renderless]
     public function loadProducts($query, $offset = 0)
     {
         $perPage = 10;
@@ -184,6 +188,7 @@ class SalePos extends Component
         return ['data' => $products];
     }
 
+    #[Renderless]
     public function saveSale($data)
     {
         if (! $this->cashDrawer) {

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use DB;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 class TambahReturPenjualan extends Component
@@ -15,6 +16,7 @@ class TambahReturPenjualan extends Component
     public $sale = [];
 
     #[On('save-all')]
+    #[Renderless]
     public function saveAll($data)
     {
         if (empty($data['retur_penjualan'])) {

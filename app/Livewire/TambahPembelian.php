@@ -9,6 +9,7 @@ use App\Traits\WithTable;
 use App\Utils\PaymentUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 class TambahPembelian extends Component
@@ -49,6 +50,7 @@ class TambahPembelian extends Component
 
     public $existingData = null;
 
+    #[Renderless]
     public function scanProduct($barcode)
     {
         $product = Product::where('business_id', $this->businessId)
@@ -214,6 +216,7 @@ class TambahPembelian extends Component
         }
     }
 
+    #[Renderless]
     public function loadSuppliers($query, $offset = 0)
     {
         $perPage = 50;
@@ -237,6 +240,7 @@ class TambahPembelian extends Component
         ];
     }
 
+    #[Renderless]
     public function loadSearchProducts($query, $offset = 0)
     {
         $perPage = 20;
@@ -286,6 +290,7 @@ class TambahPembelian extends Component
     }
 
     #[On('save-all')]
+    #[Renderless]
     public function saveAll($data)
     {
         if (empty($data['products'])) {
@@ -756,6 +761,7 @@ class TambahPembelian extends Component
         }
     }
 
+    #[Renderless]
     public function updateNomorPembelian($date)
     {
         return \App\Utils\ReferenceUtil::generate(\App\Models\Purchase::class, 'PO', 'no_pembelian', 'tanggal_pembelian', $date);

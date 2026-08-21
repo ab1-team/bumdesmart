@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Utils\PaymentUtil;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\Attributes\Renderless;
 
 class TambahStockOpname extends Component
 {
@@ -116,6 +117,7 @@ class TambahStockOpname extends Component
      * Load products based on filters
      * NO PAGINATION to prevent data loss during counting
      */
+    #[Renderless]
     public function loadProducts()
     {
         // Only load if at least one filter is selected or user explicitly asks (to prevent loading thousands of items at once)
@@ -156,6 +158,7 @@ class TambahStockOpname extends Component
     /**
      * Menyimpan Stock Opname
      */
+    #[Renderless]
     public function saveOpname($data)
     {
         if (! $data || ! is_array($data)) {
