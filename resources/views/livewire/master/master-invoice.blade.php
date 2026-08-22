@@ -108,7 +108,7 @@
                         <div class="mb-3">
                             <label class="form-label">Saldo (Jumlah Pembayaran) <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" wire:model="saldo"
-                                x-mask:dynamic="$money($input, '.', ',', 0)" placeholder="0" />
+                                x-mask:dynamic="$money($input, ',', '.', 0)" placeholder="0" />
                             @error('saldo')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror

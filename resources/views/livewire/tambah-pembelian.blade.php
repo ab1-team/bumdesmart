@@ -68,7 +68,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_beli"
-                                        x-on:input="updateRow(product.id)" x-mask:dynamic="$money($input, '.', ',', 2)"
+                                        x-on:input="updateRow(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -96,7 +96,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_bersih"
-                                        x-on:input="updateHargaBersih(product.id)" x-mask:dynamic="$money($input, '.', ',', 2)"
+                                        x-on:input="updateHargaBersih(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -108,7 +108,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control" x-model="product.harga_jual"
-                                        x-on:input="updateHargaJual(product.id)" x-mask:dynamic="$money($input, '.', ',', 2)"
+                                        x-on:input="updateHargaJual(product.id)" x-mask:dynamic="$money($input, ',', '.', 2)"
                                         x-on:focus="$el.select()">
                                 </td>
                                 <td>
@@ -185,7 +185,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
+                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
                                                     x-model="globalDiskon.jumlah">
                                             </div>
                                         </div>
@@ -211,7 +211,7 @@
                                             </div>
                                             <div class="col">
                                                 <input type="text" class="form-control"
-                                                    x-mask:dynamic="$money($input, '.', ',', 2)"
+                                                    x-mask:dynamic="$money($input, ',', '.', 2)"
                                                     x-model="globalCashback.jumlah">
                                             </div>
                                         </div>
@@ -269,7 +269,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Nominal Bayar</label>
                                     <input type="text" class="form-control fs-3" placeholder="Bayar"
-                                        x-mask:dynamic="$money($input, '.', ',', 2)" x-model="bayar"
+                                        x-mask:dynamic="$money($input, ',', '.', 2)" x-model="bayar"
                                         x-on:keyup="calculateKembalian">
                                 </div>
 
@@ -817,8 +817,8 @@
                             },
                             subtotal: this.formatRupiah(hargaBeli)
                         };
+                        this.updateTotals();
                     }
-                    this.updateRow(id);
                 },
 
                 removeProduct(id) {
@@ -861,7 +861,7 @@
 
                     let margin = parseFloat(p.margin_laba);
                     if (!isNaN(margin) && margin !== null && p.margin_laba !== '' && p.margin_laba !== undefined) {
-                        let hj = hargaBersih * (1 + margin / 100);
+                        let hj = Math.round(hargaBersih * (1 + margin / 100));
                         p.harga_jual = this.formatRupiah(hj);
                     } else if (p.harga_jual) {
                         let hj = this.parseFormatted(p.harga_jual);
@@ -888,7 +888,7 @@
 
                     let margin = parseFloat(p.margin_laba);
                     if (!isNaN(margin) && margin !== null && p.margin_laba !== '' && p.margin_laba !== undefined) {
-                        let hj = hargaBersih * (1 + margin / 100);
+                        let hj = Math.round(hargaBersih * (1 + margin / 100));
                         p.harga_jual = this.formatRupiah(hj);
                     } else if (p.harga_jual) {
                         let hj = this.parseFormatted(p.harga_jual);
@@ -904,7 +904,7 @@
                     let p = this.products[id];
                     let margin = parseFloat(p.margin_laba) || 0;
                     let hargaBersih = this.parseFormatted(p.harga_bersih);
-                    let hj = hargaBersih * (1 + margin / 100);
+                    let hj = Math.round(hargaBersih * (1 + margin / 100));
                     p.harga_jual = this.formatRupiah(hj);
                 },
 

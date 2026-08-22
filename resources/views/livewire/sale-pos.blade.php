@@ -301,7 +301,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="openingBalance"
-                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
                             </div>
                             @error('openingBalance')
                                 <span class="text-danger small">{{ $message }}</span>
@@ -333,7 +333,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" class="form-control" wire:model="closingBalanceManual"
-                                    x-mask:dynamic="$money($input, '.', ',', 2)" placeholder="0" required>
+                                    x-mask:dynamic="$money($input, ',', '.', 2)" placeholder="0" required>
                             </div>
                         </div>
                         <div class="mb-3">
