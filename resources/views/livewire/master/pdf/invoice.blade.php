@@ -459,7 +459,7 @@
     <div class="pembayaran-box">
         <strong>Pembayaran Transfer Via :</strong>
         <ul>
-            <li>Bank Mandiri &mdash; No. Rekening : 185-00-487-8888-6 an. PT. Asta Brata Teknologi</li>
+            <li>Bank Mandiri &mdash; No. Rekening : 185-000-417-4733 an. Santoso</li>
             <li>Bank BRI &mdash; No. Rekening : 0048-01-057317-50-5 an. Santoso</li>
         </ul>
     </div>
