@@ -92,6 +92,11 @@ class DaftarPembelian extends Component
         $payment = \App\Models\Payment::where('id', $id)->first();
         $purchaseId = $payment->transaction_id;
 
+        // Capture state BEFORE delete so we know if PO was previously completed
+        $purchaseBeforeDelete = \App\Models\Purchase::where('id', $purchaseId)->first();
+        $wasCompleted = $purchaseBeforeDelete
+            && in_array(strtolower($purchaseBeforeDelete->status), ['completed', 'lunas', 'paid']);
+
         $sisaBayar = \App\Models\Payment::where('transaction_id', $purchaseId)
             ->where('id', '!=', $id)
             ->whereNotIn('metode_pembayaran', ['piutang', 'diskon', 'cashback'])
@@ -102,10 +107,28 @@ class DaftarPembelian extends Component
         $totalPurchase = \App\Models\Purchase::where('id', $purchaseId)->value('total');
         $newUtang = $totalPurchase - $sisaBayar;
 
-        // Determine status:
+        // SPECIAL CASE: PO was previously COMPLETED and now a payment is being deleted.
+        // Revert: status -> 'utang', dibayar -> 0 (kosong), jumlah_utang -> full total.
+        if ($wasCompleted) {
+            \App\Models\Purchase::where('id', $purchaseId)->update([
+                'dibayar' => 0,
+                'jumlah_utang' => $totalPurchase,
+                'kembalian' => 0,
+                'status' => 'utang',
+            ]);
+
+            $this->detailPurchase = \App\Models\Purchase::with('payments')->where('id', $purchaseId)->first();
+
+            $this->dispatch('hide-modal', modalId: 'detailPembayaranModal');
+            $this->dispatch('alert', type: 'success', message: 'Pembayaran dihapus. Status pembelian dikembalikan ke Utang.');
+            $this->dispatch('$refresh');
+            return;
+        }
+
+        // NORMAL FLOW (PO was not 'completed'):
         // - completed if fully paid
-        // - partial if there are still payments but some debt remains
-        // - utang if no payments at all (or debt remains and zero paid)
+        // - partial if some payment remains but debt also remains
+        // - utang if no payments at all (sisaBayar = 0)
         $status = 'utang';
         if ($sisaBayar >= $totalPurchase) {
             $status = 'completed';

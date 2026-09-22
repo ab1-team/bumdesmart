@@ -5,20 +5,37 @@
                 <h4 class="modal-title">Detail Pembayaran</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            @if (!empty($detailPurchase))
+                <div class="px-3 pt-3">
+                    <div class="alert alert-info d-flex justify-content-between align-items-center mb-0">
+                        <span>
+                            No. Pembelian: <strong>{{ $detailPurchase->no_pembelian }}</strong>
+                        </span>
+                        <span>
+                            Status:
+                            @if (in_array(strtolower($detailPurchase->status), ['completed', 'lunas', 'paid']))
+                                <span class="badge text-light bg-success">Selesai</span>
+                            @elseif (in_array(strtolower($detailPurchase->status), ['partial', 'sebagian']))
+                                <span class="badge text-light bg-info">Sebagian</span>
+                            @else
+                                <span class="badge text-light bg-warning">Utang</span>
+                            @endif
+                        </span>
+                    </div>
+                </div>
+            @endif
             <div class="modal-body">
                 @if (!empty($detailPurchase))
                     @php
-                        // Fallback: load payments directly from DB if relation is empty
-                        if ($detailPurchase->payments->count() === 0) {
-                            $allPayments = \App\Models\Payment::where('transaction_id', $detailPurchase->id)
-                                ->where('jenis_transaksi', 'purchase')
-                                ->withTrashed()
-                                ->orderBy('tanggal_pembayaran', 'desc')
-                                ->orderBy('id', 'desc')
-                                ->get();
-                        } else {
-                            $allPayments = $detailPurchase->payments;
-                        }
+                        // Always include soft-deleted payments so user can see payment history.
+                        // Only exclude accounting entries (piutang, diskon, cashback).
+                        $allPayments = \App\Models\Payment::where('transaction_id', $detailPurchase->id)
+                            ->where('jenis_transaksi', 'purchase')
+                            ->whereNotIn('metode_pembayaran', ['piutang', 'diskon', 'cashback'])
+                            ->withTrashed()
+                            ->orderBy('tanggal_pembayaran', 'desc')
+                            ->orderBy('id', 'desc')
+                            ->get();
                     @endphp
                     @if ($allPayments->count() > 0)
                         <table class="table table-striped">
