@@ -1,4 +1,4 @@
-<div class="modal fade" id="detailPembayaranModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="detailPembayaranModal" tabindex="-1" role="dialog" aria-hidden="true" wire:key="detail-pembayaran-modal-{{ $detailPurchase->id ?? 'empty' }}">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -7,7 +7,20 @@
             </div>
             <div class="modal-body">
                 @if (!empty($detailPurchase))
-                    @if ($detailPurchase->payments->count() > 0)
+                    @php
+                        // Fallback: load payments directly from DB if relation is empty
+                        if ($detailPurchase->payments->count() === 0) {
+                            $allPayments = \App\Models\Payment::where('transaction_id', $detailPurchase->id)
+                                ->where('jenis_transaksi', 'purchase')
+                                ->withTrashed()
+                                ->orderBy('tanggal_pembayaran', 'desc')
+                                ->orderBy('id', 'desc')
+                                ->get();
+                        } else {
+                            $allPayments = $detailPurchase->payments;
+                        }
+                    @endphp
+                    @if ($allPayments->count() > 0)
                         <table class="table table-striped">
                             <thead>
                                 <tr>
@@ -21,7 +34,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($detailPurchase->payments as $payment)
+                                @foreach ($allPayments as $payment)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $payment->tanggal_pembayaran }}</td>
@@ -40,12 +53,16 @@
                                         <td>{{ $payment->no_referensi ?: '-' }}</td>
                                         <td>{{ \App\Utils\NumberUtil::format($payment->total_harga, 2, true) }}</td>
                                         <td>
-                                            <button class="btn btn-danger btn-sm"
-                                                x-on:click="deletePayment({{ $payment->id }})">
-                                                <span class="material-symbols-outlined">
-                                                    delete
-                                                </span>
-                                            </button>
+                                            @if ($payment->deleted_at)
+                                                <span class="badge bg-secondary">Dihapus</span>
+                                            @else
+                                                <button class="btn btn-danger btn-sm"
+                                                    x-on:click="deletePayment({{ $payment->id }})">
+                                                    <span class="material-symbols-outlined">
+                                                        delete
+                                                    </span>
+                                                </button>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -53,7 +70,7 @@
                             <tfoot>
                                 <tr>
                                     <td colspan="5" class="text-end fw-bold">Total</td>
-                                    <td class="fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->payments->sum('total_harga'), 2, true) }}</td>
+                                    <td class="fw-bold">{{ \App\Utils\NumberUtil::format($allPayments->sum('total_harga'), 2, true) }}</td>
                                     <td></td>
                                 </tr>
                             </tfoot>

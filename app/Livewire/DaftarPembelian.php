@@ -67,6 +67,9 @@ class DaftarPembelian extends Component
 
     public function lihatPembayaran($id)
     {
+        // Reset previous state to ensure fresh data
+        $this->detailPurchase = null;
+
         // Load purchase with all payments related to this purchase transaction.
         // Exclude only accounting entries (piutang, diskon, cashback) - these are not actual cash payments.
         $purchase = \App\Models\Purchase::with([
