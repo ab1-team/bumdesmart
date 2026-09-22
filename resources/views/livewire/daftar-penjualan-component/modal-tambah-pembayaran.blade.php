@@ -224,11 +224,10 @@
                 },
 
                 formatRupiah(number) {
-                    // Indonesian format: dot thousands, comma decimal (e.g. 1.032.000,00).
+                    // Indonesian format with always 2 decimals (e.g. 1.032.000,00).
                     const value = parseFloat(number) || 0;
-                    const hasDecimal = Math.round(value * 100) % 100 !== 0;
                     return new Intl.NumberFormat('id-ID', {
-                        minimumFractionDigits: hasDecimal ? 2 : 0,
+                        minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                     }).format(value);
                 }
