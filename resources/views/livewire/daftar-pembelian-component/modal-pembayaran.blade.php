@@ -27,12 +27,11 @@
             <div class="modal-body">
                 @if (!empty($detailPurchase))
                     @php
-                        // Always include soft-deleted payments so user can see payment history.
-                        // Only exclude accounting entries (piutang, diskon, cashback).
+                        // Only show active payments (not soft-deleted).
+                        // Also exclude accounting entries (piutang, diskon, cashback).
                         $allPayments = \App\Models\Payment::where('transaction_id', $detailPurchase->id)
                             ->where('jenis_transaksi', 'purchase')
                             ->whereNotIn('metode_pembayaran', ['piutang', 'diskon', 'cashback'])
-                            ->withTrashed()
                             ->orderBy('tanggal_pembayaran', 'desc')
                             ->orderBy('id', 'desc')
                             ->get();
@@ -70,16 +69,12 @@
                                         <td>{{ $payment->no_referensi ?: '-' }}</td>
                                         <td>{{ \App\Utils\NumberUtil::format($payment->total_harga, 2, true) }}</td>
                                         <td>
-                                            @if ($payment->deleted_at)
-                                                <span class="badge bg-secondary">Dihapus</span>
-                                            @else
-                                                <button class="btn btn-danger btn-sm"
-                                                    x-on:click="deletePayment({{ $payment->id }})">
-                                                    <span class="material-symbols-outlined">
-                                                        delete
-                                                    </span>
-                                                </button>
-                                            @endif
+                                            <button class="btn btn-danger btn-sm"
+                                                x-on:click="deletePayment({{ $payment->id }})">
+                                                <span class="material-symbols-outlined">
+                                                    delete
+                                                </span>
+                                            </button>
                                         </td>
                                     </tr>
                                 @endforeach
