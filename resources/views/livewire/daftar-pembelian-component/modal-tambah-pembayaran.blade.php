@@ -174,23 +174,23 @@
                 },
 
                 updateJumlah(e) {
-                    // Allow digits and at most one comma as decimal separator (Indonesian format)
+                    // User types US/EN format: digits with at most one dot as decimal separator.
+                    // Allow dots in input (ignored as thousand separator if multiple, kept as decimal if single)
                     let raw = String(e.target.value || '');
-                    // Strip everything except digits and comma
-                    raw = raw.replace(/[^0-9,]/g, '');
+                    // Strip everything except digits and dot/comma
+                    raw = raw.replace(/[^0-9.]/g, '');
 
-                    // Keep only the first comma (avoid "1,2,3")
-                    const firstComma = raw.indexOf(',');
-                    if (firstComma !== -1) {
-                        raw = raw.slice(0, firstComma + 1) + raw.slice(firstComma + 1).replace(/,/g, '');
+                    // Keep only the first dot (decimal), treat subsequent dots as removed (thousand separators)
+                    const firstDot = raw.indexOf('.');
+                    if (firstDot !== -1) {
+                        raw = raw.slice(0, firstDot + 1) + raw.slice(firstDot + 1).replace(/\./g, '');
                     }
 
-                    // Split into integer and decimal parts
-                    const parts = raw.split(',');
-                    let intPart = parts[0] || '0';
+                    const parts = raw.split('.');
+                    let intPart = parts[0] || '';
                     let decPart = parts[1] ?? '';
 
-                    // Remove leading zeros (but keep a single zero)
+                    // Remove leading zeros but keep one if needed (so user typing "0,5" -> "0.5")
                     intPart = intPart.replace(/^0+(?=\d)/, '');
 
                     // Limit decimal to 2 digits
@@ -198,23 +198,27 @@
                         decPart = decPart.slice(0, 2);
                     }
 
-                    // Build the canonical string for parsing
-                    const canonical = intPart === '' ? '0' : intPart;
-                    let parsed = parseFloat(canonical + (decPart !== '' ? '.' + decPart : '')) || 0;
+                    // Build canonical numeric string
+                    const canonical = (intPart === '' ? '0' : intPart) + (decPart !== '' ? '.' + decPart : '');
+                    let parsed = parseFloat(canonical) || 0;
 
                     // Cap at sisaTagihan
                     if (parsed > this.sisaTagihan) {
                         parsed = this.sisaTagihan;
+                        const fixed = parsed.toFixed(2);
+                        const fixedParts = fixed.split('.');
+                        intPart = fixedParts[0];
+                        decPart = fixedParts[1];
                     }
 
                     this.jumlahPembayaran = parsed;
 
-                    // Format for display - keep Indonesian thousand separators (.) and decimal comma (,)
-                    const intFormatted = (intPart === '' ? '0' : intPart).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                    if (parsed === 0 && raw === '') {
+                    // Display: US/EN format - comma thousands, dot decimal.
+                    const intFormatted = (intPart === '' ? '0' : intPart).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    if (raw === '') {
                         this.formattedJumlahPembayaran = '';
                     } else if (decPart !== '') {
-                        this.formattedJumlahPembayaran = intFormatted + ',' + decPart;
+                        this.formattedJumlahPembayaran = intFormatted + '.' + decPart;
                     } else {
                         this.formattedJumlahPembayaran = intFormatted;
                     }
@@ -226,17 +230,19 @@
                 },
 
                 formatNumber(number) {
-                    return new Intl.NumberFormat('id-ID', {
+                    // US/EN format: comma thousands, dot decimal.
+                    const value = parseFloat(number) || 0;
+                    return new Intl.NumberFormat('en-US', {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 2,
-                    }).format(number || 0);
+                    }).format(value);
                 },
 
                 formatRupiah(number) {
-                    // Show 2 decimals when needed (when value has non-zero decimal portion)
+                    // US/EN format consistently for this modal: 580,900.45
                     const value = parseFloat(number) || 0;
                     const hasDecimal = Math.round(value * 100) % 100 !== 0;
-                    return new Intl.NumberFormat('id-ID', {
+                    return new Intl.NumberFormat('en-US', {
                         minimumFractionDigits: hasDecimal ? 2 : 0,
                         maximumFractionDigits: 2,
                     }).format(value);

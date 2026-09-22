@@ -174,18 +174,18 @@
                 },
 
                 updateJumlah(e) {
-                    // Allow digits and at most one comma as decimal separator (Indonesian format)
+                    // User types US/EN format: digits with at most one dot as decimal separator.
                     let raw = String(e.target.value || '');
-                    raw = raw.replace(/[^0-9,]/g, '');
+                    raw = raw.replace(/[^0-9.]/g, '');
 
-                    // Keep only the first comma
-                    const firstComma = raw.indexOf(',');
-                    if (firstComma !== -1) {
-                        raw = raw.slice(0, firstComma + 1) + raw.slice(firstComma + 1).replace(/,/g, '');
+                    // Keep only the first dot
+                    const firstDot = raw.indexOf('.');
+                    if (firstDot !== -1) {
+                        raw = raw.slice(0, firstDot + 1) + raw.slice(firstDot + 1).replace(/\./g, '');
                     }
 
-                    const parts = raw.split(',');
-                    let intPart = parts[0] || '0';
+                    const parts = raw.split('.');
+                    let intPart = parts[0] || '';
                     let decPart = parts[1] ?? '';
 
                     intPart = intPart.replace(/^0+(?=\d)/, '');
@@ -194,15 +194,16 @@
                         decPart = decPart.slice(0, 2);
                     }
 
-                    const canonical = intPart === '' ? '0' : intPart;
-                    let parsed = parseFloat(canonical + (decPart !== '' ? '.' + decPart : '')) || 0;
+                    const canonical = (intPart === '' ? '0' : intPart) + (decPart !== '' ? '.' + decPart : '');
+                    let parsed = parseFloat(canonical) || 0;
 
                     this.jumlahPembayaran = parsed;
-                    const intFormatted = (intPart === '' ? '0' : intPart).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                    if (parsed === 0 && raw === '') {
+
+                    const intFormatted = (intPart === '' ? '0' : intPart).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    if (raw === '') {
                         this.formattedJumlahPembayaran = '';
                     } else if (decPart !== '') {
-                        this.formattedJumlahPembayaran = intFormatted + ',' + decPart;
+                        this.formattedJumlahPembayaran = intFormatted + '.' + decPart;
                     } else {
                         this.formattedJumlahPembayaran = intFormatted;
                     }
@@ -214,16 +215,19 @@
                 },
 
                 formatNumber(number) {
-                    return new Intl.NumberFormat('id-ID', {
+                    // US/EN format: comma thousands, dot decimal.
+                    const value = parseFloat(number) || 0;
+                    return new Intl.NumberFormat('en-US', {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 2,
-                    }).format(number || 0);
+                    }).format(value);
                 },
 
                 formatRupiah(number) {
+                    // US/EN format consistently: 580,900.45
                     const value = parseFloat(number) || 0;
                     const hasDecimal = Math.round(value * 100) % 100 !== 0;
-                    return new Intl.NumberFormat('id-ID', {
+                    return new Intl.NumberFormat('en-US', {
                         minimumFractionDigits: hasDecimal ? 2 : 0,
                         maximumFractionDigits: 2,
                     }).format(value);
