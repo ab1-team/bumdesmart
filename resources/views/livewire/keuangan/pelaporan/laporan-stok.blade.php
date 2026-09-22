@@ -36,7 +36,7 @@
                     <td style="text-align: center; color: green;">{{ \App\Utils\NumberUtil::formatQty($p->stok_masuk) }}</td>
                     <td style="text-align: center; color: red;">{{ \App\Utils\NumberUtil::formatQty($p->stok_keluar) }}</td>
                     <td style="text-align: center; font-weight: bold;">{{ \App\Utils\NumberUtil::formatQty($p->stok_akhir) }}</td>
-                    <td style="text-align: right;">{{ number_format($p->biaya_rata_rata, 2, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($p->hpp ?? $p->biaya_rata_rata, 2, ',', '.') }}</td>
                     <td style="text-align: right;">{{ number_format($p->nilai_stok, 2, ',', '.') }}</td>
                 </tr>
             @endforeach
