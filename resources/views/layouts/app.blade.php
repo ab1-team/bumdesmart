@@ -348,8 +348,35 @@
                     initTomSelect();
                     initLitepicker();
                     initDropdownViewport();
+                    reinitBootstrapDropdowns();
                 }, 100);
             });
+
+            document.addEventListener('livewire:navigated', () => {
+                setTimeout(() => {
+                    initTomSelect();
+                    initLitepicker();
+                    initDropdownViewport();
+                    reinitBootstrapDropdowns();
+                }, 100);
+            });
+
+            function reinitBootstrapDropdowns() {
+                document.querySelectorAll('[data-bs-toggle="dropdown"]:not(.dropdown-submenu .dropdown-toggle)').forEach(function(el) {
+                    if (window.bootstrap && window.bootstrap.Dropdown) {
+                        var inst = window.bootstrap.Dropdown.getInstance(el);
+                        if (inst) { inst.dispose(); }
+                        new window.bootstrap.Dropdown(el, { autoClose: 'outside' });
+                    }
+                });
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                    if (el._tooltip) return;
+                    if (window.bootstrap && window.bootstrap.Tooltip) {
+                        new window.bootstrap.Tooltip(el);
+                        el._tooltip = true;
+                    }
+                });
+            }
 
             initTomSelect();
         });
