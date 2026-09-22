@@ -3,8 +3,10 @@
 namespace App\Utils;
 
 use App\Models\Product;
+use App\Models\ProductBatch;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class StokUtil
 {
@@ -27,7 +29,7 @@ class StokUtil
      *
      * Produk tanpa movement migrasi dihitung kumulatif normal dari seluruh mutasinya.
      *
-     * @return array{stok_awal: int, masuk: int, keluar: int, stok_akhir: int}
+     * @return array{stok_awal: int, masuk: int, keluar: int, stok_akhir: int, hpp: float, nilai_stok: float}
      */
     public static function stokPeriode(Product $product, Carbon $startDate, Carbon $endDate): array
     {
@@ -71,11 +73,91 @@ class StokUtil
 
         $stokAwal = $stokMigrasi + $netSebelumPeriode;
 
+        $stokAkhir = $stokAwal + $masuk - $keluar;
+        $fifo = self::hitungFifoNilaiStok($product, $stokAkhir, $endDate);
+
         return [
             'stok_awal' => $stokAwal,
             'masuk' => $masuk,
             'keluar' => $keluar,
-            'stok_akhir' => $stokAwal + $masuk - $keluar,
+            'stok_akhir' => $stokAkhir,
+            'hpp' => $fifo['hpp'],
+            'nilai_stok' => $fifo['nilai_stok'],
+        ];
+    }
+
+    /**
+     * Hitung nilai stok akhir dan HPP per unit menurut metode costing produk.
+     *
+     * FIFO: unit stok akhir dialokasikan mundur ke batch pembelian paling baru
+     * sampai endDate. Batch yang lebih lama dipakai hanya jika kuota batch terbaru
+     * tidak cukup. Kuantitas di luar histori batch memakai fallback harga beli.
+     */
+    public static function hitungFifoNilaiStok(Product $product, int $stokAkhir, Carbon $endDate): array
+    {
+        $fallbackCost = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
+
+        if ($stokAkhir <= 0) {
+            return [
+                'hpp' => $fallbackCost,
+                'nilai_stok' => 0.0,
+            ];
+        }
+
+        if ($product->metode_biaya === 'AVERAGE' && (float) $product->biaya_rata_rata > 0) {
+            $hpp = (float) $product->biaya_rata_rata;
+
+            return [
+                'hpp' => $hpp,
+                'nilai_stok' => round($stokAkhir * $hpp, 2),
+            ];
+        }
+
+        if (! Schema::hasTable('product_batches')) {
+            return [
+                'hpp' => $fallbackCost,
+                'nilai_stok' => round($stokAkhir * $fallbackCost, 2),
+            ];
+        }
+
+        $batches = ProductBatch::where('product_id', $product->id)
+            ->where('tanggal_pembelian', '<=', $endDate->copy()->endOfDay())
+            ->orderBy('tanggal_pembelian', 'desc')
+            ->orderBy('id', 'desc')
+            ->get(['tanggal_pembelian', 'harga_satuan', 'jumlah_awal']);
+
+        if ($batches->isEmpty()) {
+            return [
+                'hpp' => $fallbackCost,
+                'nilai_stok' => round($stokAkhir * $fallbackCost, 2),
+            ];
+        }
+
+        $needed = $stokAkhir;
+        $totalNilai = 0.0;
+
+        foreach ($batches as $batch) {
+            $batchQty = max(0, (int) $batch->jumlah_awal);
+            $take = min($needed, $batchQty);
+            $unitCost = (float) $batch->harga_satuan > 0 ? (float) $batch->harga_satuan : $fallbackCost;
+
+            $totalNilai += ($take * $unitCost);
+            $needed -= $take;
+
+            if ($needed <= 0) {
+                break;
+            }
+        }
+
+        if ($needed > 0) {
+            $totalNilai += ($needed * $fallbackCost);
+        }
+
+        $nilaiStok = round($totalNilai, 2);
+
+        return [
+            'hpp' => $stokAkhir > 0 ? round($nilaiStok / $stokAkhir, 2) : $fallbackCost,
+            'nilai_stok' => $nilaiStok,
         ];
     }
 

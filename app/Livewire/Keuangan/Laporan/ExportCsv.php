@@ -1799,7 +1799,8 @@ class ExportCsv extends Controller
                 $p->stok_keluar = $stok['keluar'];
                 $p->stok_awal_periode = $stok['stok_awal'];
                 $p->stok_akhir = $stok['stok_akhir'];
-                $p->nilai_stok = $p->stok_akhir * $p->biaya_rata_rata;
+                $p->hpp = $stok['hpp'];
+                $p->nilai_stok = $stok['nilai_stok'];
                 return $p;
             });
 
@@ -1822,7 +1823,7 @@ class ExportCsv extends Controller
                 $p->stok_masuk,
                 $p->stok_keluar,
                 $p->stok_akhir,
-                $this->fmt((float) $p->biaya_rata_rata),
+                $this->fmt((float) $p->hpp),
                 $this->fmt((float) $p->nilai_stok),
             ];
         }

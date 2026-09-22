@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\ProductBatch;
 use App\Models\StockMovement;
 use App\Utils\StokUtil;
 use Carbon\Carbon;
@@ -54,6 +55,23 @@ class StokPeriodeTest extends TestCase
                 $table->timestamps();
             });
         }
+
+        if (! Schema::hasTable('product_batches')) {
+            Schema::create('product_batches', function ($table) {
+                $table->bigIncrements('id');
+                $table->unsignedBigInteger('business_id')->default(1);
+                $table->unsignedBigInteger('product_id');
+                $table->unsignedBigInteger('purchase_detail_id')->nullable();
+                $table->string('no_batch')->nullable();
+                $table->dateTime('tanggal_pembelian');
+                $table->decimal('harga_satuan', 20, 2);
+                $table->integer('jumlah_awal');
+                $table->integer('jumlah_saat_ini')->default(0);
+                $table->date('tanggal_kadaluarsa')->nullable();
+                $table->string('status', 20)->default('ACTIVE');
+                $table->timestamps();
+            });
+        }
     }
 
     private function buatProduk(int $stokAktual): Product
@@ -73,6 +91,22 @@ class StokPeriodeTest extends TestCase
             'tanggal_perubahan_stok' => Carbon::parse($tanggal),
             'jenis_perubahan' => $jenis, 'jumlah_perubahan' => $jumlah,
             'reference_id' => 0, 'reference_type' => $ref,
+        ]);
+    }
+
+    private function batch(Product $p, string $tanggal, int $jumlah, float $harga): ProductBatch
+    {
+        return ProductBatch::create([
+            'business_id' => 1,
+            'product_id' => $p->id,
+            'purchase_detail_id' => null,
+            'no_batch' => 'BATCH-'.uniqid(),
+            'tanggal_pembelian' => Carbon::parse($tanggal),
+            'harga_satuan' => $harga,
+            'jumlah_awal' => $jumlah,
+            'jumlah_saat_ini' => $jumlah,
+            'tanggal_kadaluarsa' => null,
+            'status' => 'ACTIVE',
         ]);
     }
 
@@ -175,5 +209,68 @@ class StokPeriodeTest extends TestCase
         $this->assertSame(5, $hasil['masuk']);
         $this->assertSame(2, $hasil['keluar']);
         $this->assertSame(3, $hasil['stok_akhir']);
+    }
+    /** FIFO: sisa stok seluruhnya berasal dari batch paling baru. */
+    public function test_fifo_nilai_stok_dan_hpp_dihitung_dari_batch_terbaru(): void
+    {
+        $p = $this->buatProduk(8);
+        $p->update(['metode_biaya' => 'FIFO']);
+
+        $this->batch($p, '2026-09-01 10:00:00', 10, 1000);
+        $this->batch($p, '2026-09-05 10:00:00', 10, 2000);
+        $this->mutasi($p, '2026-09-01 10:00:00', 10, 'purchase', 'purchase');
+        $this->mutasi($p, '2026-09-05 10:00:00', 10, 'purchase', 'purchase');
+        $this->mutasi($p, '2026-09-10 10:00:00', -12, 'sale', 'sale');
+
+        $hasil = StokUtil::stokPeriode(
+            $p,
+            Carbon::parse('2026-09-01')->startOfDay(),
+            Carbon::parse('2026-09-30')->endOfDay()
+        );
+
+        $this->assertSame(8, $hasil['stok_akhir']);
+        $this->assertSame(16000.0, $hasil['nilai_stok']);
+        $this->assertSame(2000.0, $hasil['hpp']);
+    }
+
+    /** FIFO: sisa stok dapat berasal dari beberapa batch, dialokasikan dari termuda. */
+    public function test_fifo_nilai_stok_multi_batch(): void
+    {
+        $p = $this->buatProduk(15);
+        $p->update(['metode_biaya' => 'FIFO']);
+
+        $this->batch($p, '2026-09-01 10:00:00', 10, 1000);
+        $this->batch($p, '2026-09-05 10:00:00', 10, 2000);
+        $this->mutasi($p, '2026-09-01 10:00:00', 10, 'purchase', 'purchase');
+        $this->mutasi($p, '2026-09-05 10:00:00', 10, 'purchase', 'purchase');
+        $this->mutasi($p, '2026-09-10 10:00:00', -5, 'sale', 'sale');
+
+        $hasil = StokUtil::stokPeriode(
+            $p,
+            Carbon::parse('2026-09-01')->startOfDay(),
+            Carbon::parse('2026-09-30')->endOfDay()
+        );
+
+        $this->assertSame(15, $hasil['stok_akhir']);
+        $this->assertSame(25000.0, $hasil['nilai_stok']);
+        $this->assertSame(1666.67, $hasil['hpp']);
+    }
+
+    /** FIFO: tanpa histori batch, gunakan harga beli master sebagai fallback. */
+    public function test_fifo_nilai_stok_fallback_jika_tanpa_batch(): void
+    {
+        $p = $this->buatProduk(5);
+        $p->update(['metode_biaya' => 'FIFO', 'biaya_rata_rata' => 0]);
+        $this->mutasi($p, '2026-09-01 10:00:00', 5, 'purchase', 'purchase');
+
+        $hasil = StokUtil::stokPeriode(
+            $p,
+            Carbon::parse('2026-09-01')->startOfDay(),
+            Carbon::parse('2026-09-30')->endOfDay()
+        );
+
+        $this->assertSame(5, $hasil['stok_akhir']);
+        $this->assertSame(50000.0, $hasil['nilai_stok']);
+        $this->assertSame(10000.0, $hasil['hpp']);
     }
 }
