@@ -5,7 +5,7 @@ namespace App\Utils;
 use App\Models\Product;
 use App\Models\ProductBatch;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class StokUtil
@@ -13,21 +13,20 @@ class StokUtil
     /**
      * Hitung posisi stok satu produk untuk periode [startDate, endDate].
      *
-     * Aturan laporan (spec):
+     * Aturan laporan (spec user):
      * - Stok Awal  = Stok Awal Migrasi (saldo awal saat import/migrasi) + mutasi sistem sebelum periode.
      * - Masuk      = mutasi positif dalam periode (pembelian, retur penjualan, penyesuaian naik).
      * - Keluar     = mutasi negatif dalam periode (penjualan, retur pembelian, penyesuaian turun).
      * - Stok Akhir = Stok Awal + Masuk - Keluar.
      *
-     * Perlakuan khusus data migrasi (reference_type = 'migration'):
-     * - Movement migrasi TIDAK dihitung sebagai Masuk; ia adalah komponen Stok Awal.
-     * - Mutasi non-migrasi (termasuk riwayat impor yang tanggalnya backdate) dihitung
-     *   kronologis normal — di dataset production terbukti konsisten:
-     *   stok_aktual = migrasi + seluruh mutasi non-migrasi (deviasi 1 unit).
-     * - Untuk periode yang berakhir SEBELUM tanggal migrasi, stok migrasi tetap
-     *   tampil sebagai Stok Awal/Stok Akhir (stok fisik memang sudah ada).
+     * HPP:
+     * - HPP = harga satuan pembelian/batch PALING TERAKHIR s.d. $endDate.
+     * - Fallback ke products.harga_beli (lalu biaya_rata_rata) jika tidak ada batch.
      *
-     * Produk tanpa movement migrasi dihitung kumulatif normal dari seluruh mutasinya.
+     * Nilai Stok:
+     * - Nilai Stok = Total Beli - Total Jual (s.d. periode yang dipilih).
+     * - Total Beli  = (stok awal migrasi * harga_beli) + SUM(purchase_details.subtotal <= endDate).
+     * - Total Jual  = SUM(sale_details.subtotal <= endDate).
      *
      * @return array{stok_awal: int, masuk: int, keluar: int, stok_akhir: int, hpp: float, nilai_stok: float}
      */
@@ -72,93 +71,103 @@ class StokUtil
         }
 
         $stokAwal = $stokMigrasi + $netSebelumPeriode;
-
         $stokAkhir = $stokAwal + $masuk - $keluar;
-        $fifo = self::hitungFifoNilaiStok($product, $stokAkhir, $endDate);
+
+        $hppTerakhir = self::hppTerakhir($product, $endDate);
+
+        $totalBeli = self::totalBeliSampai($product, $endDate, $stokMigrasi);
+        $totalJual = self::totalJualSampai($product, $endDate);
+
+        $nilaiStok = round($totalBeli - $totalJual, 2);
 
         return [
             'stok_awal' => $stokAwal,
             'masuk' => $masuk,
             'keluar' => $keluar,
             'stok_akhir' => $stokAkhir,
-            'hpp' => $fifo['hpp'],
-            'nilai_stok' => $fifo['nilai_stok'],
+            'hpp' => $hppTerakhir,
+            'nilai_stok' => $nilaiStok,
         ];
     }
 
     /**
-     * Hitung nilai stok akhir dan HPP per unit menurut metode costing produk.
-     *
-     * FIFO: unit stok akhir dialokasikan mundur ke batch pembelian paling baru
-     * sampai endDate. Batch yang lebih lama dipakai hanya jika kuota batch terbaru
-     * tidak cukup. Kuantitas di luar histori batch memakai fallback harga beli.
+     * HPP terakhir = harga satuan batch paling terakhir s.d. $endDate.
+     * Fallback ke products.harga_beli (lalu biaya_rata_rata).
      */
-    public static function hitungFifoNilaiStok(Product $product, int $stokAkhir, Carbon $endDate): array
+    public static function hppTerakhir(Product $product, Carbon $endDate): float
     {
-        $fallbackCost = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
-
-        if ($stokAkhir <= 0) {
-            return [
-                'hpp' => $fallbackCost,
-                'nilai_stok' => 0.0,
-            ];
-        }
-
-        if ($product->metode_biaya === 'AVERAGE' && (float) $product->biaya_rata_rata > 0) {
-            $hpp = (float) $product->biaya_rata_rata;
-
-            return [
-                'hpp' => $hpp,
-                'nilai_stok' => round($stokAkhir * $hpp, 2),
-            ];
-        }
+        $fallback = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
 
         if (! Schema::hasTable('product_batches')) {
-            return [
-                'hpp' => $fallbackCost,
-                'nilai_stok' => round($stokAkhir * $fallbackCost, 2),
-            ];
+            return $fallback;
         }
 
-        $batches = ProductBatch::where('product_id', $product->id)
+        $harga = ProductBatch::where('product_id', $product->id)
             ->where('tanggal_pembelian', '<=', $endDate->copy()->endOfDay())
             ->orderBy('tanggal_pembelian', 'desc')
             ->orderBy('id', 'desc')
-            ->get(['tanggal_pembelian', 'harga_satuan', 'jumlah_awal']);
+            ->value('harga_satuan');
 
-        if ($batches->isEmpty()) {
-            return [
-                'hpp' => $fallbackCost,
-                'nilai_stok' => round($stokAkhir * $fallbackCost, 2),
-            ];
+        if ($harga === null) {
+            return $fallback;
         }
 
-        $needed = $stokAkhir;
-        $totalNilai = 0.0;
+        $harga = (float) $harga;
 
-        foreach ($batches as $batch) {
-            $batchQty = max(0, (int) $batch->jumlah_awal);
-            $take = min($needed, $batchQty);
-            $unitCost = (float) $batch->harga_satuan > 0 ? (float) $batch->harga_satuan : $fallbackCost;
+        return $harga > 0 ? $harga : $fallback;
+    }
 
-            $totalNilai += ($take * $unitCost);
-            $needed -= $take;
+    /**
+     * Total nilai rupiah pembelian produk s.d. $endDate.
+     * = (stok awal migrasi * harga_beli) + SUM(purchase_details.subtotal <= endDate).
+     */
+    public static function totalBeliSampai(Product $product, Carbon $endDate, int $stokMigrasi = 0): float
+    {
+        $selesai = $endDate->copy()->endOfDay();
 
-            if ($needed <= 0) {
-                break;
-            }
+        $total = 0.0;
+
+        if ($stokMigrasi > 0) {
+            $hargaBeli = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
+            $total += $stokMigrasi * $hargaBeli;
         }
 
-        if ($needed > 0) {
-            $totalNilai += ($needed * $fallbackCost);
+        if (Schema::hasTable('purchase_details') && Schema::hasTable('purchases')) {
+            $subtotal = DB::table('purchase_details as pd')
+                ->join('purchases as p', 'p.id', '=', 'pd.purchase_id')
+                ->where('pd.product_id', $product->id)
+                ->where('p.tanggal_pembelian', '<=', $selesai)
+                ->whereNull('pd.deleted_at')
+                ->whereNull('p.deleted_at')
+                ->sum('pd.subtotal');
+
+            $total += (float) $subtotal;
         }
 
-        $nilaiStok = round($totalNilai, 2);
+        return round($total, 2);
+    }
 
-        return [
-            'hpp' => $stokAkhir > 0 ? round($nilaiStok / $stokAkhir, 2) : $fallbackCost,
-            'nilai_stok' => $nilaiStok,
-        ];
+    /**
+     * Total nilai rupiah penjualan produk s.d. $endDate.
+     * = SUM(sale_details.subtotal <= endDate).
+     */
+    public static function totalJualSampai(Product $product, Carbon $endDate): float
+    {
+        if (! Schema::hasTable('sale_details') || ! Schema::hasTable('sales')) {
+            return 0.0;
+        }
+
+        $selesai = $endDate->copy()->endOfDay();
+
+        $subtotal = DB::table('sale_details as sd')
+            ->join('sales as s', 's.id', '=', 'sd.sale_id')
+            ->where('sd.product_id', $product->id)
+            ->where('s.tanggal_transaksi', '<=', $selesai)
+            ->whereNull('sd.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->sum('sd.subtotal');
+
+        return round((float) $subtotal, 2);
     }
 
     private static function isMigration($movement): bool
