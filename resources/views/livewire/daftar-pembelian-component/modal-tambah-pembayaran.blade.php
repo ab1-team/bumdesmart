@@ -112,9 +112,9 @@
                 bankSelect: null,
 
                 initModal() {
-                    // Sync initial data from Livewire
-                    this.sisaTagihan = parseInt(@this.sisaTagihan) || 0;
-                    this.sudahDibayar = parseInt(@this.sudahDibayar) || 0;
+                    // Sync initial data from Livewire (use parseFloat to preserve decimals)
+                    this.sisaTagihan = parseFloat(@this.sisaTagihan) || 0;
+                    this.sudahDibayar = parseFloat(@this.sudahDibayar) || 0;
                     this.totalTagihan = this.sisaTagihan + this.sudahDibayar;
 
                     this.formattedSudahDibayar = this.formatRupiah(this.sudahDibayar);
@@ -174,27 +174,72 @@
                 },
 
                 updateJumlah(e) {
-                    let value = e.target.value.replace(/[^0-9]/g, '');
-                    let rawValue = parseInt(value) || 0;
+                    // Allow digits and at most one comma as decimal separator (Indonesian format)
+                    let raw = String(e.target.value || '');
+                    // Strip everything except digits and comma
+                    raw = raw.replace(/[^0-9,]/g, '');
 
-                    if (rawValue > this.sisaTagihan) {
-                        rawValue = this.sisaTagihan;
+                    // Keep only the first comma (avoid "1,2,3")
+                    const firstComma = raw.indexOf(',');
+                    if (firstComma !== -1) {
+                        raw = raw.slice(0, firstComma + 1) + raw.slice(firstComma + 1).replace(/,/g, '');
                     }
 
-                    this.jumlahPembayaran = rawValue;
-                    this.formattedJumlahPembayaran = this.formatNumber(this.jumlahPembayaran);
+                    // Split into integer and decimal parts
+                    const parts = raw.split(',');
+                    let intPart = parts[0] || '0';
+                    let decPart = parts[1] ?? '';
 
+                    // Remove leading zeros (but keep a single zero)
+                    intPart = intPart.replace(/^0+(?=\d)/, '');
+
+                    // Limit decimal to 2 digits
+                    if (decPart.length > 2) {
+                        decPart = decPart.slice(0, 2);
+                    }
+
+                    // Build the canonical string for parsing
+                    const canonical = intPart === '' ? '0' : intPart;
+                    let parsed = parseFloat(canonical + (decPart !== '' ? '.' + decPart : '')) || 0;
+
+                    // Cap at sisaTagihan
+                    if (parsed > this.sisaTagihan) {
+                        parsed = this.sisaTagihan;
+                    }
+
+                    this.jumlahPembayaran = parsed;
+
+                    // Format for display - keep Indonesian thousand separators (.) and decimal comma (,)
+                    const intFormatted = (intPart === '' ? '0' : intPart).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    if (parsed === 0 && raw === '') {
+                        this.formattedJumlahPembayaran = '';
+                    } else if (decPart !== '') {
+                        this.formattedJumlahPembayaran = intFormatted + ',' + decPart;
+                    } else {
+                        this.formattedJumlahPembayaran = intFormatted;
+                    }
+
+                    // Reset kembalian because user changed the amount
                     this.kembalian = 0;
 
                     @this.set('jumlahPembayaran', this.jumlahPembayaran);
                 },
 
                 formatNumber(number) {
-                    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    return new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                    }).format(number || 0);
                 },
 
                 formatRupiah(number) {
-                    return new Intl.NumberFormat('id-ID').format(number || 0);
+                    // Show 2 decimals when needed (when value has non-zero decimal portion)
+                    const value = parseFloat(number) || 0;
+                    const hasDecimal = Math.round(value * 100) % 100 !== 0;
+                    return new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: hasDecimal ? 2 : 0,
+                        maximumFractionDigits: 2,
+                    }).format(value);
                 }
             }))
         })

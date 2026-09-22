@@ -112,9 +112,9 @@
                 bankSelect: null,
 
                 initModal() {
-                    // Sync initial data from Livewire
-                    this.sisaTagihan = parseInt(@this.sisaTagihan) || 0;
-                    this.sudahDibayar = parseInt(@this.sudahDibayar) || 0;
+                    // Sync initial data from Livewire (use parseFloat to preserve decimals)
+                    this.sisaTagihan = parseFloat(@this.sisaTagihan) || 0;
+                    this.sudahDibayar = parseFloat(@this.sudahDibayar) || 0;
                     this.totalTagihan = this.sisaTagihan + this.sudahDibayar;
 
                     this.formattedSudahDibayar = this.formatRupiah(this.sudahDibayar);
@@ -174,23 +174,59 @@
                 },
 
                 updateJumlah(e) {
-                    let value = e.target.value.replace(/[^0-9]/g, '');
-                    this.jumlahPembayaran = parseInt(value) || 0;
-                    this.formattedJumlahPembayaran = this.formatNumber(this.jumlahPembayaran);
+                    // Allow digits and at most one comma as decimal separator (Indonesian format)
+                    let raw = String(e.target.value || '');
+                    raw = raw.replace(/[^0-9,]/g, '');
 
-                    // Logic Kembalian
+                    // Keep only the first comma
+                    const firstComma = raw.indexOf(',');
+                    if (firstComma !== -1) {
+                        raw = raw.slice(0, firstComma + 1) + raw.slice(firstComma + 1).replace(/,/g, '');
+                    }
+
+                    const parts = raw.split(',');
+                    let intPart = parts[0] || '0';
+                    let decPart = parts[1] ?? '';
+
+                    intPart = intPart.replace(/^0+(?=\d)/, '');
+
+                    if (decPart.length > 2) {
+                        decPart = decPart.slice(0, 2);
+                    }
+
+                    const canonical = intPart === '' ? '0' : intPart;
+                    let parsed = parseFloat(canonical + (decPart !== '' ? '.' + decPart : '')) || 0;
+
+                    this.jumlahPembayaran = parsed;
+                    const intFormatted = (intPart === '' ? '0' : intPart).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    if (parsed === 0 && raw === '') {
+                        this.formattedJumlahPembayaran = '';
+                    } else if (decPart !== '') {
+                        this.formattedJumlahPembayaran = intFormatted + ',' + decPart;
+                    } else {
+                        this.formattedJumlahPembayaran = intFormatted;
+                    }
+
+                    // Kembalian only shown when overpaying (sale side doesn't cap to sisaTagihan here)
                     this.kembalian = Math.max(0, this.jumlahPembayaran - this.sisaTagihan);
 
-                    // Sync to Livewire
                     @this.set('jumlahPembayaran', this.jumlahPembayaran);
                 },
 
                 formatNumber(number) {
-                    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    return new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                    }).format(number || 0);
                 },
 
                 formatRupiah(number) {
-                    return new Intl.NumberFormat('id-ID').format(number || 0);
+                    const value = parseFloat(number) || 0;
+                    const hasDecimal = Math.round(value * 100) % 100 !== 0;
+                    return new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: hasDecimal ? 2 : 0,
+                        maximumFractionDigits: 2,
+                    }).format(value);
                 }
             }))
         })

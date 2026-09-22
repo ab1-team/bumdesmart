@@ -69,24 +69,24 @@
                                     <tr>
                                         <td class="text-center">{{ $loop->iteration }}</td>
                                         <td>{{ $saleDetail->product->nama_produk }}</td>
-                                        <td class="text-end">{{ number_format($saleDetail->harga_satuan, 2, ',','.') }}
+                                        <td class="text-end">{{ \App\Utils\NumberUtil::format($saleDetail->harga_satuan, 2, true) }}
                                         </td>
                                         <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($saleDetail->jumlah) }}</td>
                                         <td class="text-end">
                                             @if ($saleDetail->jenis_diskon == 'persen')
                                                 {{ \App\Utils\NumberUtil::formatQty($saleDetail->jumlah_diskon) }}%
                                             @else
-                                                {{ number_format($saleDetail->jumlah_diskon, 2, ',','.') }}
+                                                {{ \App\Utils\NumberUtil::format($saleDetail->jumlah_diskon, 2, true) }}
                                             @endif
                                         </td>
                                         <td class="text-end">
                                             @if ($saleDetail->jenis_cashback == 'persen')
                                                 {{ \App\Utils\NumberUtil::formatQty($saleDetail->jumlah_cashback) }}%
                                             @else
-                                                {{ number_format($saleDetail->jumlah_cashback, 2, ',','.') }}
+                                                {{ \App\Utils\NumberUtil::format($saleDetail->jumlah_cashback, 2, true) }}
                                             @endif
                                         </td>
-                                        <td class="text-end">{{ number_format($saleDetail->subtotal, 2, ',','.') }}
+                                        <td class="text-end">{{ \App\Utils\NumberUtil::format($saleDetail->subtotal, 2, true) }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -94,7 +94,7 @@
                             <tfoot>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total</td>
-                                    <td class="text-end fw-bold">{{ number_format($subtotal, 2, ',','.') }}</td>
+                                    <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($subtotal, 2, true) }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Diskon</td>
@@ -102,7 +102,7 @@
                                         @if ($detailSale->jenis_diskon == 'persen')
                                             {{ \App\Utils\NumberUtil::formatQty($detailSale->jumlah_diskon) }}%
                                         @else
-                                            {{ number_format($detailSale->jumlah_diskon, 2, ',','.') }}
+                                            {{ \App\Utils\NumberUtil::format($detailSale->jumlah_diskon, 2, true) }}
                                         @endif
                                     </td>
                                 </tr>
@@ -112,31 +112,31 @@
                                         @if ($detailSale->jenis_cashback == 'persen')
                                             {{ \App\Utils\NumberUtil::formatQty($detailSale->jumlah_cashback) }}%
                                         @else
-                                            {{ number_format($detailSale->jumlah_cashback, 2, ',','.') }}
+                                            {{ \App\Utils\NumberUtil::format($detailSale->jumlah_cashback, 2, true) }}
                                         @endif
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total Keseluruhan</td>
-                                    <td class="text-end fw-bold">{{ number_format($detailSale->total, 2, ',','.') }}
+                                    <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailSale->total, 2, true) }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Total Dibayar</td>
-                                    <td class="text-end fw-bold">{{ number_format($detailSale->dibayar, 2, ',','.') }}
+                                    <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailSale->dibayar, 2, true) }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold">Kembalian</td>
                                     <td class="text-end fw-bold">
-                                        {{ number_format($detailSale->kembalian, 2, ',','.') }}
+                                        {{ \App\Utils\NumberUtil::format($detailSale->kembalian, 2, true) }}
                                     </td>
                                 </tr>
                                 @php $sisaPiutang = (float) $detailSale->total - (float) $detailSale->dibayar - (float) ($detailSale->kembalian < 0 ? 0 : $detailSale->kembalian); @endphp
                                 <tr>
                                     <td colspan="6" class="text-end fw-bold {{ $sisaPiutang > 0 ? 'text-danger' : '' }}">Sisa Piutang</td>
                                     <td class="text-end fw-bold {{ $sisaPiutang > 0 ? 'text-danger' : '' }}">
-                                        {{ number_format(max($sisaPiutang, 0), 2, ',','.') }}
+                                        {{ \App\Utils\NumberUtil::format(max($sisaPiutang, 0), 2, true) }}
                                     </td>
                                 </tr>
                             </tfoot>

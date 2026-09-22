@@ -63,30 +63,30 @@
                                 <tr>
                                     <td class="text-center">{{ $loop->iteration }}</td>
                                     <td>{{ $purchaseDetail->product->nama_produk }}</td>
-                                    <td class="text-end">{{ number_format($purchaseDetail->harga_satuan, 2, ',','.') }}</td>
+                                    <td class="text-end">{{ \App\Utils\NumberUtil::format($purchaseDetail->harga_satuan, 2, true) }}</td>
                                     <td class="text-center">{{ \App\Utils\NumberUtil::formatQty($purchaseDetail->jumlah) }}</td>
                                     <td class="text-end">
                                         @if ($purchaseDetail->jenis_diskon == 'persen')
                                             {{ \App\Utils\NumberUtil::formatQty($purchaseDetail->jumlah_diskon) }}%
                                         @else
-                                            {{ number_format($purchaseDetail->jumlah_diskon, 2, ',','.') }}
+                                            {{ \App\Utils\NumberUtil::format($purchaseDetail->jumlah_diskon, 2, true) }}
                                         @endif
                                     </td>
                                     <td class="text-end">
                                         @if ($purchaseDetail->jenis_cashback == 'persen')
                                             {{ \App\Utils\NumberUtil::formatQty($purchaseDetail->jumlah_cashback) }}%
                                         @else
-                                            {{ number_format($purchaseDetail->jumlah_cashback, 2, ',','.') }}
+                                            {{ \App\Utils\NumberUtil::format($purchaseDetail->jumlah_cashback, 2, true) }}
                                         @endif
                                     </td>
-                                    <td class="text-end">{{ number_format($purchaseDetail->subtotal, 2, ',','.') }}</td>
+                                    <td class="text-end">{{ \App\Utils\NumberUtil::format($purchaseDetail->subtotal, 2, true) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Total</td>
-                                <td class="text-end fw-bold">{{ number_format($detailPurchase->total, 2, ',','.') }}</td>
+                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->total, 2, true) }}</td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Diskon</td>
@@ -94,7 +94,7 @@
                                     @if ($detailPurchase->jenis_diskon == 'persen')
                                         {{ \App\Utils\NumberUtil::formatQty($detailPurchase->jumlah_diskon) }}%
                                     @else
-                                        {{ number_format($detailPurchase->jumlah_diskon, 2, ',','.') }}
+                                        {{ \App\Utils\NumberUtil::format($detailPurchase->jumlah_diskon, 2, true) }}
                                     @endif
                                 </td>
                             </tr>
@@ -104,29 +104,29 @@
                                     @if ($detailPurchase->jenis_cashback == 'persen')
                                         {{ \App\Utils\NumberUtil::formatQty($detailPurchase->jumlah_cashback) }}%
                                     @else
-                                        {{ number_format($detailPurchase->jumlah_cashback, 2, ',','.') }}
+                                        {{ \App\Utils\NumberUtil::format($detailPurchase->jumlah_cashback, 2, true) }}
                                     @endif
                                 </td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Total Keseluruhan</td>
-                                <td class="text-end fw-bold">{{ number_format($detailPurchase->total, 2, ',','.') }}</td>
+                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->total, 2, true) }}</td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Total Dibayar</td>
-                                <td class="text-end fw-bold">{{ number_format($detailPurchase->dibayar, 2, ',','.') }}
+                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->dibayar, 2, true) }}
                                 </td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Kembalian</td>
                                 <td class="text-end fw-bold">
-                                    {{ number_format($detailPurchase->kembalian, 2, ',','.') }}
+                                    {{ \App\Utils\NumberUtil::format($detailPurchase->kembalian, 2, true) }}
                                 </td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold {{ (float) $detailPurchase->jumlah_utang > 0 ? 'text-danger' : '' }}">Sisa Hutang</td>
                                 <td class="text-end fw-bold {{ (float) $detailPurchase->jumlah_utang > 0 ? 'text-danger' : '' }}">
-                                    {{ number_format($detailPurchase->jumlah_utang ?? 0, 2, ',','.') }}
+                                    {{ \App\Utils\NumberUtil::format($detailPurchase->jumlah_utang ?? 0, 2, true) }}
                                 </td>
                             </tr>
                         </tfoot>

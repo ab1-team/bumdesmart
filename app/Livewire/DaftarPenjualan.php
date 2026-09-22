@@ -392,11 +392,12 @@ class DaftarPenjualan extends Component
     public function simpanPembayaran()
     {
         $this->validate([
-            'jumlahPembayaran' => 'required|numeric|min:1',
+            'jumlahPembayaran' => 'required|numeric|min:0.01',
             'tanggalPembayaran' => 'required|date',
         ]);
 
-        $jumlahBayar = (float) str_replace(',', '', $this->jumlahPembayaran);
+        // Parse Indonesian-formatted number ("824.596,12" -> 824596.12)
+        $jumlahBayar = \App\Utils\NumberUtil::parse($this->jumlahPembayaran);
 
         $kembalian = 0;
         if ($jumlahBayar > $this->sisaTagihan) {

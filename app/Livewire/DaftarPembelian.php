@@ -138,12 +138,12 @@ class DaftarPembelian extends Component
     public function simpanPembayaran()
     {
         $this->validate([
-            'jumlahPembayaran' => 'required|numeric|min:1',
+            'jumlahPembayaran' => 'required|numeric|min:0.01',
             'tanggalPembayaran' => 'required|date',
         ]);
 
-        // Clean up formatted number
-        $jumlahBayar = (float) str_replace(',', '', $this->jumlahPembayaran);
+        // Parse Indonesian-formatted number ("824.596,12" -> 824596.12)
+        $jumlahBayar = \App\Utils\NumberUtil::parse($this->jumlahPembayaran);
 
         // Limit payment amount to remaining debt
         $jumlahBayarInput = $jumlahBayar;
