@@ -221,9 +221,9 @@
     <!-- END GLOBAL MANDATORY SCRIPTS -->
 
     <script>
-        const Select = {};
-        const dateLitePicker = {};
-        const Toast = Swal.mixin({
+        window.Select = window.Select || {};
+        window.dateLitePicker = window.dateLitePicker || {};
+        window.Toast = window.Toast || Swal.mixin({
             toast: true,
             position: "top-end",
             showConfirmButton: false,

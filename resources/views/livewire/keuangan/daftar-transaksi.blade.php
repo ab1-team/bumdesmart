@@ -53,8 +53,7 @@
                                 @endphp
                                 <a href="{{ $url }}"
                                     class="btn btn-sm btn-outline-secondary"
-                                    title="Hapus {{ $menu }} lewat menu {{ $menu }}"
-                                    wire:navigate>
+                                    title="Hapus {{ $menu }} lewat menu {{ $menu }}">
                                     <span class="material-symbols-outlined">delete</span>
                                 </a>
                             @else
