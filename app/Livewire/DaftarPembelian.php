@@ -67,13 +67,14 @@ class DaftarPembelian extends Component
 
     public function lihatPembayaran($id)
     {
+        // Load purchase with all payments related to this purchase transaction.
+        // Exclude only accounting entries (piutang, diskon, cashback) - these are not actual cash payments.
         $purchase = \App\Models\Purchase::with([
             'payments' => function ($query) {
-                $query->where(function ($query) {
-                    $query->where('rekening_debit', '1.1.03.01')->where('rekening_kredit', 'like', '1.1.01%');
-                })->orWhere(function ($query) {
-                    $query->where('rekening_debit', '2.1.01.01')->where('rekening_kredit', 'like', '1.1.01%');
-                });
+                $query->where('jenis_transaksi', 'purchase')
+                    ->whereNotIn('metode_pembayaran', ['piutang', 'diskon', 'cashback'])
+                    ->orderBy('tanggal_pembayaran', 'desc')
+                    ->orderBy('id', 'desc');
             },
         ])->where('id', $id)->first();
 
@@ -98,7 +99,16 @@ class DaftarPembelian extends Component
         $totalPurchase = \App\Models\Purchase::where('id', $purchaseId)->value('total');
         $newUtang = $totalPurchase - $sisaBayar;
 
-        $status = $sisaBayar >= $totalPurchase ? 'completed' : 'utang';
+        // Determine status:
+        // - completed if fully paid
+        // - partial if there are still payments but some debt remains
+        // - utang if no payments at all (or debt remains and zero paid)
+        $status = 'utang';
+        if ($sisaBayar >= $totalPurchase) {
+            $status = 'completed';
+        } elseif ($sisaBayar > 0 && $sisaBayar < $totalPurchase) {
+            $status = 'partial';
+        }
 
         \App\Models\Purchase::where('id', $purchaseId)->update([
             'dibayar' => $sisaBayar,
@@ -111,6 +121,7 @@ class DaftarPembelian extends Component
 
         $this->dispatch('hide-modal', modalId: 'detailPembayaranModal');
         $this->dispatch('alert', type: 'success', message: 'Pembayaran berhasil dihapus');
+        $this->dispatch('$refresh');
     }
 
     public function tambahPembayaran($id)
@@ -180,9 +191,15 @@ class DaftarPembelian extends Component
             ->whereNotIn('metode_pembayaran', ['piutang', 'diskon', 'cashback'])
             ->get();
         $totalDibayar = $this->sudahDibayar + $jumlahBayar;
+        // Status logic:
+        // - completed if fully paid
+        // - partial if partially paid (some payment remains but debt also remains)
+        // - utang if no payments at all
         $status = 'utang';
         if ($totalDibayar >= $this->detailPurchase->total) {
             $status = 'completed';
+        } elseif ($totalDibayar > 0 && $totalDibayar < $this->detailPurchase->total) {
+            $status = 'partial';
         }
 
         \App\Models\Purchase::where('id', $this->detailPurchase->id)->update([
@@ -196,6 +213,7 @@ class DaftarPembelian extends Component
 
         $this->dispatch('hide-modal', modalId: 'tambahPembayaranModal');
         $this->dispatch('alert', type: 'success', message: 'Pembayaran berhasil disimpan');
+        $this->dispatch('$refresh');
     }
 
     #[On('delete-confirmed')]

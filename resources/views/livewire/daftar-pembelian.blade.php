@@ -34,7 +34,9 @@
                         <td>
                             @if (in_array(strtolower($purchase->status), ['completed', 'lunas', 'paid']))
                                 <span class="badge text-light bg-success">Selesai</span>
-                            @elseif (in_array(strtolower($purchase->status), ['utang', 'hutang', 'partial', 'pending', 'sebagian']))
+                            @elseif (in_array(strtolower($purchase->status), ['partial', 'sebagian']))
+                                <span class="badge text-light bg-info">Sebagian</span>
+                            @elseif (in_array(strtolower($purchase->status), ['utang', 'hutang', 'pending']))
                                 <span class="badge text-light bg-warning">Utang</span>
                             @else
                                 <span class="badge text-light bg-secondary">{{ ucfirst($purchase->status) }}</span>
