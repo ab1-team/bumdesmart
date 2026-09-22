@@ -132,6 +132,13 @@
                                         {{ number_format($detailSale->kembalian, 2, ',','.') }}
                                     </td>
                                 </tr>
+                                @php $sisaPiutang = (float) $detailSale->total - (float) $detailSale->dibayar - (float) ($detailSale->kembalian < 0 ? 0 : $detailSale->kembalian); @endphp
+                                <tr>
+                                    <td colspan="6" class="text-end fw-bold {{ $sisaPiutang > 0 ? 'text-danger' : '' }}">Sisa Piutang</td>
+                                    <td class="text-end fw-bold {{ $sisaPiutang > 0 ? 'text-danger' : '' }}">
+                                        {{ number_format(max($sisaPiutang, 0), 2, ',','.') }}
+                                    </td>
+                                </tr>
                             </tfoot>
                         </table>
                     </div>

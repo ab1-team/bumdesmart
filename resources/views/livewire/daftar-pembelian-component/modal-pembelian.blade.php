@@ -123,6 +123,12 @@
                                     {{ number_format($detailPurchase->kembalian, 2, ',','.') }}
                                 </td>
                             </tr>
+                            <tr>
+                                <td colspan="6" class="text-end fw-bold {{ (float) $detailPurchase->jumlah_utang > 0 ? 'text-danger' : '' }}">Sisa Hutang</td>
+                                <td class="text-end fw-bold {{ (float) $detailPurchase->jumlah_utang > 0 ? 'text-danger' : '' }}">
+                                    {{ number_format($detailPurchase->jumlah_utang ?? 0, 2, ',','.') }}
+                                </td>
+                            </tr>
                         </tfoot>
                         </table>
                     </div>
