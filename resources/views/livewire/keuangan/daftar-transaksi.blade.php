@@ -46,21 +46,34 @@
                             {{ $payment->user->nama_lengkap ?? '-' }}
                         </td>
                         <td>
-                            <button x-data
-                                x-on:click="Swal.fire({
-                                    title: 'Hapus Transaksi?',
-                                    text: 'Tindakan ini tidak dapat dibatalkan!',
-                                    icon: 'warning',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#d33',
-                                    cancelButtonColor: '#3085d6',
-                                    confirmButtonText: 'Ya, Hapus!',
-                                    cancelButtonText: 'Batal'
-                                }).then((result) => { if (result.isConfirmed) { $wire.delete({{ $payment->id }}) } })"
-                                class="btn btn-sm btn-outline-danger"
-                                title="Hapus Transaksi">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
+                            @if (in_array($payment->jenis_transaksi, ['sale', 'purchase'], true))
+                                @php
+                                    $menu = $payment->jenis_transaksi === 'sale' ? 'Penjualan' : 'Pembelian';
+                                    $url = $payment->jenis_transaksi === 'sale' ? '/penjualan/daftar' : '/pembelian/daftar';
+                                @endphp
+                                <a href="{{ $url }}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    title="Hapus {{ $menu }} lewat menu {{ $menu }}"
+                                    wire:navigate>
+                                    <span class="material-symbols-outlined">delete</span>
+                                </a>
+                            @else
+                                <button x-data
+                                    x-on:click="Swal.fire({
+                                        title: 'Hapus Transaksi?',
+                                        text: 'Tindakan ini tidak dapat dibatalkan!',
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#d33',
+                                        cancelButtonColor: '#3085d6',
+                                        confirmButtonText: 'Ya, Hapus!',
+                                        cancelButtonText: 'Batal'
+                                    }).then((result) => { if (result.isConfirmed) { $wire.delete({{ $payment->id }}) } })"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Hapus Transaksi">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            @endif
                         </td>
                     </tr>
                 @empty

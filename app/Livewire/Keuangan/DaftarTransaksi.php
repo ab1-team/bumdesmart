@@ -68,6 +68,12 @@ class DaftarTransaksi extends Component
     {
         $payment = Payment::where('business_id', auth()->user()->business_id)->findOrFail($id);
 
+        if (in_array($payment->jenis_transaksi, ['sale', 'purchase'], true)) {
+            $menu = $payment->jenis_transaksi === 'sale' ? 'Penjualan' : 'Pembelian';
+            $this->dispatch('alert', type: 'error', message: "Transaksi {$menu} tidak dapat dihapus dari Daftar Transaksi. Gunakan menu {$menu}.");
+            return;
+        }
+
         DB::beginTransaction();
         try {
             if ($payment->jenis_transaksi === 'jurnal_umum') {

@@ -20,6 +20,7 @@ return new class extends Migration
                 $menuId = DB::table('menus')->insertGetId([
                     'parent_id' => $parent->id,
                     'title' => 'Daftar Transaksi',
+                    'url' => '/keuangan/daftar-transaksi',
                     'icon' => null,
                     'order' => 99,
                     'is_active' => 1,
@@ -31,6 +32,7 @@ return new class extends Migration
                 DB::table('menus')->where('id', $menuId)->update([
                     'parent_id' => $parent->id,
                     'title' => 'Daftar Transaksi',
+                    'url' => '/keuangan/daftar-transaksi',
                     'is_active' => 1,
                     'updated_at' => now(),
                 ]);
