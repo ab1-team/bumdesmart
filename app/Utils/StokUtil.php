@@ -27,7 +27,7 @@ class StokUtil
      * Nilai Stok:
      * - Nilai Stok = Total Beli - Total Jual (s.d. periode yang dipilih).
      * - Total Beli  = (stok awal migrasi * harga_beli) + SUM(purchase_details.subtotal <= endDate).
-     * - Total Jual  = SUM(sale_details.subtotal <= endDate).
+     * - Total Jual  = SUM(sale_details.hpp <= endDate).
      *
      * @return array{stok_awal: int, masuk: int, keluar: int, stok_akhir: int, hpp: float, nilai_stok: float}
      */
@@ -154,7 +154,7 @@ class StokUtil
             ->whereNull('sd.deleted_at')
             ->whereNull('s.deleted_at')
             ->groupBy('sd.product_id')
-            ->select('sd.product_id', DB::raw('SUM(sd.subtotal) as total'))
+            ->select('sd.product_id', DB::raw('SUM(sd.hpp) as total'))
             ->pluck('total', 'product_id');
 
         foreach ($products as $p) {
@@ -336,7 +336,7 @@ class StokUtil
 
     /**
      * Total nilai rupiah penjualan produk s.d. $endDate.
-     * = SUM(sale_details.subtotal <= endDate).
+     * = SUM(sale_details.hpp <= endDate).
      */
     public static function totalJualSampai(Product $product, Carbon $endDate): float
     {
@@ -352,7 +352,7 @@ class StokUtil
             ->where('s.tanggal_transaksi', '<=', $selesai)
             ->whereNull('sd.deleted_at')
             ->whereNull('s.deleted_at')
-            ->sum('sd.subtotal');
+            ->sum('sd.hpp');
 
         return round((float) $subtotal, 2);
     }

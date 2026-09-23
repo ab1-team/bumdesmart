@@ -183,14 +183,19 @@ class StokPeriodeTest extends TestCase
         ]);
     }
 
-    /** Buat sale + detail untuk perhitungan Total Jual. */
-    private function penjualan(Product $p, string $tanggal, int $jumlah, float $harga): void
+    /** Buat sale + detail untuk perhitungan Total Jual (memakai sd.hpp). */
+    private function penjualan(Product $p, string $tanggal, int $jumlah, float $harga, ?float $hpp = null): void
     {
+        $subtotal = $jumlah * $harga;
+        // Total Jual dihitung dari SUM(sale_details.hpp), bukan subtotal (harga jual).
+        // Default hpp = harga_beli master produk bila tidak diberikan.
+        $hppTotal = $hpp ?? ($jumlah * (float) ($p->harga_beli ?: 0));
+
         $id = DB::table('sales')->insertGetId([
             'business_id' => 1,
             'tanggal_transaksi' => Carbon::parse($tanggal),
-            'subtotal' => $jumlah * $harga,
-            'total' => $jumlah * $harga,
+            'subtotal' => $subtotal,
+            'total' => $subtotal,
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
@@ -199,8 +204,8 @@ class StokPeriodeTest extends TestCase
             'product_id' => $p->id,
             'jumlah' => $jumlah,
             'harga_satuan' => $harga,
-            'subtotal' => $jumlah * $harga,
-            'hpp' => 0,
+            'subtotal' => $subtotal,
+            'hpp' => $hppTotal,
             'created_at' => now(), 'updated_at' => now(),
         ]);
     }
@@ -230,10 +235,10 @@ class StokPeriodeTest extends TestCase
         $hasil = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
         $this->assertSame(11000.0, $hasil['hpp'], 'HPP = harga batch terakhir s.d. periode');
 
-        // Nilai Stok = Total Beli - Total Jual (s.d. September).
-        // Total Beli = migrasi 4*10000 + beli 10*10000 = 140000; Total Jual = 2*15000 = 30000
-        // => 110000
-        $this->assertSame(110000.0, $hasil['nilai_stok']);
+        // Nilai Stok = Total Beli - Total Jual HPP (s.d. September).
+        // Total Beli = migrasi 4*10000 + beli 10*10000 = 140000; Total Jual HPP = 2*10000 = 20000
+        // => 120000
+        $this->assertSame(120000.0, $hasil['nilai_stok']);
 
         // Periode Juli (sebelum semua): stok migrasi tetap tampil sebagai saldo
         $hasilJuli = StokUtil::stokPeriode($p, new Carbon('2026-07-01'), new Carbon('2026-07-31'));
@@ -263,8 +268,8 @@ class StokPeriodeTest extends TestCase
         $this->assertSame(0, $hasilAgustus['masuk']);
         $this->assertSame(3, $hasilAgustus['keluar']);
         $this->assertSame(7, $hasilAgustus['stok_akhir']);
-        // Total Beli 100000 - Total Jual 45000 = 55000
-        $this->assertSame(55000.0, $hasilAgustus['nilai_stok']);
+        // Total Beli 100000 - Total Jual HPP 30000 = 70000
+        $this->assertSame(70000.0, $hasilAgustus['nilai_stok']);
 
         $hasilJuli = StokUtil::stokPeriode($p, new Carbon('2026-07-01'), new Carbon('2026-07-31'));
         $this->assertSame(0, $hasilJuli['stok_awal']);
@@ -298,8 +303,8 @@ class StokPeriodeTest extends TestCase
         $this->assertSame(10, $hasil['masuk']);
         $this->assertSame(5, $hasil['keluar']);
         $this->assertSame(11, $hasil['stok_akhir']);
-        // Total Beli = migrasi 6*10000 + beli 10*10000 = 160000; Total Jual = 5*15000 = 75000
-        $this->assertSame(85000.0, $hasil['nilai_stok']);
+        // Total Beli = migrasi 6*10000 + beli 10*10000 = 160000; Total Jual HPP = 5*10000 = 50000
+        $this->assertSame(110000.0, $hasil['nilai_stok']);
 
         // September: awal = 11, keluar 2 -> akhir 9 = master
         $hasilSep = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
@@ -307,8 +312,8 @@ class StokPeriodeTest extends TestCase
         $this->assertSame(2, $hasilSep['keluar']);
         $this->assertSame(9, $hasilSep['stok_akhir']);
         $this->assertSame((int) $p->stok_aktual, $hasilSep['stok_akhir']);
-        // Total Beli 160000 - Total Jual (5+2)*15000 = 105000 => 55000
-        $this->assertSame(55000.0, $hasilSep['nilai_stok']);
+        // Total Beli 160000 - Total Jual HPP (5+2)*10000 = 70000 => 90000
+        $this->assertSame(90000.0, $hasilSep['nilai_stok']);
     }
 
     /** Produk tanpa movement sama sekali. */
@@ -341,15 +346,15 @@ class StokPeriodeTest extends TestCase
         $this->assertSame(5, $hasil['masuk']);
         $this->assertSame(2, $hasil['keluar']);
         $this->assertSame(3, $hasil['stok_akhir']);
-        // Total Beli 50000 - Total Jual 30000 = 20000
-        $this->assertSame(20000.0, $hasil['nilai_stok']);
+        // Total Beli 50000 - Total Jual HPP 20000 = 30000
+        $this->assertSame(30000.0, $hasil['nilai_stok']);
 
         // Penjualan 1 Oktober tidak boleh ikut periode September.
         $hasilOkt = StokUtil::stokPeriode($p, new Carbon('2026-10-01'), new Carbon('2026-10-31'));
         $this->assertSame(3, $hasilOkt['stok_awal']);
         $this->assertSame(1, $hasilOkt['keluar']);
-        // Total Beli 50000 - Total Jual 45000 = 5000
-        $this->assertSame(5000.0, $hasilOkt['nilai_stok']);
+        // Total Beli 50000 - Total Jual HPP (2+1)*10000 = 30000 => 20000
+        $this->assertSame(20000.0, $hasilOkt['nilai_stok']);
     }
 
     /** HPP: harga satuan batch PALING TERAKHIR s.d. periode. */
@@ -417,8 +422,8 @@ class StokPeriodeTest extends TestCase
         );
 
         $this->assertSame(0, $hasil['stok_akhir']);
-        // Total Beli 100000 - Total Jual 150000 = -50000 (stok habis, sesuai rumus)
-        $this->assertSame(-50000.0, $hasil['nilai_stok']);
+        // Total Beli 100000 - Total Jual HPP 100000 = 0 (stok habis)
+        $this->assertSame(0.0, $hasil['nilai_stok']);
     }
 
     /** Skenario migrasi: batch MIGRATION bertanggal setelah periode Juli; harga master berubah. */
@@ -445,5 +450,44 @@ class StokPeriodeTest extends TestCase
         $sep = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
         $this->assertSame(11000.0, $sep['hpp']);
         $this->assertSame(110000.0, $sep['nilai_stok']);
+    }
+
+    /**
+     * Contoh manual user (produk APT00007):
+     * Beli 1: 10 pcs @ 5895.35 = 58953.50
+     * Beli 2: 10 pcs @ 5244.80 = 52448.00
+     * Total Beli = 111401.50
+     * Jual: 16 pcs dengan HPP total = 90422.30
+     * Nilai Stok Akhir = 111401.50 - 90422.30 = 20979.20
+     */
+    public function test_hitung_manual_user_apt00007(): void
+    {
+        $p = $this->buatProduk(4); // 20 beli - 16 jual
+
+        // Mutasi stok (masuk 20, keluar 16).
+        $this->mutasi($p, '2026-09-01 09:00:00', 10, 'purchase', 'purchase');
+        $this->mutasi($p, '2026-09-02 09:00:00', 10, 'purchase', 'purchase');
+        $this->mutasi($p, '2026-09-10 10:00:00', -16, 'sale', 'sale');
+
+        // Dua pembelian dengan harga berbeda.
+        $this->pembelian($p, '2026-09-01', 10, 5895.35);
+        $this->pembelian($p, '2026-09-02', 10, 5244.80);
+
+        // Penjualan 16 pcs; Total Jual memakai HPP (bukan harga jual).
+        $this->penjualan($p, '2026-09-10', 16, 7000, 90422.30);
+
+        $hasil = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
+
+        $this->assertSame(0, $hasil['stok_awal']);
+        $this->assertSame(20, $hasil['masuk']);
+        $this->assertSame(16, $hasil['keluar']);
+        $this->assertSame(4, $hasil['stok_akhir']);
+
+        // Total Beli = 10*5895.35 + 10*5244.80 = 111401.50
+        $this->assertSame(111401.50, StokUtil::totalBeliSampai($p, new Carbon('2026-09-30')));
+        // Total Jual (HPP) = 90422.30
+        $this->assertSame(90422.30, StokUtil::totalJualSampai($p, new Carbon('2026-09-30')));
+        // Nilai Stok Akhir = 111401.50 - 90422.30 = 20979.20
+        $this->assertSame(20979.20, $hasil['nilai_stok']);
     }
 }
