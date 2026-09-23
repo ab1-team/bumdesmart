@@ -1071,24 +1071,8 @@ class Cetak extends Controller
             }
         }
 
-        $products = $query->orderBy('nama_produk')->get()
-            ->map(function ($p) use ($startDate, $endDate) {
-                // Sumber tunggal perhitungan stok per periode (StokUtil::stokPeriode):
-                // Stok Awal  = seluruh mutasi sebelum periode (termasuk stok awal migrasi)
-                // Masuk      = mutasi positif dalam periode (pembelian, retur jual, penyesuaian naik)
-                // Keluar     = mutasi negatif dalam periode (penjualan, retur beli, penyesuaian turun)
-                // Stok Akhir = Stok Awal + Masuk - Keluar
-                $stok = StokUtil::stokPeriode($p, $startDate, $endDate);
-
-                $p->stok_masuk = $stok['masuk'];
-                $p->stok_keluar = $stok['keluar'];
-                $p->stok_awal_periode = $stok['stok_awal'];
-                $p->stok_akhir = $stok['stok_akhir'];
-                $p->hpp = $stok['hpp'];
-                $p->nilai_stok = $stok['nilai_stok'];
-
-                return $p;
-            });
+        $products = $query->orderBy('nama_produk')->get();
+        $products = StokUtil::stokPeriodeBulk($products, $startDate, $endDate);
 
         $summary = [
             'total_produk' => $products->count(),

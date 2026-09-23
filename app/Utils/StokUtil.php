@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Models\Product;
 use App\Models\ProductBatch;
+use App\Models\StockMovement;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -88,6 +89,152 @@ class StokUtil
             'hpp' => $hppTerakhir,
             'nilai_stok' => $nilaiStok,
         ];
+    }
+
+    /**
+     * Versi BULK dari stokPeriode untuk banyak produk sekaligus (menghindari N+1).
+     *
+     * Menjalankan 5 query agregat (WHERE IN product_id) untuk seluruh collection,
+     * lalu memetakan hasilnya ke setiap produk tanpa query per produk.
+     *
+     * @param  \Illuminate\Support\Collection  $products
+     * @return \Illuminate\Support\Collection
+     */
+    public static function stokPeriodeBulk($products, Carbon $startDate, Carbon $endDate)
+    {
+        $productIds = $products->pluck('id')->all();
+
+        if (empty($productIds)) {
+            return $products;
+        }
+
+        $mulai = $startDate->copy()->startOfDay();
+        $selesai = $endDate->copy()->endOfDay();
+
+        // a. Movements
+        $movementsGroup = StockMovement::whereIn('product_id', $productIds)
+            ->orderBy('tanggal_perubahan_stok')
+            ->get(['product_id', 'jumlah_perubahan', 'tanggal_perubahan_stok', 'reference_type'])
+            ->groupBy('product_id');
+
+        // b. Latest Batches s.d. endDate
+        $latestBatchMap = ProductBatch::whereIn('product_id', $productIds)
+            ->where('tanggal_pembelian', '<=', $endDate->copy()->endOfDay())
+            ->orderBy('tanggal_pembelian', 'desc')
+            ->orderBy('id', 'desc')
+            ->get(['product_id', 'harga_satuan'])
+            ->unique('product_id')
+            ->pluck('harga_satuan', 'product_id');
+
+        // c. Migration Batches
+        $migrasiBatchMap = ProductBatch::whereIn('product_id', $productIds)
+            ->where('no_batch', 'like', '%MIGRATION%')
+            ->orderBy('tanggal_pembelian', 'desc')
+            ->orderBy('id', 'desc')
+            ->get(['product_id', 'harga_satuan'])
+            ->unique('product_id')
+            ->pluck('harga_satuan', 'product_id');
+
+        // d. Total Beli s.d. endDate
+        $totalBeliMap = DB::table('purchase_details as pd')
+            ->join('purchases as p', 'p.id', '=', 'pd.purchase_id')
+            ->whereIn('pd.product_id', $productIds)
+            ->where('p.tanggal_pembelian', '<=', $endDate->copy()->endOfDay())
+            ->whereNull('pd.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->groupBy('pd.product_id')
+            ->select('pd.product_id', DB::raw('SUM(pd.subtotal) as total'))
+            ->pluck('total', 'product_id');
+
+        // e. Total Jual s.d. endDate
+        $totalJualMap = DB::table('sale_details as sd')
+            ->join('sales as s', 's.id', '=', 'sd.sale_id')
+            ->whereIn('sd.product_id', $productIds)
+            ->where('s.tanggal_transaksi', '<=', $endDate->copy()->endOfDay())
+            ->whereNull('sd.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->groupBy('sd.product_id')
+            ->select('sd.product_id', DB::raw('SUM(sd.subtotal) as total'))
+            ->pluck('total', 'product_id');
+
+        foreach ($products as $p) {
+            $movements = $movementsGroup->get($p->id, collect());
+
+            $stokMigrasi = 0;
+            foreach ($movements as $m) {
+                if (self::isMigration($m)) {
+                    $stokMigrasi += (int) round((float) $m->jumlah_perubahan);
+                }
+            }
+
+            $masuk = 0;
+            $keluar = 0;
+            $netSebelumPeriode = 0;
+
+            foreach ($movements as $m) {
+                if (self::isMigration($m)) {
+                    continue; // migrasi = Stok Awal, bukan mutasi Masuk/Keluar
+                }
+
+                $tanggal = Carbon::parse($m->tanggal_perubahan_stok);
+                $jumlah = (int) round((float) $m->jumlah_perubahan);
+
+                if ($tanggal->lt($mulai)) {
+                    $netSebelumPeriode += $jumlah;
+                } elseif ($tanggal->lte($selesai)) {
+                    if ($jumlah > 0) {
+                        $masuk += $jumlah;
+                    } else {
+                        $keluar += abs($jumlah);
+                    }
+                }
+            }
+
+            $stokAwal = $stokMigrasi + $netSebelumPeriode;
+            $stokAkhir = $stokAwal + $masuk - $keluar;
+
+            // HPP: batch terakhir s.d. periode -> batch migrasi -> harga_beli/biaya_rata_rata.
+            $fallback = (float) ($p->harga_beli > 0 ? $p->harga_beli : ($p->biaya_rata_rata ?? 0));
+
+            $hpp = $latestBatchMap->get($p->id);
+
+            if ($hpp === null || (float) $hpp <= 0) {
+                $hargaMigrasi = $migrasiBatchMap->get($p->id);
+
+                if ($hargaMigrasi !== null && (float) $hargaMigrasi > 0) {
+                    $hpp = (float) $hargaMigrasi;
+                } else {
+                    $hpp = $fallback;
+                }
+            } else {
+                $hpp = (float) $hpp;
+            }
+
+            // Harga migrasi untuk nilai stok (fallback ke harga_beli/biaya_rata_rata).
+            $hargaMigrasiNilai = $migrasiBatchMap->get($p->id);
+
+            if ($hargaMigrasiNilai === null || (float) $hargaMigrasiNilai <= 0) {
+                $hargaMigrasiNilai = $fallback;
+            } else {
+                $hargaMigrasiNilai = (float) $hargaMigrasiNilai;
+            }
+
+            $nilaiStok = round(
+                ($stokMigrasi * $hargaMigrasiNilai)
+                + (float) $totalBeliMap->get($p->id, 0)
+                - (float) $totalJualMap->get($p->id, 0),
+                2
+            );
+
+            $p->stok_masuk = $masuk;
+            $p->stok_keluar = $keluar;
+            $p->stok_awal_periode = $stokAwal;
+            $p->stok_akhir = $stokAkhir;
+            $p->hpp = $hpp;
+            $p->nilai_stok = $nilaiStok;
+        }
+
+        return $products;
     }
 
     /**
