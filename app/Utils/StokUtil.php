@@ -73,7 +73,7 @@ class StokUtil
         $stokAwal = $stokMigrasi + $netSebelumPeriode;
         $stokAkhir = $stokAwal + $masuk - $keluar;
 
-        $hppTerakhir = self::hppTerakhir($product, $endDate);
+        $hppTerakhir = self::hppTerakhir($product, $endDate, $stokMigrasi);
 
         $totalBeli = self::totalBeliSampai($product, $endDate, $stokMigrasi);
         $totalJual = self::totalJualSampai($product, $endDate);
@@ -92,9 +92,11 @@ class StokUtil
 
     /**
      * HPP terakhir = harga satuan batch paling terakhir s.d. $endDate.
-     * Fallback ke products.harga_beli (lalu biaya_rata_rata).
+     * Jika tidak ada batch s.d. $endDate dan produk punya batch migrasi,
+     * pakai harga satuan batch migrasi (bukan harga_beli master saat ini).
+     * Fallback terakhir ke products.harga_beli (lalu biaya_rata_rata).
      */
-    public static function hppTerakhir(Product $product, Carbon $endDate): float
+    public static function hppTerakhir(Product $product, Carbon $endDate, int $stokMigrasi = 0): float
     {
         $fallback = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
 
@@ -109,6 +111,13 @@ class StokUtil
             ->value('harga_satuan');
 
         if ($harga === null) {
+            // Tidak ada batch s.d. periode: pakai harga batch migrasi bila ada.
+            $hargaMigrasi = self::hargaBatchMigrasi($product);
+
+            if ($hargaMigrasi !== null && $hargaMigrasi > 0) {
+                return $hargaMigrasi;
+            }
+
             return $fallback;
         }
 
@@ -118,8 +127,32 @@ class StokUtil
     }
 
     /**
+     * Harga satuan batch migrasi (no_batch LIKE '%MIGRATION%'), atau null bila tidak ada.
+     */
+    private static function hargaBatchMigrasi(Product $product): ?float
+    {
+        if (! Schema::hasTable('product_batches')) {
+            return null;
+        }
+
+        $harga = ProductBatch::where('product_id', $product->id)
+            ->where('no_batch', 'like', '%MIGRATION%')
+            ->orderBy('tanggal_pembelian', 'desc')
+            ->orderBy('id', 'desc')
+            ->value('harga_satuan');
+
+        if ($harga === null) {
+            return null;
+        }
+
+        return (float) $harga;
+    }
+
+    /**
      * Total nilai rupiah pembelian produk s.d. $endDate.
-     * = (stok awal migrasi * harga_beli) + SUM(purchase_details.subtotal <= endDate).
+     * = (stok awal migrasi * harga batch migrasi) + SUM(purchase_details.subtotal <= endDate).
+     * Harga batch migrasi = harga_satuan ProductBatch (no_batch LIKE '%MIGRATION%'),
+     * fallback ke products.harga_beli (lalu biaya_rata_rata).
      */
     public static function totalBeliSampai(Product $product, Carbon $endDate, int $stokMigrasi = 0): float
     {
@@ -128,8 +161,15 @@ class StokUtil
         $total = 0.0;
 
         if ($stokMigrasi > 0) {
-            $hargaBeli = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
-            $total += $stokMigrasi * $hargaBeli;
+            // Harga stok migrasi diambil dari batch migrasi (harga saat migrasi),
+            // bukan harga_beli master saat ini. Fallback ke harga_beli/biaya_rata_rata.
+            $hargaMigrasi = self::hargaBatchMigrasi($product);
+
+            if ($hargaMigrasi === null || $hargaMigrasi <= 0) {
+                $hargaMigrasi = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
+            }
+
+            $total += $stokMigrasi * $hargaMigrasi;
         }
 
         if (Schema::hasTable('purchase_details') && Schema::hasTable('purchases')) {

@@ -420,4 +420,30 @@ class StokPeriodeTest extends TestCase
         // Total Beli 100000 - Total Jual 150000 = -50000 (stok habis, sesuai rumus)
         $this->assertSame(-50000.0, $hasil['nilai_stok']);
     }
+
+    /** Skenario migrasi: batch MIGRATION bertanggal setelah periode Juli; harga master berubah. */
+    public function test_migrasi_batch_harga_saat_migrasi(): void
+    {
+        $p = $this->buatProduk(10);
+        $p->update(['harga_beli' => 9000, 'biaya_rata_rata' => 9000]); // harga master saat ini berubah
+
+        $this->mutasi($p, '2026-08-20 09:24:17', 10, 'adjustment', 'migration');
+
+        ProductBatch::create([
+            'business_id' => 1, 'product_id' => $p->id, 'purchase_detail_id' => null,
+            'no_batch' => 'MIGRATION-20260820',
+            'tanggal_pembelian' => Carbon::parse('2026-08-20 09:24:17'),
+            'harga_satuan' => 11000, 'jumlah_awal' => 10, 'jumlah_saat_ini' => 10,
+            'tanggal_kadaluarsa' => null, 'status' => 'ACTIVE',
+        ]);
+
+        $juli = StokUtil::stokPeriode($p, new Carbon('2026-07-01'), new Carbon('2026-07-31'));
+        $this->assertSame(11000.0, $juli['hpp'], 'HPP Juli pakai harga batch migrasi');
+        $this->assertSame(110000.0, $juli['nilai_stok'], 'Nilai stok Juli pakai harga batch migrasi');
+
+        // Pasca migrasi (September) tanpa batch lain: tetap harga migrasi.
+        $sep = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
+        $this->assertSame(11000.0, $sep['hpp']);
+        $this->assertSame(110000.0, $sep['nilai_stok']);
+    }
 }
