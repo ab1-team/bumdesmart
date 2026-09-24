@@ -85,8 +85,8 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="6" class="text-end fw-bold">Total</td>
-                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->total, 2, true) }}</td>
+                                <td colspan="6" class="text-end fw-bold">Subtotal</td>
+                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->subtotal, 2, true) }}</td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Diskon</td>

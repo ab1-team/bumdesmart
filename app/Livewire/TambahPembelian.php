@@ -300,7 +300,27 @@ class TambahPembelian extends Component
         }
 
         $bayar = \App\Utils\NumberUtil::parse($data['bayar']);
-        $total = \App\Utils\NumberUtil::parse($data['grandTotal']);
+
+        // Always (re)calculate the header subtotal from the actual item details,
+        // so the master header can never drift from the line items.
+        $sumSubtotal = collect($data['products'])->sum(function ($item) {
+            return \App\Utils\NumberUtil::parse($item['subtotal'] ?? 0);
+        });
+        $subtotal = $sumSubtotal;
+
+        // Derive the grand total from the (re)calculated subtotal plus taxes,
+        // then subtract global discount and cashback, so header total stays in sync.
+        $globalDiskonVal = \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah'] ?? 0);
+        $globalDiskonAmt = (($data['globalDiskon']['jenis'] ?? 'nominal') === 'nominal')
+            ? $globalDiskonVal
+            : ($subtotal * $globalDiskonVal / 100);
+
+        $globalCashbackVal = \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah'] ?? 0);
+        $globalCashbackAmt = (($data['globalCashback']['jenis'] ?? 'nominal') === 'nominal')
+            ? $globalCashbackVal
+            : ($subtotal * $globalCashbackVal / 100);
+
+        $total = max(0, $subtotal - $globalDiskonAmt - $globalCashbackAmt);
 
         $jenisPembayaran = $data['jenisPembayaran'];
         $status = $data['status'] ?? 'pending';
@@ -327,13 +347,6 @@ class TambahPembelian extends Component
 
         DB::beginTransaction();
         try {
-            $subtotal = \App\Utils\NumberUtil::parse($data['subtotal']);
-
-            $globalDiskonVal = \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah']);
-            $globalDiskonAmt = ($data['globalDiskon']['jenis'] === 'nominal')
-                ? $globalDiskonVal
-                : ($subtotal * $globalDiskonVal / 100);
-
             $taxable = max(0, $subtotal - $globalDiskonAmt);
             $taxAmount = ($data['jenisPajak'] === 'PPN') ? $taxable * 0.11 : 0;
 
@@ -676,17 +689,8 @@ class TambahPembelian extends Component
             // 5. Create Payment Records (Double-Entry Accounting) - OPTIMIZED
             $kodeRekening = PaymentUtil::ambilRekening('purchase', 'cash', $data['metodeBayar'], $data['noRekening']);
 
-            // Calculate actual discount and cashback amounts (GLOBAL ONLY)
-            $globalDiskonVal = \App\Utils\NumberUtil::parse($data['globalDiskon']['jumlah']);
-            $globalDiskonAmt = ($data['globalDiskon']['jenis'] === 'nominal')
-                ? $globalDiskonVal
-                : ($subtotal * $globalDiskonVal / 100);
-
-            $globalCashbackVal = \App\Utils\NumberUtil::parse($data['globalCashback']['jumlah']);
-            $globalCashbackAmt = ($data['globalCashback']['jenis'] === 'nominal')
-                ? $globalCashbackVal
-                : ($subtotal * $globalCashbackVal / 100);
-
+            // Discount and cashback amounts (GLOBAL ONLY) were already computed from
+            // the sum-based subtotal above, keeping them in sync with the line items.
             $totalDiskonAll = $globalDiskonAmt;
             $totalCashbackAll = $globalCashbackAmt;
 
