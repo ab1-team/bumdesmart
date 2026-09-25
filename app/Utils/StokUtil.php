@@ -38,7 +38,7 @@ class StokUtil
 
         $movements = $product->stockMovements()
             ->orderBy('tanggal_perubahan_stok')
-            ->get(['jumlah_perubahan', 'tanggal_perubahan_stok', 'reference_type']);
+            ->get(['jumlah_perubahan', 'tanggal_perubahan_stok', 'reference_type', 'catatan']);
 
         $stokMigrasi = 0;
 
@@ -114,7 +114,7 @@ class StokUtil
         // a. Movements
         $movementsGroup = StockMovement::whereIn('product_id', $productIds)
             ->orderBy('tanggal_perubahan_stok')
-            ->get(['product_id', 'jumlah_perubahan', 'tanggal_perubahan_stok', 'reference_type'])
+            ->get(['product_id', 'jumlah_perubahan', 'tanggal_perubahan_stok', 'reference_type', 'catatan'])
             ->groupBy('product_id');
 
         // b. Latest Batches s.d. endDate
@@ -128,7 +128,10 @@ class StokUtil
 
         // c. Migration Batches
         $migrasiBatchMap = ProductBatch::whereIn('product_id', $productIds)
-            ->where('no_batch', 'like', '%MIGRATION%')
+            ->where(function ($q) {
+                $q->where('no_batch', 'like', '%MIGRATION%')
+                    ->orWhere('no_batch', 'like', '%INIT%');
+            })
             ->orderBy('tanggal_pembelian', 'desc')
             ->orderBy('id', 'desc')
             ->get(['product_id', 'harga_satuan'])
@@ -283,7 +286,10 @@ class StokUtil
         }
 
         $harga = ProductBatch::where('product_id', $product->id)
-            ->where('no_batch', 'like', '%MIGRATION%')
+            ->where(function ($q) {
+                $q->where('no_batch', 'like', '%MIGRATION%')
+                    ->orWhere('no_batch', 'like', '%INIT%');
+            })
             ->orderBy('tanggal_pembelian', 'desc')
             ->orderBy('id', 'desc')
             ->value('harga_satuan');
@@ -359,6 +365,19 @@ class StokUtil
 
     private static function isMigration($movement): bool
     {
-        return ($movement->reference_type ?? '') === 'migration';
+        $ref = $movement->reference_type ?? '';
+        if ($ref === 'migration') {
+            return true;
+        }
+
+        // Stock opname inisialisasi awal (SO-INIT).
+        if ($ref === 'stock_opname') {
+            $catatan = strtolower($movement->catatan ?? '');
+            if (str_contains($catatan, 'so-init') || str_contains($catatan, 'penyesuaian stok awal') || str_contains($catatan, 'stok awal via impor')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
