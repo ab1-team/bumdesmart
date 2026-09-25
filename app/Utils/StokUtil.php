@@ -29,7 +29,7 @@ class StokUtil
      * - Total Beli  = (stok awal migrasi * harga_beli) + SUM(purchase_details.subtotal <= endDate).
      * - Total Jual  = SUM(sale_details.hpp <= endDate).
      *
-     * @return array{stok_awal: int, masuk: int, keluar: int, stok_akhir: int, hpp: float, nilai_stok: float}
+     * @return array{stok_awal: float, masuk: float, keluar: float, stok_akhir: float, hpp: float, nilai_stok: float}
      */
     public static function stokPeriode(Product $product, Carbon $startDate, Carbon $endDate): array
     {
@@ -40,17 +40,18 @@ class StokUtil
             ->orderBy('tanggal_perubahan_stok')
             ->get(['jumlah_perubahan', 'tanggal_perubahan_stok', 'reference_type', 'catatan']);
 
-        $stokMigrasi = 0;
+        $stokMigrasi = 0.0;
 
         foreach ($movements as $m) {
             if (self::isMigration($m)) {
-                $stokMigrasi += (int) round((float) $m->jumlah_perubahan);
+                // Presisi sesuai database (decimal 15,2). Tidak dilakukan pembulatan ke int.
+                $stokMigrasi += (float) $m->jumlah_perubahan;
             }
         }
 
-        $masuk = 0;
-        $keluar = 0;
-        $netSebelumPeriode = 0;
+        $masuk = 0.0;
+        $keluar = 0.0;
+        $netSebelumPeriode = 0.0;
 
         foreach ($movements as $m) {
             if (self::isMigration($m)) {
@@ -58,7 +59,8 @@ class StokUtil
             }
 
             $tanggal = Carbon::parse($m->tanggal_perubahan_stok);
-            $jumlah = (int) round((float) $m->jumlah_perubahan);
+            // Presisi sesuai database (decimal 15,2). Tidak dilakukan pembulatan ke int.
+            $jumlah = (float) $m->jumlah_perubahan;
 
             if ($tanggal->lt($mulai)) {
                 $netSebelumPeriode += $jumlah;
@@ -163,16 +165,17 @@ class StokUtil
         foreach ($products as $p) {
             $movements = $movementsGroup->get($p->id, collect());
 
-            $stokMigrasi = 0;
+            $stokMigrasi = 0.0;
             foreach ($movements as $m) {
                 if (self::isMigration($m)) {
-                    $stokMigrasi += (int) round((float) $m->jumlah_perubahan);
+                    // Presisi sesuai database (decimal 15,2). Tidak dilakukan pembulatan ke int.
+                    $stokMigrasi += (float) $m->jumlah_perubahan;
                 }
             }
 
-            $masuk = 0;
-            $keluar = 0;
-            $netSebelumPeriode = 0;
+            $masuk = 0.0;
+            $keluar = 0.0;
+            $netSebelumPeriode = 0.0;
 
             foreach ($movements as $m) {
                 if (self::isMigration($m)) {
@@ -180,7 +183,8 @@ class StokUtil
                 }
 
                 $tanggal = Carbon::parse($m->tanggal_perubahan_stok);
-                $jumlah = (int) round((float) $m->jumlah_perubahan);
+                // Presisi sesuai database (decimal 15,2). Tidak dilakukan pembulatan ke int.
+                $jumlah = (float) $m->jumlah_perubahan;
 
                 if ($tanggal->lt($mulai)) {
                     $netSebelumPeriode += $jumlah;
@@ -246,7 +250,7 @@ class StokUtil
      * pakai harga satuan batch migrasi (bukan harga_beli master saat ini).
      * Fallback terakhir ke products.harga_beli (lalu biaya_rata_rata).
      */
-    public static function hppTerakhir(Product $product, Carbon $endDate, int $stokMigrasi = 0): float
+    public static function hppTerakhir(Product $product, Carbon $endDate, float $stokMigrasi = 0): float
     {
         $fallback = (float) ($product->harga_beli > 0 ? $product->harga_beli : ($product->biaya_rata_rata ?? 0));
 
@@ -307,7 +311,7 @@ class StokUtil
      * Harga batch migrasi = harga_satuan ProductBatch (no_batch LIKE '%MIGRATION%'),
      * fallback ke products.harga_beli (lalu biaya_rata_rata).
      */
-    public static function totalBeliSampai(Product $product, Carbon $endDate, int $stokMigrasi = 0): float
+    public static function totalBeliSampai(Product $product, Carbon $endDate, float $stokMigrasi = 0): float
     {
         $selesai = $endDate->copy()->endOfDay();
 

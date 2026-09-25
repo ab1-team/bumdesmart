@@ -224,11 +224,11 @@ class StokPeriodeTest extends TestCase
 
         // Periode September
         $hasil = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
-        $this->assertSame(4, $hasil['stok_awal'], 'Stok Awal = migrasi 4');
-        $this->assertSame(10, $hasil['masuk'], 'Masuk = pembelian September saja, migrasi TIDAK dihitung Masuk');
-        $this->assertSame(2, $hasil['keluar']);
-        $this->assertSame(12, $hasil['stok_akhir']);
-        $this->assertSame(12, $hasil['stok_awal'] + $hasil['masuk'] - $hasil['keluar']);
+        $this->assertEquals(4, $hasil['stok_awal']);
+        $this->assertEquals(10, $hasil['masuk']);
+        $this->assertEquals(2, $hasil['keluar']);
+        $this->assertEquals(12, $hasil['stok_akhir']);
+        $this->assertEquals(12, $hasil['stok_awal'] + $hasil['masuk'] - $hasil['keluar']);
 
         // HPP = harga beli terakhir (batch terakhir s.d. September).
         $this->batch($p, '2026-09-02 10:00:00', 10, 11000);
@@ -242,10 +242,10 @@ class StokPeriodeTest extends TestCase
 
         // Periode Juli (sebelum semua): stok migrasi tetap tampil sebagai saldo
         $hasilJuli = StokUtil::stokPeriode($p, new Carbon('2026-07-01'), new Carbon('2026-07-31'));
-        $this->assertSame(4, $hasilJuli['stok_awal'], 'Migrasi tetap Stok Awal meski periode sebelum tanggal migrasi');
-        $this->assertSame(0, $hasilJuli['masuk']);
-        $this->assertSame(0, $hasilJuli['keluar']);
-        $this->assertSame(4, $hasilJuli['stok_akhir']);
+        $this->assertEquals(4, $hasilJuli['stok_awal']);
+        $this->assertEquals(0, $hasilJuli['masuk']);
+        $this->assertEquals(0, $hasilJuli['keluar']);
+        $this->assertEquals(4, $hasilJuli['stok_akhir']);
         // HPP fallback ke harga_beli master (belum ada batch s.d. Juli).
         $this->assertSame(10000.0, $hasilJuli['hpp']);
         // Total Beli = migrasi 4*10000 = 40000; Total Jual = 0
@@ -264,18 +264,18 @@ class StokPeriodeTest extends TestCase
         $this->penjualan($p, '2026-09-05', 2, 15000);
 
         $hasilAgustus = StokUtil::stokPeriode($p, new Carbon('2026-08-01'), new Carbon('2026-08-31'));
-        $this->assertSame(10, $hasilAgustus['stok_awal']);
-        $this->assertSame(0, $hasilAgustus['masuk']);
-        $this->assertSame(3, $hasilAgustus['keluar']);
-        $this->assertSame(7, $hasilAgustus['stok_akhir']);
+        $this->assertEquals(10, $hasilAgustus['stok_awal']);
+        $this->assertEquals(0, $hasilAgustus['masuk']);
+        $this->assertEquals(3, $hasilAgustus['keluar']);
+        $this->assertEquals(7, $hasilAgustus['stok_akhir']);
         // Total Beli 100000 - Total Jual HPP 30000 = 70000
         $this->assertSame(70000.0, $hasilAgustus['nilai_stok']);
 
         $hasilJuli = StokUtil::stokPeriode($p, new Carbon('2026-07-01'), new Carbon('2026-07-31'));
-        $this->assertSame(0, $hasilJuli['stok_awal']);
-        $this->assertSame(10, $hasilJuli['masuk']);
-        $this->assertSame(0, $hasilJuli['keluar']);
-        $this->assertSame(10, $hasilJuli['stok_akhir']);
+        $this->assertEquals(0, $hasilJuli['stok_awal']);
+        $this->assertEquals(10, $hasilJuli['masuk']);
+        $this->assertEquals(0, $hasilJuli['keluar']);
+        $this->assertEquals(10, $hasilJuli['stok_akhir']);
         // Total Beli 100000 - Total Jual 0 = 100000
         $this->assertSame(100000.0, $hasilJuli['nilai_stok']);
     }
@@ -299,19 +299,19 @@ class StokPeriodeTest extends TestCase
 
         // Agustus: awal = migrasi 6; keluar = backdate 1 + jual 4 = 5; masuk 10 -> akhir 11
         $hasil = StokUtil::stokPeriode($p, new Carbon('2026-08-01'), new Carbon('2026-08-31'));
-        $this->assertSame(6, $hasil['stok_awal']);
-        $this->assertSame(10, $hasil['masuk']);
-        $this->assertSame(5, $hasil['keluar']);
-        $this->assertSame(11, $hasil['stok_akhir']);
+        $this->assertEquals(6, $hasil['stok_awal']);
+        $this->assertEquals(10, $hasil['masuk']);
+        $this->assertEquals(5, $hasil['keluar']);
+        $this->assertEquals(11, $hasil['stok_akhir']);
         // Total Beli = migrasi 6*10000 + beli 10*10000 = 160000; Total Jual HPP = 5*10000 = 50000
         $this->assertSame(110000.0, $hasil['nilai_stok']);
 
         // September: awal = 11, keluar 2 -> akhir 9 = master
         $hasilSep = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
-        $this->assertSame(11, $hasilSep['stok_awal']);
-        $this->assertSame(2, $hasilSep['keluar']);
-        $this->assertSame(9, $hasilSep['stok_akhir']);
-        $this->assertSame((int) $p->stok_aktual, $hasilSep['stok_akhir']);
+        $this->assertEquals(11, $hasilSep['stok_awal']);
+        $this->assertEquals(2, $hasilSep['keluar']);
+        $this->assertEquals(9, $hasilSep['stok_akhir']);
+        $this->assertEquals((int) $p->stok_aktual, $hasilSep['stok_akhir']);
         // Total Beli 160000 - Total Jual HPP (5+2)*10000 = 70000 => 90000
         $this->assertSame(90000.0, $hasilSep['nilai_stok']);
     }
@@ -321,10 +321,10 @@ class StokPeriodeTest extends TestCase
     {
         $p = $this->buatProduk(15);
         $hasil = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
-        $this->assertSame(0, $hasil['stok_awal']);
-        $this->assertSame(0, $hasil['masuk']);
-        $this->assertSame(0, $hasil['keluar']);
-        $this->assertSame(0, $hasil['stok_akhir']);
+        $this->assertEquals(0, $hasil['stok_awal']);
+        $this->assertEquals(0, $hasil['masuk']);
+        $this->assertEquals(0, $hasil['keluar']);
+        $this->assertEquals(0, $hasil['stok_akhir']);
         // HPP fallback ke harga_beli master.
         $this->assertSame(10000.0, $hasil['hpp']);
         $this->assertSame(0.0, $hasil['nilai_stok']);
@@ -342,17 +342,17 @@ class StokPeriodeTest extends TestCase
         $this->penjualan($p, '2026-10-01', 1, 15000);
 
         $hasil = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
-        $this->assertSame(0, $hasil['stok_awal']);
-        $this->assertSame(5, $hasil['masuk']);
-        $this->assertSame(2, $hasil['keluar']);
-        $this->assertSame(3, $hasil['stok_akhir']);
+        $this->assertEquals(0, $hasil['stok_awal']);
+        $this->assertEquals(5, $hasil['masuk']);
+        $this->assertEquals(2, $hasil['keluar']);
+        $this->assertEquals(3, $hasil['stok_akhir']);
         // Total Beli 50000 - Total Jual HPP 20000 = 30000
         $this->assertSame(30000.0, $hasil['nilai_stok']);
 
         // Penjualan 1 Oktober tidak boleh ikut periode September.
         $hasilOkt = StokUtil::stokPeriode($p, new Carbon('2026-10-01'), new Carbon('2026-10-31'));
-        $this->assertSame(3, $hasilOkt['stok_awal']);
-        $this->assertSame(1, $hasilOkt['keluar']);
+        $this->assertEquals(3, $hasilOkt['stok_awal']);
+        $this->assertEquals(1, $hasilOkt['keluar']);
         // Total Beli 50000 - Total Jual HPP (2+1)*10000 = 30000 => 20000
         $this->assertSame(20000.0, $hasilOkt['nilai_stok']);
     }
@@ -421,7 +421,7 @@ class StokPeriodeTest extends TestCase
             Carbon::parse('2026-09-30')->endOfDay()
         );
 
-        $this->assertSame(0, $hasil['stok_akhir']);
+        $this->assertEquals(0, $hasil['stok_akhir']);
         // Total Beli 100000 - Total Jual HPP 100000 = 0 (stok habis)
         $this->assertSame(0.0, $hasil['nilai_stok']);
     }
@@ -478,10 +478,10 @@ class StokPeriodeTest extends TestCase
 
         $hasil = StokUtil::stokPeriode($p, new Carbon('2026-09-01'), new Carbon('2026-09-30'));
 
-        $this->assertSame(0, $hasil['stok_awal']);
-        $this->assertSame(20, $hasil['masuk']);
-        $this->assertSame(16, $hasil['keluar']);
-        $this->assertSame(4, $hasil['stok_akhir']);
+        $this->assertEquals(0, $hasil['stok_awal']);
+        $this->assertEquals(20, $hasil['masuk']);
+        $this->assertEquals(16, $hasil['keluar']);
+        $this->assertEquals(4, $hasil['stok_akhir']);
 
         // Total Beli = 10*5895.35 + 10*5244.80 = 111401.50
         $this->assertSame(111401.50, StokUtil::totalBeliSampai($p, new Carbon('2026-09-30')));

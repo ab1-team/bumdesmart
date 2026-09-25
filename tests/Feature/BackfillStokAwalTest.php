@@ -140,10 +140,10 @@ class BackfillStokAwalTest extends TestCase
 
         // Laporan stok per periode: A tidak lagi 0
         $hasil = StokUtil::stokPeriode($a->fresh(), Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth());
-        $this->assertSame(25, $hasil['stok_awal']);
-        $this->assertSame(0, $hasil['masuk']);
-        $this->assertSame(0, $hasil['keluar']);
-        $this->assertSame(25, $hasil['stok_akhir']);
+        $this->assertEquals(25, $hasil['stok_awal']);
+        $this->assertEquals(0, $hasil['masuk']);
+        $this->assertEquals(0, $hasil['keluar']);
+        $this->assertEquals(25, $hasil['stok_akhir']);
 
         // Idempoten: jalan lagi tidak menambah movement
         $this->jalankanBackfill();
