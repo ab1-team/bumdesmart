@@ -60,6 +60,47 @@ class NumberUtil
     }
 
     /**
+     * Format quantity / stock mengikuti nilai database tanpa pembulatan.
+     *
+     * - Tidak melakukan round(), sehingga desimal tampil apa adanya (sesuai DB).
+     * - Mendukung sampai $maxDecimals (default 6) desimal.
+     * - Trailing zero dihilangkan (mis. 1,500000 -> 1,5 ; 1,000000 -> 1).
+     *
+     * @param mixed $value
+     * @param int $maxDecimals
+     * @return string
+     */
+    public static function formatQtyFull($value, $maxDecimals = 6)
+    {
+        if ($value === null || $value === '') {
+            return '0';
+        }
+
+        // Jika string mengandung ',' sebagai desimal Indonesia, normalkan.
+        $val = $value;
+        if (is_string($val)) {
+            $val = trim($val);
+            if (str_contains($val, ',') && ! str_contains($val, '.')) {
+                $val = str_replace(',', '.', $val);
+            }
+        }
+
+        $val = (float) $val;
+
+        // Bilangan bulat -> tampil tanpa desimal, dengan pemisah ribuan Indonesia.
+        if (floor($val) == $val) {
+            return number_format($val, 0, ',', '.');
+        }
+
+        // Tampilkan sampai $maxDecimals desimal, tanpa round, lalu trim trailing zero.
+        $formatted = number_format($val, $maxDecimals, ',', '.');
+        // Buang nol di belakang koma, lalu koma yang menggantung.
+        $formatted = rtrim(rtrim($formatted, '0'), ',');
+
+        return $formatted;
+    }
+
+    /**
      * Parse a formatted number string into a float.
      * Supports both Indonesian standard (1.234,56) and US standard (1,234.56),
      * as well as standard unformatted floats (1234.56).

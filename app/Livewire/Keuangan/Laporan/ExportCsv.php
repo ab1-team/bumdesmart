@@ -1806,10 +1806,10 @@ class ExportCsv extends Controller
                 $p->category->nama_kategori ?? '-',
                 $p->unit->nama_satuan ?? '-',
                 $p->shelf->nama_rak ?? '-',
-                $p->stok_awal_periode,
-                $p->stok_masuk,
-                $p->stok_keluar,
-                $p->stok_akhir,
+                (float) $p->stok_awal_periode,
+                (float) $p->stok_masuk,
+                (float) $p->stok_keluar,
+                (float) $p->stok_akhir,
                 $this->fmt((float) $p->hpp),
                 $this->fmt((float) $p->nilai_stok),
             ];
@@ -1826,7 +1826,7 @@ class ExportCsv extends Controller
             'Laporan Stok (Per Periode)',
             $this->periodeSubtitle($tahun, $bulan, $hari),
             $summaryRows,
-            [['title' => null, 'headers' => $headers, 'rows' => $rows, 'footer' => ['', '', '', '', '', 'Total', '', '', (string) $products->sum('stok_akhir'), '', $this->fmt((float) $products->sum('nilai_stok'))]]]
+            [['title' => null, 'headers' => $headers, 'rows' => $rows, 'footer' => ['', '', '', '', '', 'Total', '', '', (float) $products->sum('stok_akhir'), '', $this->fmt((float) $products->sum('nilai_stok'))]]]
         );
     }
 }

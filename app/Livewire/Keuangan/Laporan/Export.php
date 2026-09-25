@@ -75,14 +75,14 @@ class Export extends Controller
         return $sub;
     }
 
-    private function buildExcel(string $title, string $subtitle, array $headers, array $rows, array $totalsRow, string $filename, array $numberCols = [], array $columnWidths = [])
+    private function buildExcel(string $title, string $subtitle, array $headers, array $rows, array $totalsRow, string $filename, array $numberCols = [], array $columnWidths = [], array $cellFormats = [])
     {
         return $this->buildGroupedExcel($title, $subtitle, [], [
             ['title' => null, 'headers' => $headers, 'rows' => $rows, 'subtotals' => !empty($totalsRow) ? [$totalsRow] : []],
-        ], $filename, $numberCols, $columnWidths);
+        ], $filename, $numberCols, $columnWidths, $cellFormats);
     }
 
-    private function buildGroupedExcel(string $title, string $subtitle, array $summaryRow, array $groups, string $filename, array $numberCols = [], array $columnWidths = [])
+    private function buildGroupedExcel(string $title, string $subtitle, array $summaryRow, array $groups, string $filename, array $numberCols = [], array $columnWidths = [], array $cellFormats = [])
     {
         $maxCols = 1;
         foreach ($groups as $g) {
@@ -106,12 +106,19 @@ class Export extends Controller
         $html .= '<tr><td colspan="'.$maxCols.'" class="title">'.e($title).'</td></tr>';
         $html .= '<tr><td colspan="'.$maxCols.'" class="subtitle">'.e($subtitle).'</td></tr>';
 
+        $defaultNumFmt = '\#\#\#\.\#\#0';
+
         if (!empty($summaryRow)) {
             foreach ($summaryRow as $sRow) {
                 $html .= '<tr>';
                 for ($i = 0; $i < $maxCols; $i++) {
                     $val = $sRow[$i] ?? '';
-                    $html .= '<td'.(is_numeric($val) ? ' style="mso-number-format:\'\#\#\#\.\#\#0\'"' : '').'>'.e($val).'</td>';
+                    $style = '';
+                    if (is_numeric($val)) {
+                        $fmt = $cellFormats[$i] ?? $defaultNumFmt;
+                        $style = ' style="mso-number-format:\''.$fmt.'\'"';
+                    }
+                    $html .= '<td'.$style.'>'.e($val).'</td>';
                 }
                 $html .= '</tr>';
             }
@@ -138,7 +145,12 @@ class Export extends Controller
                 $html .= '<tr>';
                 for ($i = 0; $i < $gc; $i++) {
                     $val = $r[$i] ?? '';
-                    $html .= '<td'.(is_numeric($val) ? ' style="mso-number-format:\'\#\#\#\.\#\#0\'"' : '').'>'.e($val).'</td>';
+                    $style = '';
+                    if (is_numeric($val)) {
+                        $fmt = $cellFormats[$i] ?? $defaultNumFmt;
+                        $style = ' style="mso-number-format:\''.$fmt.'\'"';
+                    }
+                    $html .= '<td'.$style.'>'.e($val).'</td>';
                 }
                 $html .= '</tr>';
             }
@@ -147,7 +159,12 @@ class Export extends Controller
                 $html .= '<tr>';
                 for ($i = 0; $i < $gc; $i++) {
                     $val = $st[$i] ?? '';
-                    $html .= '<td class="subtotal">'.e($val).'</td>';
+                    $style = '';
+                    if (is_numeric($val)) {
+                        $fmt = $cellFormats[$i] ?? $defaultNumFmt;
+                        $style = ' style="mso-number-format:\''.$fmt.'\'"';
+                    }
+                    $html .= '<td class="subtotal"'.$style.'>'.e($val).'</td>';
                 }
                 $html .= '</tr>';
             }
@@ -2259,15 +2276,25 @@ class Export extends Controller
                 $p->category->nama_kategori ?? '-',
                 $p->unit->nama_satuan ?? '-',
                 $p->shelf->nama_rak ?? '-',
-                (int) $p->stok_awal_periode,
-                (int) $p->stok_masuk,
-                (int) $p->stok_keluar,
-                (int) $p->stok_akhir,
+                (float) $p->stok_awal_periode,
+                (float) $p->stok_masuk,
+                (float) $p->stok_keluar,
+                (float) $p->stok_akhir,
                 $this->rupiah($p->hpp),
                 $this->rupiah($p->nilai_stok),
             ];
         }
-        $totalsRow = ['', '', '', '', '', 'Total', '', '', '', (int) $products->sum('stok_akhir'), '', $this->rupiah($products->sum('nilai_stok'))];
+        $totalsRow = ['', '', '', '', '', 'Total', '', '', '', (float) $products->sum('stok_akhir'), '', $this->rupiah($products->sum('nilai_stok'))];
+
+        // Format cell khusus per kolom:
+        // - Kolom Stok (6-9) pakai "General" supaya desimal tampil apa adanya tanpa pembulatan.
+        // - Kolom HPP (10) dan Nilai Stok (11) tetap format default dengan 2 desimal.
+        $cellFormats = [
+            6 => 'General',
+            7 => 'General',
+            8 => 'General',
+            9 => 'General',
+        ];
 
         return $this->buildExcel(
             'Laporan Stok',
@@ -2277,7 +2304,8 @@ class Export extends Controller
             $totalsRow,
             'laporan-stok.xlsx',
             [],
-            [5, 14, 32, 22, 12, 14, 14, 12, 12, 14, 16, 18]
+            [5, 14, 32, 22, 12, 14, 14, 12, 12, 14, 16, 18],
+            $cellFormats
         );
     }
 }
