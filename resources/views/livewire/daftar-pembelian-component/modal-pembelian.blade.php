@@ -23,7 +23,9 @@
                             <span>
                                 @if (in_array(strtolower($detailPurchase->status), ['completed', 'lunas', 'paid']))
                                     <span class="badge text-light bg-success">Selesai</span>
-                                @elseif (in_array(strtolower($detailPurchase->status), ['utang', 'hutang', 'partial', 'pending', 'sebagian']))
+                                @elseif (in_array(strtolower($detailPurchase->status), ['partial', 'sebagian']))
+                                    <span class="badge text-light bg-info">Sebagian</span>
+                                @elseif (in_array(strtolower($detailPurchase->status), ['utang', 'hutang', 'pending']))
                                     <span class="badge text-light bg-warning">Utang</span>
                                 @else
                                     <span class="badge text-light bg-secondary">{{ ucfirst($detailPurchase->status) }}</span>
@@ -46,6 +48,13 @@
                         </div>
                     </div>
                     <div class="table-responsive">
+                        @php
+                            // Hitung Subtotal secara dinamis dari jumlah per-baris di tabel,
+                            // supaya selalu konsisten dengan yang ditampilkan ke user.
+                            $displayedSubtotal = $detailPurchase->purchaseDetails->sum(function ($d) {
+                                return (float) $d->subtotal;
+                            });
+                        @endphp
                         <table class="table table-bordered mt-2">
                         <thead>
                             <tr>
@@ -86,7 +95,7 @@
                         <tfoot>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Subtotal</td>
-                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($detailPurchase->subtotal, 2, true) }}</td>
+                                <td class="text-end fw-bold">{{ \App\Utils\NumberUtil::format($displayedSubtotal, 2, true) }}</td>
                             </tr>
                             <tr>
                                 <td colspan="6" class="text-end fw-bold">Diskon</td>

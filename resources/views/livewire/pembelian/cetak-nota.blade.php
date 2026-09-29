@@ -161,9 +161,15 @@
             // Status Pembayaran Logic
             $statusPrefix = 'LUNAS';
             if ($purchase->jumlah_utang > 0) {
-                $statusPrefix = 'UTANG';
+                $statusPrefix = (float) $purchase->dibayar > 0 ? 'SEBAGIAN' : 'UTANG';
             }
             $statusBayar = $statusPrefix . ' ' . $metode;
+
+            // Hitung Subtotal dinamis dari detail items agar konsisten dengan baris
+            // yang tercetak di nota (mencegah mismatch dengan $purchase->subtotal tersimpan).
+            $detailSubtotal = $purchase->purchaseDetails->sum(function ($d) {
+                return (float) $d->subtotal;
+            });
         @endphp
 
         <!-- Header -->
@@ -236,7 +242,7 @@
                     <tr>
                         <td style="text-align: left;">Subtotal</td>
                         <td style="text-align: center; width: 10px;">:</td>
-                        <td class="text-right">{{ number_format($purchase->subtotal, 2, ',','.') }}</td>
+                        <td class="text-right">{{ number_format($detailSubtotal, 2, ',','.') }}</td>
                     </tr>
                     @if ($purchase->jumlah_diskon > 0)
                     <tr>
