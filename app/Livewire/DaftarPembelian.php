@@ -25,12 +25,38 @@ class DaftarPembelian extends Component
     public function mount()
     {
         $this->businessId = auth()->user()->business_id;
-        $this->bankAccounts = \App\Models\Account::where('business_id', $this->businessId)
-            ->whereNotNull('no_rek_bank')
+        $this->loadBankAccounts();
+    }
+
+    /**
+     * Ambil daftar rekening bank milik bisnis.
+     * Mencakup rekening yang punya nomor rekening maupun akun "Bank ..." di grup Kas,
+     * supaya pilihan bank di modal pembayaran tidak kosong.
+     */
+    private function loadBankAccounts()
+    {
+        $accounts = \App\Models\Account::where('business_id', $this->businessId)
+            ->where(function ($query) {
+                $query->whereNotNull('no_rek_bank')
+                    ->orWhere(function ($bankQuery) {
+                        $bankQuery->where('parent_id', 111)->where('nama', 'like', 'Bank%');
+                    });
+            })
+            ->orderBy('nama')
             ->get();
-            
-        $this->defaultTransferAccount = $this->bankAccounts->where('is_default_transfer', true)->first()?->no_rek_bank;
-        $this->defaultQrisAccount = $this->bankAccounts->where('is_default_qris', true)->first()?->no_rek_bank;
+
+        $this->bankAccounts = $accounts->map(fn ($bank) => [
+            'id' => $bank->id,
+            'nama' => $bank->nama,
+            'no_rek_bank' => $bank->no_rek_bank,
+        ])->values()->all();
+
+        $fallbackAccount = $this->bankAccounts[0]['id'] ?? null;
+
+        $this->defaultTransferAccount = $accounts->where('is_default_transfer', true)->first()?->id
+            ?? $fallbackAccount;
+        $this->defaultQrisAccount = $accounts->where('is_default_qris', true)->first()?->id
+            ?? $fallbackAccount;
     }
 
     // Payment Form Properties
@@ -198,6 +224,12 @@ class DaftarPembelian extends Component
 
         $rekening = PaymentUtil::ambilRekening('purchase', 'cash', $this->metodePembayaran, $this->noRekening);
 
+        // Simpan nomor rekening bank yang dipilih (bukan id) sebagai referensi pembayaran.
+        $bankAccount = $this->noRekening
+            ? \App\Models\Account::where('business_id', $this->businessId)->where('id', $this->noRekening)->first()
+            : null;
+        $noReferensi = $bankAccount ? $bankAccount->no_rek_bank : ($this->noRekening ?: null);
+
         $payment = \App\Models\Payment::create([
             'business_id' => $this->businessId,
             'user_id' => auth()->user()->id,
@@ -207,7 +239,7 @@ class DaftarPembelian extends Component
             'transaction_id' => $this->detailPurchase->id,
             'total_harga' => $jumlahBayar,
             'metode_pembayaran' => $this->metodePembayaran,
-            'no_referensi' => $this->noRekening ?: null,
+            'no_referensi' => $noReferensi,
             'catatan' => $this->keterangan,
             'rekening_debit' => '2.1.01.01', // Hutang
             'rekening_kredit' => $rekening['purchase']['rekening_kredit'], // Kas/Bank
@@ -308,6 +340,7 @@ class DaftarPembelian extends Component
     {
         $this->title = 'Daftar Pembelian';
         $this->businessId = auth()->user()->business_id;
+        $this->loadBankAccounts();
 
         $query = \App\Models\Purchase::where('business_id', $this->businessId)->with([
             'supplier',

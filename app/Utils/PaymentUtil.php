@@ -11,13 +11,24 @@ class PaymentUtil
         $rekeningKas = '1.1.01.01';
         if ($metodeBayar == 'transfer' || $metodeBayar == 'qris') {
             $rekeningKas = '1.1.01.03';
-            
+
             $query = Account::where('business_id', auth()->user()->business_id);
-            
+            $defaultField = ($metodeBayar == 'transfer') ? 'is_default_transfer' : 'is_default_qris';
+
+            // Terima no_rek_bank (format lama) maupun id rekening (format halaman transaksi).
+            $rekeningBank = null;
             if ($noRekening) {
-                $rekeningBank = (clone $query)->where('no_rek_bank', $noRekening)->first();
-            } else {
-                $defaultField = ($metodeBayar == 'transfer') ? 'is_default_transfer' : 'is_default_qris';
+                $rekeningBank = (clone $query)
+                    ->where(function ($q) use ($noRekening) {
+                        $q->where('no_rek_bank', $noRekening);
+                        if (is_numeric($noRekening)) {
+                            $q->orWhere('id', $noRekening);
+                        }
+                    })
+                    ->first();
+            }
+
+            if (! $rekeningBank) {
                 $rekeningBank = (clone $query)->where($defaultField, true)->first();
             }
 

@@ -75,9 +75,11 @@
                         <div wire:ignore>
                             <select id="bankAccountSelectPurchaseModal" class="form-select" x-model="noRekening" placeholder="Pilih Rekening Bank...">
                                 <option value=""></option>
-                                @foreach($bankAccounts as $bank)
-                                    <option value="{{ $bank->no_rek_bank }}">{{ $bank->nama }} ({{ $bank->no_rek_bank }})</option>
-                                @endforeach
+                                @forelse($bankAccounts as $bank)
+                                    <option value="{{ $bank['id'] }}">{{ $bank['nama'] }}{{ $bank['no_rek_bank'] ? ' (' . $bank['no_rek_bank'] . ')' : '' }}</option>
+                                @empty
+                                    <option value="" disabled>Belum ada rekening bank</option>
+                                @endforelse
                             </select>
                         </div>
                     </div>
